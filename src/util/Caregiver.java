@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 public class Caregiver {
     private int caregiverID;
+    private String username;
+    private String password;
     private String firstName;
     private String lastName;
     private LocalDateTime dateOfBirth;

@@ -2,19 +2,39 @@ package util;
 
 public class Guardian {
     private int guardianID;
+    private String username;
+    private String password;
     private String firstName;
     private String lastName;
     private String contactNumber;
     private String email;
     private String address;
 
-    public Guardian(int guardianID, String firstName, String lastName, String contactNumber, String email, String address) {
+    public Guardian(int guardianID, String username, String password, String firstName, String lastName, String contactNumber, String email, String address) {
         this.guardianID = guardianID;
+        this.username = username;
+        this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
         this.contactNumber = contactNumber;
         this.email = email;
         this.address = address;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public int getGuardianID() {
