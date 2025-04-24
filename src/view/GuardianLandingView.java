@@ -13,7 +13,7 @@ public class GuardianLandingView extends Application {
 
     public void start(Stage primaryStage) {
 
-        ComboBox<String> caregiverComboBox = new ComboBox<>();
+        ComboBox<String> caregiverComboBox = new javafx.scene.control.ComboBox<String>();
         caregiverComboBox.setPromptText("Select Caregiver");
 
 
