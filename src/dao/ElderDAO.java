@@ -1,6 +1,6 @@
-package model;
+package dao;
 
-import util.Elder;
+import model.Elder;
 
 import java.sql.*;
 import java.util.ArrayList;

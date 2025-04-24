@@ -1,6 +1,6 @@
-package model;
+package dao;
 
-import util.Activity;
+import model.Activity;
 
 import java.sql.*;
 import java.util.ArrayList;

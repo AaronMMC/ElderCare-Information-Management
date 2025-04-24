@@ -1,6 +1,6 @@
-package model;
+package dao;
 
-import util.MedicalRecord;
+import model.MedicalRecord;
 
 import java.sql.*;
 import java.util.ArrayList;

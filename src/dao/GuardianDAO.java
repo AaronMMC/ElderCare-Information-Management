@@ -1,7 +1,7 @@
-package model;
+package dao;
 
-import util.Elder;
-import util.Guardian;
+import model.Elder;
+import model.Guardian;
 
 import java.util.List;
 

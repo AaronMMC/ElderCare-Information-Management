@@ -1,8 +1,8 @@
 package controller;
 
-import model.GuardianDAO;
-import util.Elder;
-import util.Guardian;
+import dao.GuardianDAO;
+import model.Elder;
+import model.Guardian;
 
 import java.util.List;
 

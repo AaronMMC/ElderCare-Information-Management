@@ -1,8 +1,8 @@
 package controller;
 
-import model.CaregiverDAO;
-import util.Caregiver;
-import util.Service;
+import dao.CaregiverDAO;
+import model.Caregiver;
+import model.Service;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
-package model;
+package dao;
 
-import util.Caregiver;
-import util.Service;
+import model.Caregiver;
+import model.Service;
 
 import java.util.List;
 

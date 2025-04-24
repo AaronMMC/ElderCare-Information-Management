@@ -1,6 +1,6 @@
-package model;
+package dao;
 
-import util.Appointment;
+import model.Appointment;
 
 import java.sql.*;
 import java.util.ArrayList;
