@@ -5,6 +5,9 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES />
+    <excluded>
+      <root url="jar://$USER_HOME$/Desktop/javafx-sdk-24/lib/javafx.base.jar!/" />
+    </excluded>
     <jarDirectory url="file://$USER_HOME$/Desktop/javafx-sdk-24/lib" recursive="false" />
   </library>
 </component>
