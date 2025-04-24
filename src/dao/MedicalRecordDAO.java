@@ -1,0 +1,88 @@
+package dao;
+
+import model.MedicalRecord;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MedicalRecordDAO {
+
+    private final Connection conn;
+
+    public MedicalRecordDAO(Connection conn) {
+        this.conn = conn;
+    }
+
+    public void insertMedicalRecord(MedicalRecord record) throws SQLException {
+        String sql = "{CALL InsertMedicalRecord(?, ?, ?, ?, ?, ?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setString(1, record.getDiagnosis());
+            stmt.setString(2, record.getMedications());
+            stmt.setString(3, record.getTreatmentPlan());
+            stmt.setString(5, record.getMedicationStatus().name());;
+            stmt.setString(5, record.getTreatmentStatus().name());
+            stmt.setTimestamp(6, Timestamp.valueOf(record.getLastModified()));
+            stmt.execute();
+        }
+    }
+
+    public MedicalRecord getMedicalRecordById(int id) throws SQLException {
+        String sql = "{CALL GetMedicalRecordById(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToMedicalRecord(rs);
+                }
+            }
+        }
+        return null;
+    }
+
+    public List<MedicalRecord> getAllMedicalRecords() throws SQLException {
+        List<MedicalRecord> records = new ArrayList<>();
+        String sql = "{CALL GetAllMedicalRecords()}";
+        try (CallableStatement stmt = conn.prepareCall(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                records.add(mapResultSetToMedicalRecord(rs));
+            }
+        }
+        return records;
+    }
+
+    public void updateMedicalRecord(MedicalRecord record) throws SQLException {
+        String sql = "{CALL UpdateMedicalRecord(?, ?, ?, ?, ?, ?, ?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setInt(1, record.getMedicalRecordID());
+            stmt.setString(2, record.getDiagnosis());
+            stmt.setString(3, record.getMedications());
+            stmt.setString(4, record.getTreatmentPlan());
+            stmt.setString(5, record.getMedicationStatus().name());
+            stmt.setString(6, record.getTreatmentStatus().name());
+            stmt.setTimestamp(7, Timestamp.valueOf(record.getLastModified()));
+            stmt.execute();
+        }
+    }
+
+    public void deleteMedicalRecord(int id) throws SQLException {
+        String sql = "{CALL DeleteMedicalRecord(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setInt(1, id);
+            stmt.execute();
+        }
+    }
+
+    private MedicalRecord mapResultSetToMedicalRecord(ResultSet rs) throws SQLException {
+        return new MedicalRecord(
+                rs.getInt("medical_record_id"),
+                rs.getString("diagnosis"),
+                rs.getString("medications"),
+                rs.getString("treatment_plan"),
+                MedicalRecord.Status.valueOf(rs.getString("medication_status")),
+                MedicalRecord.Status.valueOf(rs.getString("treatment_status")),
+                rs.getTimestamp("last_modified").toLocalDateTime()
+        );
+    }
+}
