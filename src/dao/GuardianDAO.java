@@ -3,9 +3,17 @@ package dao;
 import model.Elder;
 import model.Guardian;
 
+import java.sql.Connection;
 import java.util.List;
 
 public class GuardianDAO {
+
+    private final Connection conn;
+
+    public GuardianDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public void insertGuardian(Guardian guardian){
 
     };

@@ -3,9 +3,17 @@ package dao;
 import model.Caregiver;
 import model.Service;
 
+import java.sql.Connection;
 import java.util.List;
 
 public class CaregiverDAO {
+
+    private final Connection conn;
+
+    public CaregiverDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public void insertCaregiver(Caregiver caregiver){
 
     };
