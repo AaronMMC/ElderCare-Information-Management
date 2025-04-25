@@ -1,32 +1,24 @@
+package main;
 
-import controller.CareGiverAppointmentController;
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.stage.Stage;
-import view.CaregiverAppointmentView;
+import view.LoginView;
 
 public class ElderCareMain extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // Buttons passed to the view (as required by your constructor)
-        Button acceptBtn = new Button();
-        Button closeBtn = new Button();
-        Button declineBtn = new Button();
+        LoginView loginView = new LoginView(); // Create instance of your custom view
 
-        // Create the view and controller
-        CaregiverAppointmentView view = new CaregiverAppointmentView(acceptBtn, closeBtn, declineBtn);
-        new CareGiverAppointmentController(view);
+        Scene scene = new Scene(loginView.getView(), 600, 500); // Embed the view into the scene
 
-        // Set up the stage
-        Scene scene = view.getScene();
-        primaryStage.setTitle("Caregiver Appointment Management");
+        primaryStage.setTitle("Healthcare Management System");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
     public static void main(String[] args) {
-        launch(args);
+        launch(args); // Launch JavaFX application
     }
 }
