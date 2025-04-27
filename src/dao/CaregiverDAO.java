@@ -1,10 +1,9 @@
 package dao;
 
 import model.Caregiver;
-import model.Service;
 
-import java.sql.Connection;
-import java.util.List;
+import java.sql.*;
+import java.util.Arrays;
 
 public class CaregiverDAO {
 
@@ -14,24 +13,92 @@ public class CaregiverDAO {
         this.conn = conn;
     }
 
-    public void insertCaregiver(Caregiver caregiver){
+    public void insertCaregiver(Caregiver caregiver) {
+        String sql = "{CALL InsertCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setString(1, caregiver.getUsername());
+            stmt.setString(2, caregiver.getPassword());
+            stmt.setString(3, caregiver.getFirstName());
+            stmt.setString(4, caregiver.getLastName());
+            stmt.setTimestamp(5, Timestamp.valueOf(caregiver.getDateOfBirth()));
+            stmt.setString(6, caregiver.getGender());
+            stmt.setString(7, caregiver.getContactNumber());
+            stmt.setString(8, caregiver.getEmail());
+            stmt.setString(9, caregiver.getAddress());
+            stmt.setString(10, String.join(",", caregiver.getCertifications())); // list -> string
+            stmt.setBoolean(11, caregiver.isBackgroundCheckStatus());
+            stmt.setBoolean(12, caregiver.isMedicalClearanceStatus());
+            stmt.setString(13, caregiver.getAvailabilitySchedule());
+            stmt.setString(14, caregiver.getEmploymentType());
 
-    };
-    public Caregiver getCaregiverById(int id){
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
+    public Caregiver getCaregiverById(int id) {
+        String sql = "{CALL GetCaregiverById(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                Caregiver caregiver = new Caregiver();
+                caregiver.setCaregiverID(rs.getInt("caregiver_id"));
+                caregiver.setUsername(rs.getString("username"));
+                caregiver.setPassword(rs.getString("password"));
+                caregiver.setFirstName(rs.getString("first_name"));
+                caregiver.setLastName(rs.getString("last_name"));
+                caregiver.setDateOfBirth(rs.getTimestamp("date_of_birth").toLocalDateTime());
+                caregiver.setGender(rs.getString("gender"));
+                caregiver.setContactNumber(rs.getString("contact_number"));
+                caregiver.setEmail(rs.getString("email"));
+                caregiver.setAddress(rs.getString("address"));
+                caregiver.setCertifications(Arrays.asList(rs.getString("certifications").split(",")));
+                caregiver.setBackgroundCheckStatus(rs.getBoolean("background_check_status"));
+                caregiver.setMedicalClearanceStatus(rs.getBoolean("medical_clearance_status"));
+                caregiver.setAvailabilitySchedule(rs.getString("availability_schedule"));
+                caregiver.setEmploymentType(rs.getString("employment_type"));
+                return caregiver;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
-    };
-    public void updateCaregiver(Caregiver caregiver){
+    }
 
-    };
-    public void deleteCaregiver(int id){
+    public void updateCaregiver(Caregiver caregiver) {
+        String sql = "{CALL UpdateCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setInt(1, caregiver.getCaregiverID());
+            stmt.setString(2, caregiver.getUsername());
+            stmt.setString(3, caregiver.getPassword());
+            stmt.setString(4, caregiver.getFirstName());
+            stmt.setString(5, caregiver.getLastName());
+            stmt.setTimestamp(6, Timestamp.valueOf(caregiver.getDateOfBirth()));
+            stmt.setString(7, caregiver.getGender());
+            stmt.setString(8, caregiver.getContactNumber());
+            stmt.setString(9, caregiver.getEmail());
+            stmt.setString(10, caregiver.getAddress());
+            stmt.setString(11, String.join(",", caregiver.getCertifications()));
+            stmt.setBoolean(12, caregiver.isBackgroundCheckStatus());
+            stmt.setBoolean(13, caregiver.isMedicalClearanceStatus());
+            stmt.setString(14, caregiver.getAvailabilitySchedule());
+            stmt.setString(15, caregiver.getEmploymentType());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
-    };
-    public void insertCaregiverService(int caregiverId, int serviceId, int years, double rate){
-
-    };
-    public List<Service> getServicesByCaregiver(int caregiverId){
-        return null;
-    };
+    public void deleteCaregiver(int id) {
+        String sql = "{CALL DeleteCaregiver(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

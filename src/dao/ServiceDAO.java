@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ServiceDAO {
-    private Connection conn;
+    private final Connection conn;
 
     public ServiceDAO(Connection conn) {
         this.conn = conn;
