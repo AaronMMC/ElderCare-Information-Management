@@ -25,7 +25,7 @@ public class CaregiverDAO {
             stmt.setString(7, caregiver.getContactNumber());
             stmt.setString(8, caregiver.getEmail());
             stmt.setString(9, caregiver.getAddress());
-            stmt.setString(10, String.join(",", caregiver.getCertifications())); // list -> string
+            stmt.setString(10, String.join(",", caregiver.getCertifications()));
             stmt.setBoolean(11, caregiver.isBackgroundCheckStatus());
             stmt.setBoolean(12, caregiver.isMedicalClearanceStatus());
             stmt.setString(13, caregiver.getAvailabilitySchedule());
