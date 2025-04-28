@@ -21,6 +21,8 @@ public class Guardian {
         this.address = address;
     }
 
+    public Guardian() {}
+
     public String getUsername() {
         return username;
     }
