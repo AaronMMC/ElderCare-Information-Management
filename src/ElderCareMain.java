@@ -11,7 +11,7 @@ public class ElderCareMain extends Application {
 
         Scene scene = new Scene(loginView.getView(), 600, 500); // Embed the view into the scene
 
-        primaryStage.setTitle("Healthcare Management System");
+        primaryStage.setTitle("ElderCare Application");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

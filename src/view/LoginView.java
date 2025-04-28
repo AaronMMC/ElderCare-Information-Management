@@ -2,7 +2,6 @@ package view;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
@@ -11,14 +10,15 @@ import javafx.scene.text.Font;
 
 public class LoginView {
 
-    private final TextField usernameField = createStyledTextField("Username");
-    private final PasswordField passwordField = createStyledPasswordField("Password");
-    private final Button signInButton = createStyledButton("Sign In");
-    private final Button registerButton = createStyledRegisterButton("Register");
+    private final TextField usernameField = createStyledTextField();
+    private final PasswordField passwordField = createStyledPasswordField();
+    private final Button signInButton = createStyledButton("Sign in");
+    private final Button registerAsGuardianButton = createStyledButton("Register as a Guardian");
+    private final Button registerAsCaregiverButton = createStyledButton("Register as a Caregiver");
     private final VBox rootLayout;
 
     public LoginView() {
-        Label title = new Label("Healthcare Management System");
+        Label title = new Label("ElderCare Application");
         title.setFont(new Font("Arial", 28));
         title.setTextFill(Color.web("#333333"));
 
@@ -42,9 +42,20 @@ public class LoginView {
         VBox signInBox = new VBox(10, signInLabel, formGrid, signInButton);
         signInBox.setAlignment(Pos.CENTER);
 
+        signInButton.setOnAction(e -> {
+            //TODO: logic to determine if the account signed in is guardian, caregiver, or admin.
+        });
+
         Label registerLabel = new Label("Don't have an account?");
-        VBox registerBox = new VBox(10, registerLabel, registerButton);
+        VBox registerBox = new VBox(10, registerLabel, registerAsGuardianButton, registerAsCaregiverButton);
         registerBox.setAlignment(Pos.CENTER);
+
+        registerAsGuardianButton.setOnAction(e -> {
+            //TODO: invoke the register page for a guardian.
+        });
+        registerAsCaregiverButton.setOnAction(e -> {
+            //TODO: invoke the register page for a caregiver.
+        });
 
         rootLayout = new VBox(20, title, signInBox, registerBox);
         rootLayout.setPadding(new Insets(20));
@@ -52,16 +63,16 @@ public class LoginView {
         rootLayout.setStyle("-fx-background-color: #f0f4f7;");
     }
 
-    private TextField createStyledTextField(String promptText) {
+    private TextField createStyledTextField() {
         TextField tf = new TextField();
-        tf.setPromptText(promptText);
+        tf.setPromptText("Username");
         tf.setStyle("-fx-background-color: #ffffff; -fx-text-fill: black; -fx-background-radius: 5; -fx-padding: 8;");
         return tf;
     }
 
-    private PasswordField createStyledPasswordField(String promptText) {
+    private PasswordField createStyledPasswordField() {
         PasswordField pf = new PasswordField();
-        pf.setPromptText(promptText);
+        pf.setPromptText("Password");
         pf.setStyle("-fx-background-color: #ffffff; -fx-text-fill: black; -fx-background-radius: 5; -fx-padding: 8;");
         return pf;
     }
@@ -69,13 +80,6 @@ public class LoginView {
     private Button createStyledButton(String text) {
         Button btn = new Button(text);
         btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px; -fx-background-radius: 5;");
-        btn.setMinWidth(200);
-        return btn;
-    }
-
-    private Button createStyledRegisterButton(String text) {
-        Button btn = new Button(text);
-        btn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 16px; -fx-background-radius: 5;");
         btn.setMinWidth(200);
         return btn;
     }
@@ -105,7 +109,9 @@ public class LoginView {
         return signInButton;
     }
 
-    public Button getRegisterButton() {
-        return registerButton;
+    public Button getRegisterAsGuardianButton() {
+        return registerAsGuardianButton;
     }
+
+    public Button getRegisterAsCaregiverButton() {return registerAsCaregiverButton;}
 }
