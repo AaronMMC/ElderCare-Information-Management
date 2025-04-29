@@ -8,7 +8,7 @@ import java.util.List;
 
 public class ServiceController {
 
-    private ServiceDAO serviceDAO;
+    private final ServiceDAO serviceDAO;
 
     public ServiceController(Connection conn) {
         serviceDAO = new ServiceDAO(conn);

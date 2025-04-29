@@ -8,7 +8,7 @@ import java.util.List;
 
 public class PaymentController {
 
-    private PaymentDAO paymentDAO;
+    private final PaymentDAO paymentDAO;
 
     public PaymentController(Connection conn) {
         paymentDAO = new PaymentDAO(conn);
