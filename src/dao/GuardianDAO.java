@@ -13,13 +13,15 @@ public class GuardianDAO {
     }
 
     public void insertGuardian(Guardian guardian) {
-        String sql = "{CALL InsertGuardian(?, ?, ?, ?, ?)}";
+        String sql = "{CALL InsertGuardian(?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
-            stmt.setString(1, guardian.getFirstName());
-            stmt.setString(2, guardian.getLastName());
-            stmt.setString(3, guardian.getContactNumber());
-            stmt.setString(4, guardian.getEmail());
-            stmt.setString(5, guardian.getAddress());
+            stmt.setString(1, caregiver.getUsername());
+            stmt.setString(2, caregiver.getPassword());
+            stmt.setString(3, guardian.getFirstName());
+            stmt.setString(4, guardian.getLastName());
+            stmt.setString(5, guardian.getContactNumber());
+            stmt.setString(6, guardian.getEmail());
+            stmt.setString(7, guardian.getAddress());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
