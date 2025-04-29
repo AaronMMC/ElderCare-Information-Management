@@ -14,7 +14,6 @@ public class ElderCareMain extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            // Establish DB connection once and reuse it
             conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/eldercare_db", "yourUsername", "yourPassword");
 
             LoginController loginController = new LoginController(primaryStage, conn);
@@ -34,7 +33,7 @@ public class ElderCareMain extends Application {
     public void stop() throws Exception {
         super.stop();
         if (conn != null && !conn.isClosed()) {
-            conn.close(); // Clean up DB connection when app exits
+            conn.close();
         }
     }
 

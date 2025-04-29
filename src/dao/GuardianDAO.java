@@ -73,4 +73,34 @@ public class GuardianDAO {
             e.printStackTrace();
         }
     }
+
+    public Guardian findByUsernameAndPassword(String username, String password) {
+        String sql = "{CALL FindGuardianByUsernameAndPassword(?, ?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToGuardian(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Guardian mapResultSetToGuardian(ResultSet rs) throws SQLException {
+        return new Guardian(
+                rs.getInt("guardianID"),
+                rs.getString("username"),
+                rs.getString("password"),
+                rs.getString("firstName"),
+                rs.getString("lastName"),
+                rs.getString("contactNumber"),
+                rs.getString("email"),
+                rs.getString("address")
+        );
+    }
 }

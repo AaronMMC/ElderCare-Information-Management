@@ -4,6 +4,7 @@ import model.Caregiver;
 
 import java.sql.*;
 import java.util.Arrays;
+import java.util.List;
 
 public class CaregiverDAO {
 
@@ -100,5 +101,41 @@ public class CaregiverDAO {
             e.printStackTrace();
         }
     }
+
+    public Caregiver findByUsernameAndPassword(String username, String password) {
+        String sql = "{CALL FindCaregiverByUsernameAndPassword(?, ?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToCaregiver(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Caregiver mapResultSetToCaregiver(ResultSet rs) throws SQLException {
+        return new Caregiver(
+                rs.getInt("caregiver_id"),
+                rs.getString("username"),
+                rs.getString("password"),
+                rs.getString("first_name"),
+                rs.getString("last_name"),
+                rs.getTimestamp("date_of_birth").toLocalDateTime(),
+                Caregiver.Gender.valueOf(rs.getString("gender")),
+                rs.getString("contact_number"),
+                rs.getString("email"),
+                rs.getString("address"),
+                List.of(rs.getString("certifications").split(",")),
+                rs.getBoolean("background_check_status"),
+                rs.getBoolean("medical_clearance_status"),
+                rs.getString("availability_schedule"),
+                rs.getString("employment_type")
+        );
+    }
+
 
 }
