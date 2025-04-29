@@ -21,7 +21,7 @@ public class CaregiverDAO {
             stmt.setString(3, caregiver.getFirstName());
             stmt.setString(4, caregiver.getLastName());
             stmt.setTimestamp(5, Timestamp.valueOf(caregiver.getDateOfBirth()));
-            stmt.setString(6, caregiver.getGender());
+            stmt.setString(6, caregiver.getGender().name());
             stmt.setString(7, caregiver.getContactNumber());
             stmt.setString(8, caregiver.getEmail());
             stmt.setString(9, caregiver.getAddress());
@@ -50,7 +50,7 @@ public class CaregiverDAO {
                 caregiver.setFirstName(rs.getString("first_name"));
                 caregiver.setLastName(rs.getString("last_name"));
                 caregiver.setDateOfBirth(rs.getTimestamp("date_of_birth").toLocalDateTime());
-                caregiver.setGender(rs.getString("gender"));
+                caregiver.setGender(Caregiver.Gender.valueOf(rs.getString("gender")));
                 caregiver.setContactNumber(rs.getString("contact_number"));
                 caregiver.setEmail(rs.getString("email"));
                 caregiver.setAddress(rs.getString("address"));
@@ -76,7 +76,7 @@ public class CaregiverDAO {
             stmt.setString(4, caregiver.getFirstName());
             stmt.setString(5, caregiver.getLastName());
             stmt.setTimestamp(6, Timestamp.valueOf(caregiver.getDateOfBirth()));
-            stmt.setString(7, caregiver.getGender());
+            stmt.setString(7, caregiver.getGender().name());
             stmt.setString(8, caregiver.getContactNumber());
             stmt.setString(9, caregiver.getEmail());
             stmt.setString(10, caregiver.getAddress());

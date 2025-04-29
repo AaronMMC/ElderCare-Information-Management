@@ -4,13 +4,20 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class Caregiver {
+
+    public enum Gender{
+        MALE,
+        FEMALE,
+        OTHER
+    }
+ 
     private int caregiverID;
     private String username;
     private String password;
     private String firstName;
     private String lastName;
     private LocalDateTime dateOfBirth;
-    private String gender;
+    private Gender gender;
     private String contactNumber;
     private String email;
     private String address;
@@ -21,7 +28,7 @@ public class Caregiver {
     private String employmentType;
 
     public Caregiver(int caregiverID, String username, String password, String firstName, String lastName, LocalDateTime dateOfBirth,
-                     String gender, String contactNumber, String email, String address, List<String> certifications,
+                     Gender gender, String contactNumber, String email, String address, List<String> certifications,
                      boolean backgroundCheckStatus, boolean medicalClearanceStatus, String availabilitySchedule, String employmentType) {
         this.caregiverID = caregiverID;
         this.username = username;
@@ -47,7 +54,7 @@ public class Caregiver {
         this.firstName = "";
         this.lastName = "";
         this.dateOfBirth = null;
-        this.gender = "";
+        this.gender = null;
         this.contactNumber = "";
         this.email = "";
         this.address = "";
@@ -106,11 +113,11 @@ public class Caregiver {
         this.dateOfBirth = dateOfBirth;
     }
 
-    public String getGender() {
+    public Gender getGender() {
         return gender;
     }
 
-    public void setGender(String gender) {
+    public void setGender(Gender gender) {
         this.gender = gender;
     }
 
