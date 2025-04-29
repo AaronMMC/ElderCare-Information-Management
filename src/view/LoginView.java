@@ -42,20 +42,10 @@ public class LoginView {
         VBox signInBox = new VBox(10, signInLabel, formGrid, signInButton);
         signInBox.setAlignment(Pos.CENTER);
 
-        signInButton.setOnAction(e -> {
-            //TODO: logic to determine if the account signed in is guardian, caregiver, or admin.
-        });
 
         Label registerLabel = new Label("Don't have an account?");
         VBox registerBox = new VBox(10, registerLabel, registerAsGuardianButton, registerAsCaregiverButton);
         registerBox.setAlignment(Pos.CENTER);
-
-        registerAsGuardianButton.setOnAction(e -> {
-            //TODO: invoke the register page for a guardian.
-        });
-        registerAsCaregiverButton.setOnAction(e -> {
-            //TODO: invoke the register page for a caregiver.
-        });
 
         rootLayout = new VBox(20, title, signInBox, registerBox);
         rootLayout.setPadding(new Insets(20));

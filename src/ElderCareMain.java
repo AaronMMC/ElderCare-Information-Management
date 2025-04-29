@@ -1,22 +1,44 @@
+import controller.LoginController;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import view.LoginView;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class ElderCareMain extends Application {
 
+    private Connection conn;
+
     @Override
     public void start(Stage primaryStage) {
-        LoginView loginView = new LoginView(); // Create instance of your custom view
+        try {
+            // Establish DB connection once and reuse it
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/eldercare_db", "yourUsername", "yourPassword");
 
-        Scene scene = new Scene(loginView.getView(), 600, 500); // Embed the view into the scene
+            LoginController loginController = new LoginController(primaryStage, conn);
+            Scene loginScene = loginController.getLoginScene();
 
-        primaryStage.setTitle("ElderCare Application");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+            primaryStage.setTitle("ElderCare Login");
+            primaryStage.setScene(loginScene);
+            primaryStage.show();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Failed to connect to the database.");
+        }
+    }
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        if (conn != null && !conn.isClosed()) {
+            conn.close(); // Clean up DB connection when app exits
+        }
     }
 
     public static void main(String[] args) {
-        launch(args); // Launch JavaFX application
+        launch(args);
     }
 }

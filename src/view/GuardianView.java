@@ -1,6 +1,7 @@
 package view;
 
 import controller.GuardianController;
+import controller.GuardianElderController;
 import model.Guardian;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -11,12 +12,14 @@ import javafx.stage.Stage;
 public class GuardianView {
 
     private final GuardianController guardianController;
+    //private final GuardianElderController guardianElderController;
 
+    //TODO: Depending on the UI, the parameter can have GuardianElderController as well.
     public GuardianView(GuardianController controller) {
         this.guardianController = controller;
     }
 
-    //TODO: Same format for all view classes sana parang dito isang constructor with corresponding ocntroller tapos yung start
+    //TODO: Fix design for Guardian Home Page. Class name is can be refactored.
     public void start(Stage primaryStage) {
         // Layout
         VBox root = new VBox(10);
