@@ -15,8 +15,8 @@ public class GuardianDAO {
     public void insertGuardian(Guardian guardian) {
         String sql = "{CALL InsertGuardian(?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
-            stmt.setString(1, caregiver.getUsername());
-            stmt.setString(2, caregiver.getPassword());
+            stmt.setString(1, guardian.getUsername());
+            stmt.setString(2, guardian.getPassword());
             stmt.setString(3, guardian.getFirstName());
             stmt.setString(4, guardian.getLastName());
             stmt.setString(5, guardian.getContactNumber());
