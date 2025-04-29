@@ -14,7 +14,7 @@ public class MedicalRecordDAO {
         this.conn = conn;
     }
 
-    public void insertMedicalRecord(MedicalRecord record) throws SQLException {
+    public void insertMedicalRecord(MedicalRecord record) {
         String sql = "{CALL InsertMedicalRecord(?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, record.getDiagnosis());
@@ -24,10 +24,12 @@ public class MedicalRecordDAO {
             stmt.setString(5, record.getTreatmentStatus().name());
             stmt.setTimestamp(6, Timestamp.valueOf(record.getLastModified()));
             stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public MedicalRecord getMedicalRecordById(int id) throws SQLException {
+    public MedicalRecord getMedicalRecordById(int id) {
         String sql = "{CALL GetMedicalRecordById(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, id);
@@ -36,11 +38,13 @@ public class MedicalRecordDAO {
                     return mapResultSetToMedicalRecord(rs);
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return null;
     }
 
-    public List<MedicalRecord> getAllMedicalRecords() throws SQLException {
+    public List<MedicalRecord> getAllMedicalRecords() {
         List<MedicalRecord> records = new ArrayList<>();
         String sql = "{CALL GetAllMedicalRecords()}";
         try (CallableStatement stmt = conn.prepareCall(sql);
@@ -48,11 +52,13 @@ public class MedicalRecordDAO {
             while (rs.next()) {
                 records.add(mapResultSetToMedicalRecord(rs));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return records;
     }
 
-    public void updateMedicalRecord(MedicalRecord record) throws SQLException {
+    public void updateMedicalRecord(MedicalRecord record) {
         String sql = "{CALL UpdateMedicalRecord(?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, record.getMedicalRecordID());
@@ -63,14 +69,18 @@ public class MedicalRecordDAO {
             stmt.setString(6, record.getTreatmentStatus().name());
             stmt.setTimestamp(7, Timestamp.valueOf(record.getLastModified()));
             stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public void deleteMedicalRecord(int id) throws SQLException {
+    public void deleteMedicalRecord(int id) {
         String sql = "{CALL DeleteMedicalRecord(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, id);
             stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

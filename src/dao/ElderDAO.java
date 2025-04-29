@@ -14,7 +14,7 @@ public class ElderDAO {
         this.conn = conn;
     }
 
-    public void insertElder(Elder elder) throws SQLException {
+    public void insertElder(Elder elder) {
         String sql = "{CALL InsertElder(?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, elder.getFirstName());
@@ -24,10 +24,12 @@ public class ElderDAO {
             stmt.setString(5, elder.getEmail());
             stmt.setString(6, elder.getAddress());
             stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public Elder getElderById(int id) throws SQLException {
+    public Elder getElderById(int id) {
         String sql = "{CALL GetElderById(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, id);
@@ -35,12 +37,14 @@ public class ElderDAO {
                 if (rs.next()) {
                     return mapResultSetToElder(rs);
                 }
-            }
+            } catch (Exception _){}
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return null;
     }
 
-    public List<Elder> getAllElders() throws SQLException {
+    public List<Elder> getAllElders() {
         List<Elder> elders = new ArrayList<>();
         String sql = "{CALL GetAllElders()}";
         try (CallableStatement stmt = conn.prepareCall(sql);
@@ -48,11 +52,13 @@ public class ElderDAO {
             while (rs.next()) {
                 elders.add(mapResultSetToElder(rs));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return elders;
     }
 
-    public void updateElder(Elder elder) throws SQLException {
+    public void updateElder(Elder elder) {
         String sql = "{CALL UpdateElder(?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, elder.getElderID());
@@ -63,14 +69,18 @@ public class ElderDAO {
             stmt.setString(6, elder.getEmail());
             stmt.setString(7, elder.getAddress());
             stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public void deleteElder(int id) throws SQLException {
+    public void deleteElder(int id) {
         String sql = "{CALL DeleteElder(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, id);
             stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

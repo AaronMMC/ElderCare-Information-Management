@@ -14,7 +14,7 @@ public class AppointmentDAO {
         this.conn = conn;
     }
 
-    public void insertAppointment(Appointment appointment) throws SQLException {
+    public void insertAppointment(Appointment appointment){
         String sql = "{CALL InsertAppointment(?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setTimestamp(1, Timestamp.valueOf(appointment.getAppointmentDate()));
@@ -22,10 +22,12 @@ public class AppointmentDAO {
             stmt.setInt(3, appointment.getDuration());
             stmt.setTimestamp(4, Timestamp.valueOf(appointment.getCreatedDate()));
             stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public Appointment getAppointmentById(int id) throws SQLException {
+    public Appointment getAppointmentById(int id) {
         String sql = "{CALL GetAppointmentById(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, id);
@@ -34,11 +36,13 @@ public class AppointmentDAO {
                     return mapResultSetToAppointment(rs);
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return null;
     }
 
-    public List<Appointment> getAllAppointments() throws SQLException {
+    public List<Appointment> getAllAppointments() {
         List<Appointment> appointments = new ArrayList<>();
         String sql = "{CALL GetAllAppointments()}";
         try (CallableStatement stmt = conn.prepareCall(sql);
@@ -46,11 +50,13 @@ public class AppointmentDAO {
             while (rs.next()) {
                 appointments.add(mapResultSetToAppointment(rs));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return appointments;
     }
 
-    public void updateAppointment(Appointment appointment) throws SQLException {
+    public void updateAppointment(Appointment appointment) {
         String sql = "{CALL UpdateAppointment(?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, appointment.getAppointmentID());
@@ -59,14 +65,18 @@ public class AppointmentDAO {
             stmt.setInt(4, appointment.getDuration());
             stmt.setTimestamp(5, Timestamp.valueOf(appointment.getCreatedDate()));
             stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public void deleteAppointment(int id) throws SQLException {
+    public void deleteAppointment(int id) {
         String sql = "{CALL DeleteAppointment(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, id);
             stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

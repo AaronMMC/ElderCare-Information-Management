@@ -12,56 +12,76 @@ public class ServiceDAO {
         this.conn = conn;
     }
 
-    public void insertService(Service service) throws SQLException {
-        CallableStatement stmt = conn.prepareCall("{call insert_service(?, ?, ?)}");
-        stmt.setString(1, service.getCategory());
-        stmt.setString(2, service.getServiceName());
-        stmt.setString(3, service.getDescription());
-        stmt.executeUpdate();
+    public void insertService(Service service) {
+        try {
+            CallableStatement stmt = conn.prepareCall("{call insert_service(?, ?, ?)}");
+            stmt.setString(1, service.getCategory());
+            stmt.setString(2, service.getServiceName());
+            stmt.setString(3, service.getDescription());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    public Service getServiceByID(int serviceID) throws SQLException {
-        CallableStatement stmt = conn.prepareCall("{call get_service_by_id(?)}");
-        stmt.setInt(1, serviceID);
-        ResultSet rs = stmt.executeQuery();
-        if (rs.next()) {
-            return new Service(
-                    rs.getInt("service_id"),
-                    rs.getString("category"),
-                    rs.getString("service_name"),
-                    rs.getString("description")
-            );
+    public Service getServiceByID(int serviceID) {
+        try {
+            CallableStatement stmt = conn.prepareCall("{call get_service_by_id(?)}");
+            stmt.setInt(1, serviceID);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new Service(
+                        rs.getInt("service_id"),
+                        rs.getString("category"),
+                        rs.getString("service_name"),
+                        rs.getString("description")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return null;
     }
 
-    public List<Service> getAllServices() throws SQLException {
-        CallableStatement stmt = conn.prepareCall("{call get_all_services()}");
-        ResultSet rs = stmt.executeQuery();
+    public List<Service> getAllServices() {
         List<Service> services = new ArrayList<>();
-        while (rs.next()) {
-            services.add(new Service(
-                    rs.getInt("service_id"),
-                    rs.getString("category"),
-                    rs.getString("service_name"),
-                    rs.getString("description")
-            ));
+        try {
+            CallableStatement stmt = conn.prepareCall("{call get_all_services()}");
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                services.add(new Service(
+                        rs.getInt("service_id"),
+                        rs.getString("category"),
+                        rs.getString("service_name"),
+                        rs.getString("description")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return services;
     }
 
-    public void updateService(Service service) throws SQLException {
-        CallableStatement stmt = conn.prepareCall("{call update_service(?, ?, ?, ?)}");
-        stmt.setInt(1, service.getServiceID());
-        stmt.setString(2, service.getCategory());
-        stmt.setString(3, service.getServiceName());
-        stmt.setString(4, service.getDescription());
-        stmt.executeUpdate();
+    public void updateService(Service service) {
+        try {
+            CallableStatement stmt = conn.prepareCall("{call update_service(?, ?, ?, ?)}");
+            stmt.setInt(1, service.getServiceID());
+            stmt.setString(2, service.getCategory());
+            stmt.setString(3, service.getServiceName());
+            stmt.setString(4, service.getDescription());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void deleteService(int serviceID) throws SQLException {
-        CallableStatement stmt = conn.prepareCall("{call delete_service(?)}");
-        stmt.setInt(1, serviceID);
-        stmt.executeUpdate();
+    public void deleteService(int serviceID) {
+        try {
+            CallableStatement stmt = conn.prepareCall("{call delete_service(?)}");
+            stmt.setInt(1, serviceID);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

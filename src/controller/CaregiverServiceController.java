@@ -1,4 +1,36 @@
 package controller;
 
+import dao.CaregiverServiceDAO;
+import model.CaregiverService;
+
+import java.sql.Connection;
+import java.util.List;
+
 public class CaregiverServiceController {
+
+    private final CaregiverServiceDAO caregiverServiceDAO;
+
+    public CaregiverServiceController(Connection conn) {
+        this.caregiverServiceDAO = new CaregiverServiceDAO(conn);
+    }
+
+    public void addCaregiverService(CaregiverService service) {
+        caregiverServiceDAO.insertCaregiverService(service);
+    }
+
+    public CaregiverService getCaregiverService(int caregiverId, int serviceId) {
+        return caregiverServiceDAO.getCaregiverService(caregiverId, serviceId);
+    }
+
+    public List<CaregiverService> getAllCaregiverServices() {
+        return caregiverServiceDAO.getAllCaregiverServices();
+    }
+
+    public void updateCaregiverService(CaregiverService service) {
+        caregiverServiceDAO.updateCaregiverService(service);
+    }
+
+    public void deleteCaregiverService(int caregiverId, int serviceId) {
+        caregiverServiceDAO.deleteCaregiverService(caregiverId, serviceId);
+    }
 }
