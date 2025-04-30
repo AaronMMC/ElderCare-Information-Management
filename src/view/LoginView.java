@@ -10,80 +10,93 @@ import javafx.scene.text.Font;
 
 public class LoginView {
 
-    private final TextField usernameField = createStyledTextField();
-    private final PasswordField passwordField = createStyledPasswordField();
-    private final Button signInButton = createStyledButton("Sign in");
-    private final Button registerAsGuardianButton = createStyledButton("Register as a Guardian");
-    private final Button registerAsCaregiverButton = createStyledButton("Register as a Caregiver");
-    private final VBox rootLayout;
+    private final TextField usernameField = createRoundedField("Email");
+    private final PasswordField passwordField = createRoundedPasswordField("Password");
+    private final Button signInButton = createGreenButton("Sign in");
+    private final Button registerAsGuardianButton = createWhiteButton("Sign up as Guardian");
+    private final Button registerAsCaregiverButton = createWhiteButton("Sign up as CareGiver");
+
+    private final HBox rootLayout;
 
     public LoginView() {
-        Label title = new Label("ElderCare Application");
-        title.setFont(new Font("Arial", 28));
-        title.setTextFill(Color.web("#333333"));
+        // Left: Login Section
+        Label titleLabel = new Label("Login to Your Account");
+        titleLabel.setFont(Font.font("Arial", 24));
+        titleLabel.setStyle("-fx-font-weight: bold;");
 
-        Label signInLabel = new Label("Sign In");
-        signInLabel.setFont(new Font("Arial", 20));
-        signInLabel.setTextFill(Color.web("#333333"));
+        VBox formBox = new VBox(15,
+                new VBox(new Label("Email:"), usernameField),
+                new VBox(new Label("Password:"), passwordField),
+                signInButton
+        );
+        formBox.setAlignment(Pos.CENTER_LEFT);
 
-        // Form Grid
-        GridPane formGrid = new GridPane();
-        formGrid.setVgap(10);
-        formGrid.setHgap(10);
-        formGrid.setPadding(new Insets(10));
-        formGrid.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
-        formGrid.setEffect(createShadowEffect());
+        VBox leftPane = new VBox(30, titleLabel, formBox);
+        leftPane.setPadding(new Insets(50));
+        leftPane.setAlignment(Pos.CENTER);
+        leftPane.setPrefWidth(600);
+        leftPane.setStyle("-fx-background-color: white;");
 
-        formGrid.add(new Label("Username:"), 0, 0);
-        formGrid.add(usernameField, 1, 0);
-        formGrid.add(new Label("Password:"), 0, 1);
-        formGrid.add(passwordField, 1, 1);
+        // Right: Register Section
+        Label newHereLabel = new Label("New Here?");
+        newHereLabel.setFont(Font.font("Arial", 22));
+        newHereLabel.setStyle("-fx-font-weight: bold;");
+        newHereLabel.setTextFill(Color.WHITE);
 
-        VBox signInBox = new VBox(10, signInLabel, formGrid, signInButton);
-        signInBox.setAlignment(Pos.CENTER);
+        Label infoLabel = new Label("Sign up here and discover great\namount of oppurtunities");
+        infoLabel.setTextFill(Color.WHITE);
+        infoLabel.setFont(Font.font(14));
+        infoLabel.setWrapText(true);
+        infoLabel.setAlignment(Pos.CENTER);
 
+        VBox rightPane = new VBox(20,
+                newHereLabel,
+                infoLabel,
+                registerAsGuardianButton,
+                new Label("OR"),
+                registerAsCaregiverButton
+        );
+        rightPane.setAlignment(Pos.CENTER);
+        rightPane.setPadding(new Insets(40));
+        rightPane.setStyle("-fx-background-color: #3BB49C;");
+        rightPane.setPrefWidth(300);
 
-        Label registerLabel = new Label("Don't have an account?");
-        VBox registerBox = new VBox(10, registerLabel, registerAsGuardianButton, registerAsCaregiverButton);
-        registerBox.setAlignment(Pos.CENTER);
-
-        rootLayout = new VBox(20, title, signInBox, registerBox);
-        rootLayout.setPadding(new Insets(20));
-        rootLayout.setAlignment(Pos.CENTER);
-        rootLayout.setStyle("-fx-background-color: #f0f4f7;");
+        rootLayout = new HBox(leftPane, rightPane);
     }
 
-    private TextField createStyledTextField() {
+    private TextField createRoundedField(String prompt) {
         TextField tf = new TextField();
-        tf.setPromptText("Username");
-        tf.setStyle("-fx-background-color: #ffffff; -fx-text-fill: black; -fx-background-radius: 5; -fx-padding: 8;");
+        tf.setPromptText(prompt);
+        tf.setStyle("-fx-background-color: #d9d9d9; -fx-background-radius: 20; -fx-padding: 10 20;");
+        tf.setPrefWidth(300);
         return tf;
     }
 
-    private PasswordField createStyledPasswordField() {
+    private PasswordField createRoundedPasswordField(String prompt) {
         PasswordField pf = new PasswordField();
-        pf.setPromptText("Password");
-        pf.setStyle("-fx-background-color: #ffffff; -fx-text-fill: black; -fx-background-radius: 5; -fx-padding: 8;");
+        pf.setPromptText(prompt);
+        pf.setStyle("-fx-background-color: #d9d9d9; -fx-background-radius: 20; -fx-padding: 10 20;");
+        pf.setPrefWidth(300);
         return pf;
     }
 
-    private Button createStyledButton(String text) {
+    private Button createGreenButton(String text) {
         Button btn = new Button(text);
-        btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px; -fx-background-radius: 5;");
-        btn.setMinWidth(200);
+        btn.setStyle("-fx-background-color: #3BB49C; -fx-text-fill: black; -fx-font-size: 18px; -fx-background-radius: 15;");
+        btn.setPrefWidth(300);
+        btn.setPrefHeight(45);
         return btn;
     }
 
-    private DropShadow createShadowEffect() {
-        DropShadow shadow = new DropShadow();
-        shadow.setRadius(8);
-        shadow.setOffsetX(0);
-        shadow.setOffsetY(4);
-        shadow.setColor(Color.rgb(0, 0, 0, 0.2));
-        return shadow;
+    private Button createWhiteButton(String text) {
+        Button btn = new Button(text);
+        btn.setStyle("-fx-background-color: white; -fx-text-fill: black; -fx-font-size: 16px; -fx-background-radius: 15;");
+        btn.setPrefWidth(220);
+        btn.setPrefHeight(45);
+        return btn;
     }
 
-    public VBox getView() {
+    public HBox getView() {
         return rootLayout;
     }
 
@@ -103,5 +116,7 @@ public class LoginView {
         return registerAsGuardianButton;
     }
 
-    public Button getRegisterAsCaregiverButton() {return registerAsCaregiverButton;}
+    public Button getRegisterAsCaregiverButton() {
+        return registerAsCaregiverButton;
+    }
 }
