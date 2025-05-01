@@ -1,115 +1,114 @@
-//package view;
-//
-//
-//import javafx.application.Application;
-//import javafx.geometry.Insets;
-//import javafx.geometry.Pos;
-//import javafx.scene.Scene;
-//import javafx.scene.control.*;
-//import javafx.scene.control.cell.PropertyValueFactory;
-//import javafx.scene.layout.*;
-//import javafx.stage.Stage;
-//
-//public class GuardianAppointmentView extends Application {
-//
-//    @Override
-//    public void start(Stage primaryStage) {
-//        VBox root = new VBox(20);
-//        root.setPadding(new Insets(20));
-//        root.setAlignment(Pos.TOP_CENTER);
-//
-//        Label title = new Label("All Appointments");
-//        title.getStyleClass().add("title");
-//
-//        TableView<Appointment> appointmentTable = new TableView<>();
-//        appointmentTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-//        appointmentTable.setPrefHeight(300);
-//
-//        TableColumn<Appointment, String> caregiverCol = new TableColumn<>("Caregiver Name");
-//        caregiverCol.setCellValueFactory(new PropertyValueFactory<>("caregiverName"));
-//
-//        TableColumn<Appointment, String> dateTimeCol = new TableColumn<>("Appointment Date & Time");
-//        dateTimeCol.setCellValueFactory(new PropertyValueFactory<>("appointmentDateTime"));
-//
-//        TableColumn<Appointment, String> statusCol = new TableColumn<>("Status");
-//        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
-//
-//        TableColumn<Appointment, String> balanceCol = new TableColumn<>("Balance");
-//        balanceCol.setCellValueFactory(new PropertyValueFactory<>("balance"));
-//
-//        TableColumn<Appointment, Void> actionCol = new TableColumn<>("Action");
-//        actionCol.setCellFactory(param -> new TableCell<>() {
-//            private final Button payBtn = new Button("Pay Balance");
-//
-//            {
-//                payBtn.getStyleClass().add("btn-success");
-//                payBtn.setOnAction(e -> {
-//                    Appointment a = getTableView().getItems().get(getIndex());
-//                    System.out.println("Paying balance for: " + a.getCaregiverName());
-//                });
-//            }
-//
-//            @Override
-//            protected void updateItem(Void item, boolean empty) {
-//                super.updateItem(item, empty);
-//                setGraphic(empty ? null : payBtn);
-//            }
-//        });
-//
-//        appointmentTable.getColumns().addAll(caregiverCol, dateTimeCol, statusCol, balanceCol, actionCol);
-//
-//        // Sample data
-//        appointmentTable.getItems().addAll(
-//                new Appointment("John Doe", "2025-04-10 10:00 AM", "Pending Payment", "PHP 1500"),
-//                new Appointment("Jane Smith", "2025-04-12 2:00 PM", "Paid", "PHP 0"),
-//                new Appointment("Emily Davis", "2025-04-15 9:00 AM", "Pending Payment", "PHP 1700")
-//        );
-//
-//        Button backBtn = new Button("Back to Dashboard");
-//        backBtn.getStyleClass().add("btn-primary");
-//        backBtn.setOnAction(e -> System.out.println("Returning to dashboard..."));
-//
-//        root.getChildren().addAll(title, appointmentTable, backBtn);
-//
-//        Scene scene = new Scene(root, 800, 500);
-//        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
-//
-//        primaryStage.setTitle("Guardian Appointments View");
-//        primaryStage.setScene(scene);
-//        primaryStage.show();
-//    }
-//
-//    public static class Appointment {
-//        private final String caregiverName;
-//        private final String appointmentDateTime;
-//        private final String status;
-//        private final String balance;
-//
-//        public Appointment(String caregiverName, String appointmentDateTime, String status, String balance) {
-//            this.caregiverName = caregiverName;
-//            this.appointmentDateTime = appointmentDateTime;
-//            this.status = status;
-//            this.balance = balance;
-//        }
-//
-//        public String getCaregiverName() {
-//            return caregiverName;
-//        }
-//
-//        public String getAppointmentDateTime() {
-//            return appointmentDateTime;
-//        }
-//
-//        public String getStatus() {
-//            return status;
-//        }
-//
-//        public String getBalance() {
-//            return balance;
-//        }
-//    }
-//
-//    public static void main(String[] args) {
-//        launch(args);
-//    }
-//}
+package view;
+
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
+import java.sql.Connection;
+
+public class GuardianAppointmentView{
+
+    private final Scene scene;
+
+    public GuardianAppointmentView(Stage stage, Connection conn) {
+        // Mock data: list of appointments
+        // In real implementation, fetch from database
+        VBox appointmentsContainer = new VBox(15);
+        appointmentsContainer.setPadding(new Insets(10));
+
+        // Example appointments
+        appointmentsContainer.getChildren().addAll(
+                createAppointmentCard("Caregiver: Alice Johnson", "2023-10-20", "14:00", "Paid"),
+                createAppointmentCard("Caregiver: Bob Williams", "2023-10-22", "10:00", "Unpaid"),
+                createAppointmentCard("Caregiver: Carol Smith", "2023-10-25", "09:00", "Paid"),
+                createAppointmentCard("Caregiver: David Lee", "2023-10-28", "16:00", "Unpaid")
+        );
+
+        ScrollPane scrollPane = new ScrollPane(appointmentsContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(400);
+
+        Label titleLabel = new Label("My Appointments");
+        titleLabel.setFont(Font.font("Arial", 24));
+        titleLabel.setStyle("-fx-font-weight: bold;");
+
+        VBox leftPane = new VBox(20, titleLabel, scrollPane);
+        leftPane.setPadding(new Insets(20));
+        leftPane.setStyle("-fx-background-color: white;");
+        leftPane.setPrefWidth(700);
+
+        // Right pane could be used for additional info or actions
+        // For now, keeping it empty or for future extensions
+        VBox rightPane = new VBox();
+        rightPane.setPrefWidth(200);
+        rightPane.setStyle("-fx-background-color: #3BB49C;");
+
+        // Combine panes
+        HBox root = new HBox(20, leftPane, rightPane);
+        root.setPadding(new Insets(20));
+
+        this.scene = new Scene(root, 950, 500);
+        stage.setTitle("Guardian Appointments");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    // Helper method to create appointment cards
+    private VBox createAppointmentCard(String caregiverInfo, String date, String time, String status) {
+        VBox card = new VBox(8);
+        card.setPadding(new Insets(10));
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-border-color: #ccc; -fx-border-radius: 15; -fx-cursor: hand;");
+        card.setMaxWidth(650);
+
+        Label caregiverLabel = new Label(caregiverInfo);
+        caregiverLabel.setFont(Font.font("Arial", 16));
+        caregiverLabel.setStyle("-fx-font-weight: bold;");
+
+        Label dateLabel = new Label("Date: " + date);
+        Label timeLabel = new Label("Time: " + time);
+        Label statusLabel = new Label("Status: " + status);
+        statusLabel.setTextFill(status.equals("Unpaid") ? Color.RED : Color.GREEN);
+
+        // If unpaid, show "Pay Balance" button
+        Button payButton = null;
+        if (status.equals("Unpaid")) {
+            payButton = new Button("Pay Balance");
+            payButton.setStyle("""
+                -fx-background-color: #3BB49C;
+                -fx-text-fill: white;
+                -fx-font-size: 14px;
+                -fx-background-radius: 15;
+            """);
+            payButton.setPrefWidth(130);
+            payButton.setOnAction(e -> {
+                System.out.println("Redirect to payment for appointment with " + caregiverInfo);
+                // TODO: Implement redirection to payment UI
+            });
+        }
+
+        VBox infoBox = new VBox(4, caregiverLabel, dateLabel, timeLabel, statusLabel);
+        HBox cardContent;
+        if (payButton != null) {
+            cardContent = new HBox(10, infoBox, payButton);
+            cardContent.setAlignment(Pos.CENTER_LEFT);
+        } else {
+            cardContent = new HBox(infoBox);
+        }
+
+        card.getChildren().add(cardContent);
+
+        // Optional: highlight on hover
+        card.setOnMouseEntered(e -> card.setStyle("-fx-background-color: #f0f0f0; -fx-background-radius: 15; -fx-border-color: #ccc; -fx-border-radius: 15; -fx-cursor: hand;"));
+        card.setOnMouseExited(e -> card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-border-color: #ccc; -fx-border-radius: 15;"));
+
+        return card;
+    }
+
+    public Scene getScene() {
+        return scene;
+    }
+}
