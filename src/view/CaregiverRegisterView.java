@@ -37,6 +37,7 @@
 //}
 
 
+
 package view;
 
 import javafx.geometry.Insets;
@@ -55,7 +56,6 @@ public class CaregiverRegisterView {
     private final Scene scene;
 
     public CaregiverRegisterView(Stage stage, Connection conn) {
-        // Left pane - personal information
         Label personalInfoTitle = new Label("Fill up Personal Information");
         personalInfoTitle.setFont(new Font("Arial", 24));
         personalInfoTitle.setStyle("-fx-font-weight: bold;");
@@ -70,6 +70,18 @@ public class CaregiverRegisterView {
         TextField birthdayField = createRoundedField("Birthday");
         TextField contactNumberField = createRoundedField("Contact Number");
         TextField addressField = createRoundedField("Address");
+        TextField employmentTypeField = createRoundedField("Employment Type");
+
+        TextArea availabilityField = new TextArea();
+        availabilityField.setPromptText("Availability Schedule (e.g., Mon-Fri: 8AM - 5PM)");
+        styleRoundedArea(availabilityField);
+
+        TextArea certificationsArea = new TextArea();
+        certificationsArea.setPromptText("Certifications (one per line)");
+        styleRoundedArea(certificationsArea);
+
+        TextField backgroundCheckField = createRoundedField("Background Check Details");
+        TextField medicalClearanceField = createRoundedField("Medical Clearance Details");
 
         personalInfoGrid.add(new Label("First Name"), 0, 0);
         personalInfoGrid.add(firstNameField, 0, 1);
@@ -81,13 +93,23 @@ public class CaregiverRegisterView {
         personalInfoGrid.add(contactNumberField, 1, 3);
         personalInfoGrid.add(new Label("Address"), 0, 4);
         personalInfoGrid.add(addressField, 0, 5);
+        personalInfoGrid.add(new Label("Employment Type"), 1, 4);
+        personalInfoGrid.add(employmentTypeField, 1, 5);
+        personalInfoGrid.add(new Label("Availability Schedule"), 0, 6);
+        personalInfoGrid.add(availabilityField, 0, 7);
+        personalInfoGrid.add(new Label("Certifications"), 1, 6);
+        personalInfoGrid.add(certificationsArea, 1, 7);
+        personalInfoGrid.add(new Label("Background Check Details"), 0, 8);
+        personalInfoGrid.add(backgroundCheckField, 0, 9);
+        personalInfoGrid.add(new Label("Medical Clearance Details"), 1, 8);
+        personalInfoGrid.add(medicalClearanceField, 1, 9);
 
         VBox leftPane = new VBox(20, personalInfoTitle, personalInfoGrid);
         leftPane.setPadding(new Insets(40));
         leftPane.setPrefWidth(600);
         leftPane.setAlignment(Pos.TOP_CENTER);
 
-        // Right pane - registration
+        // Right pane - login credentials
         Label registerLabel = new Label("Register");
         registerLabel.setFont(new Font("Arial", 24));
         registerLabel.setTextFill(Color.WHITE);
@@ -98,23 +120,30 @@ public class CaregiverRegisterView {
         passwordField.setPromptText("Password");
         styleRoundedField(passwordField);
 
-        Button signInButton = new Button("Sign in");
-        signInButton.setStyle("-fx-background-color: white; -fx-text-fill: black; -fx-font-size: 14px; -fx-background-radius: 20;");
-        signInButton.setPrefWidth(120);
+        Button registerButton = new Button("Register");
+        registerButton.setStyle("-fx-background-color: white; -fx-text-fill: black; -fx-font-size: 14px; -fx-background-radius: 20;");
+        registerButton.setPrefWidth(120);
 
-        VBox rightPane = new VBox(20, registerLabel, usernameField, passwordField, signInButton);
+        Button backButton = new Button("Back to Login");
+        backButton.setStyle("-fx-background-color: white; -fx-text-fill: black; -fx-font-size: 14px; -fx-background-radius: 20;");
+        backButton.setPrefWidth(120);
+
+        VBox rightPane = new VBox(20, registerLabel, usernameField, passwordField, registerButton, backButton);
         rightPane.setPadding(new Insets(60));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setAlignment(Pos.CENTER);
         rightPane.setPrefWidth(300);
 
         HBox rootLayout = new HBox(leftPane, rightPane);
-        this.scene = new Scene(rootLayout, 900, 500);
+        this.scene = new Scene(rootLayout, 1000, 650);
 
-        // Actions
-        signInButton.setOnAction(e -> {
-            System.out.println("Signing in caregiver...");
-            // TODO: Add database insertion logic via CaregiverController
+        registerButton.setOnAction(e -> {
+            System.out.println("Registering guardian...");
+            // TODO: Add DB logic through GuardianController
+        });
+
+        backButton.setOnAction(e -> {
+            System.out.println("Going back to login...");
         });
 
         stage.setScene(scene);
@@ -132,10 +161,20 @@ public class CaregiverRegisterView {
         field.setPrefWidth(200);
     }
 
+    private void styleRoundedArea(TextArea area) {
+        area.setStyle("-fx-background-color: lightgray; -fx-background-radius: 20; -fx-padding: 8 16;");
+        area.setPrefWidth(200);
+        area.setPrefRowCount(3);
+        area.setWrapText(true);
+    }
+
     public Scene getScene() {
         return scene;
     }
 }
+
+
+
 
 
 
