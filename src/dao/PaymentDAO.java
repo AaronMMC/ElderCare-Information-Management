@@ -14,12 +14,11 @@ public class PaymentDAO {
 
     public void insertPayment(Payment payment) {
         try {
-            CallableStatement stmt = conn.prepareCall("{call insert_payment(?, ?, ?, ?, ?)}");
+            CallableStatement stmt = conn.prepareCall("{call insert_payment(?, ?, ?, ?)}");
             stmt.setDouble(1, payment.getTotalAmount());
             stmt.setString(2, payment.getPaymentMethod());
             stmt.setDouble(3, payment.getAdditionalCharges());
             stmt.setString(4, payment.getCurrency());
-            stmt.setTimestamp(5, Timestamp.valueOf(payment.getTransactionDate()));
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
