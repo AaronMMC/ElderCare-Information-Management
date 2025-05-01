@@ -61,9 +61,7 @@ public class AppointmentDAO {
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, appointment.getAppointmentID());
             stmt.setTimestamp(2, Timestamp.valueOf(appointment.getAppointmentDate()));
-            stmt.setString(3, appointment.getStatus());
             stmt.setInt(4, appointment.getDuration());
-            stmt.setTimestamp(5, Timestamp.valueOf(appointment.getCreatedDate()));
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
