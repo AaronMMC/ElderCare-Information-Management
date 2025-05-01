@@ -75,7 +75,6 @@ public class PaymentDAO {
             stmt.setString(3, payment.getPaymentMethod());
             stmt.setDouble(4, payment.getAdditionalCharges());
             stmt.setString(5, payment.getCurrency());
-            stmt.setTimestamp(6, Timestamp.valueOf(payment.getTransactionDate()));
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
