@@ -10,17 +10,19 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import java.sql.Connection;
 
-public class GuardianAppointmentView{
+public class GuardianAppointmentView {
 
     private final Scene scene;
+    private final Stage stage;
 
     public GuardianAppointmentView(Stage stage, Connection conn) {
-        // Mock data: list of appointments
-        // In real implementation, fetch from database
+        this.stage = stage;
+
+        // Main container for appointments
         VBox appointmentsContainer = new VBox(15);
         appointmentsContainer.setPadding(new Insets(10));
 
-        // Example appointments
+        // Sample appointments
         appointmentsContainer.getChildren().addAll(
                 createAppointmentCard("Caregiver: Alice Johnson", "2023-10-20", "14:00", "Paid"),
                 createAppointmentCard("Caregiver: Bob Williams", "2023-10-22", "10:00", "Unpaid"),
@@ -41,13 +43,11 @@ public class GuardianAppointmentView{
         leftPane.setStyle("-fx-background-color: white;");
         leftPane.setPrefWidth(700);
 
-        // Right pane could be used for additional info or actions
-        // For now, keeping it empty or for future extensions
+        // Right pane placeholder
         VBox rightPane = new VBox();
         rightPane.setPrefWidth(200);
         rightPane.setStyle("-fx-background-color: #3BB49C;");
 
-        // Combine panes
         HBox root = new HBox(20, leftPane, rightPane);
         root.setPadding(new Insets(20));
 
@@ -57,7 +57,7 @@ public class GuardianAppointmentView{
         stage.show();
     }
 
-    // Helper method to create appointment cards
+    // Create appointment card
     private VBox createAppointmentCard(String caregiverInfo, String date, String time, String status) {
         VBox card = new VBox(8);
         card.setPadding(new Insets(10));
@@ -73,7 +73,6 @@ public class GuardianAppointmentView{
         Label statusLabel = new Label("Status: " + status);
         statusLabel.setTextFill(status.equals("Unpaid") ? Color.RED : Color.GREEN);
 
-        // If unpaid, show "Pay Balance" button
         Button payButton = null;
         if (status.equals("Unpaid")) {
             payButton = new Button("Pay Balance");
@@ -85,8 +84,7 @@ public class GuardianAppointmentView{
             """);
             payButton.setPrefWidth(130);
             payButton.setOnAction(e -> {
-                System.out.println("Redirect to payment for appointment with " + caregiverInfo);
-                // TODO: Implement redirection to payment UI
+                showPaymentUI(caregiverInfo, date, time);
             });
         }
 
@@ -101,11 +99,89 @@ public class GuardianAppointmentView{
 
         card.getChildren().add(cardContent);
 
-        // Optional: highlight on hover
+        // Hover effect
         card.setOnMouseEntered(e -> card.setStyle("-fx-background-color: #f0f0f0; -fx-background-radius: 15; -fx-border-color: #ccc; -fx-border-radius: 15; -fx-cursor: hand;"));
         card.setOnMouseExited(e -> card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-border-color: #ccc; -fx-border-radius: 15;"));
 
         return card;
+    }
+
+    // Show payment UI for a specific appointment
+    private void showPaymentUI(String caregiverInfo, String date, String time) {
+        VBox paymentPane = new VBox(20);
+        paymentPane.setPadding(new Insets(20));
+        paymentPane.setStyle("-fx-background-color: #fff;");
+
+        Label title = new Label("Select Payment Method");
+        title.setFont(Font.font("Arial", 20));
+        title.setStyle("-fx-font-weight: bold;");
+
+        // Payment methods
+        ToggleGroup paymentMethods = new ToggleGroup();
+        RadioButton creditCardOption = new RadioButton("Credit Card");
+        creditCardOption.setToggleGroup(paymentMethods);
+        RadioButton paypalOption = new RadioButton("PayPal");
+        paypalOption.setToggleGroup(paymentMethods);
+        RadioButton bankTransferOption = new RadioButton("Bank Transfer");
+        bankTransferOption.setToggleGroup(paymentMethods);
+
+        VBox methodsBox = new VBox(10, creditCardOption, paypalOption, bankTransferOption);
+
+        // Confirm button
+        Button payButton = new Button("Pay");
+        payButton.setStyle("""
+            -fx-background-color: #3BB49C;
+            -fx-text-fill: white;
+            -fx-font-size: 14px;
+            -fx-background-radius: 15;
+        """);
+        payButton.setPrefWidth(100);
+        payButton.setOnAction(e -> {
+            RadioButton selectedMethod = (RadioButton) paymentMethods.getSelectedToggle();
+            if (selectedMethod == null) {
+                showAlert("Please select a payment method.");
+            } else {
+                String method = selectedMethod.getText();
+                // Simulate payment process
+                showAlert("Payment of appointment with " + caregiverInfo + " on " + date + " at " + time + " via " + method + " was successful!");
+                // After payment, you might want to refresh the view or update the appointment status
+                // For now, just go back to the appointment list
+                refreshView();
+            }
+        });
+
+        // Back button
+        Button backButton = new Button("Back");
+        backButton.setStyle("""
+            -fx-background-color: #ccc;
+            -fx-text-fill: black;
+            -fx-font-size: 14px;
+            -fx-background-radius: 15;
+        """);
+        backButton.setPrefWidth(100);
+        backButton.setOnAction(e -> refreshView());
+
+        HBox buttonsBox = new HBox(10, backButton, payButton);
+        buttonsBox.setAlignment(Pos.CENTER);
+
+        paymentPane.getChildren().addAll(title, methodsBox, buttonsBox);
+
+        // Replace current scene with payment UI
+        Scene paymentScene = new Scene(paymentPane, 400, 300);
+        stage.setScene(paymentScene);
+    }
+
+    // Utility method to show alerts
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // Refresh the main appointment view
+    private void refreshView() {
+        new GuardianAppointmentView(stage, null); // Pass connection if needed
     }
 
     public Scene getScene() {
