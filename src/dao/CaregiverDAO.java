@@ -69,7 +69,7 @@ public class CaregiverDAO {
     }
 
     public void updateCaregiver(Caregiver caregiver) {
-        String sql = "{CALL UpdateCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+        String sql = "{CALL UpdateCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, caregiver.getCaregiverID());
             stmt.setString(2, caregiver.getUsername());
@@ -82,11 +82,19 @@ public class CaregiverDAO {
             stmt.setString(9, caregiver.getEmail());
             stmt.setString(10, caregiver.getAddress());
             stmt.setString(11, String.join(",", caregiver.getCertifications()));
-            stmt.setBoolean(12, caregiver.isBackgroundCheckStatus());
-            stmt.setBoolean(13, caregiver.isMedicalClearanceStatus());
-            stmt.setString(14, caregiver.getAvailabilitySchedule());
-            stmt.setString(15, caregiver.getEmploymentType());
+            stmt.setString(12, caregiver.getAvailabilitySchedule());
+            stmt.setString(13, caregiver.getEmploymentType());
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateCaregiverStatus(Caregiver caregiver) {
+        String sql = "{CALL UpdateCaregiverStatus(?, ?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setBoolean(2, caregiver.isBackgroundCheckStatus());
+            stmt.setBoolean(3, caregiver.isMedicalClearanceStatus());
         } catch (SQLException e) {
             e.printStackTrace();
         }
