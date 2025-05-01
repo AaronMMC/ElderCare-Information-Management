@@ -15,11 +15,10 @@ public class ActivityDAO {
     }
 
     public void insertActivity(Activity activity){
-        String sql = "{CALL InsertActivity(?, ?, ?)}";
+        String sql = "{CALL InsertActivity(?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, activity.getTitle());
             stmt.setString(2, activity.getDescription());
-            stmt.setTimestamp(3, activity.getTimeStamp());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
