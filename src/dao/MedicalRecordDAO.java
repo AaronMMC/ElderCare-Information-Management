@@ -58,7 +58,7 @@ public class MedicalRecordDAO {
     }
 
     public void updateMedicalRecord(MedicalRecord record) {
-        String sql = "{CALL UpdateMedicalRecord(?, ?, ?, ?, ?, ?, ?)}";
+        String sql = "{CALL UpdateMedicalRecord(?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, record.getMedicalRecordID());
             stmt.setString(2, record.getDiagnosis());
@@ -66,7 +66,6 @@ public class MedicalRecordDAO {
             stmt.setString(4, record.getTreatmentPlan());
             stmt.setString(5, record.getMedicationStatus().name());
             stmt.setString(6, record.getTreatmentStatus().name());
-            stmt.setTimestamp(7, Timestamp.valueOf(record.getLastModified()));
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
