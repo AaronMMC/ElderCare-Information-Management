@@ -1,4 +1,4 @@
-//package view;
+package view;//package view;
 //
 //import javafx.application.Application;
 //import javafx.geometry.Insets;
@@ -132,3 +132,161 @@
 //        launch(args);
 //    }
 //}
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
+
+public class CaregiverManagementView {
+
+    private final TableView<Service> tableView = new TableView<>();
+    private final TextField nameField = new TextField();
+    private final TextArea descArea = new TextArea();
+
+    private final Button addButton = new Button("Add");
+    private final Button updateButton = new Button("Update");
+    private final Button deleteButton = new Button("Delete");
+
+    private final Scene scene;
+    private final Stage stage;
+
+    public CaregiverManagementView(Stage stage) {
+        this.stage = stage;
+
+        // Title
+        Label titleLabel = new Label("Caregiver Service Management");
+        titleLabel.setFont(Font.font("Arial", 24));
+        titleLabel.setStyle("-fx-font-weight: bold;");
+
+        // TableView setup
+        setupTableView();
+
+        // Input section
+        VBox inputSection = createInputSection();
+
+        // Buttons
+        VBox buttonsBox = createButtonsBox();
+
+        // Left content container
+        VBox leftContent = new VBox(20, titleLabel, tableView, inputSection, buttonsBox);
+        leftContent.setPadding(new Insets(20));
+        leftContent.setStyle("-fx-background-color: #F0F0F0;");
+        // Make the left content expand to fill available space
+        HBox.setHgrow(leftContent, Priority.ALWAYS);
+
+        // Right green layer
+        VBox rightPane = new VBox();
+        rightPane.setPrefWidth(200);
+        rightPane.setStyle("-fx-background-color: #3BB49C; -fx-background-radius: 10;");
+
+        // Main HBox container
+        HBox mainContainer = new HBox();
+        mainContainer.getChildren().addAll(leftContent, rightPane);
+        mainContainer.setSpacing(10);
+        mainContainer.setPadding(new Insets(20));
+
+        scene = new Scene(mainContainer, 1000, 700);
+        stage.setTitle("Caregiver Service Management");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    private void setupTableView() {
+        tableView.setPrefHeight(250);
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tableView.setPlaceholder(new Label("No services added"));
+
+        TableColumn<Service, String> nameCol = new TableColumn<>("Service Name");
+        nameCol.setCellValueFactory(param -> param.getValue().nameProperty());
+
+        TableColumn<Service, String> descCol = new TableColumn<>("Description");
+        descCol.setCellValueFactory(param -> param.getValue().descriptionProperty());
+
+        tableView.getColumns().addAll(nameCol, descCol);
+    }
+
+    private VBox createInputSection() {
+        Label nameLabel = new Label("Service Name:");
+        Label descLabel = new Label("Description:");
+
+        styleInputField(nameField);
+        styleInputArea(descArea);
+
+        VBox nameBox = new VBox(5, nameLabel, nameField);
+        VBox descBox = new VBox(5, descLabel, descArea);
+
+        VBox inputBox = new VBox(10, nameBox, descBox);
+        inputBox.setPadding(new Insets(15));
+        inputBox.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+        inputBox.setEffect(new DropShadow(5, Color.GRAY));
+
+        return inputBox;
+    }
+
+    private VBox createButtonsBox() {
+        String buttonStyle = """
+            -fx-background-radius: 8;
+            -fx-font-size: 14px;
+            -fx-font-weight: bold;
+            -fx-cursor: hand;
+        """;
+
+        styleActionButton(addButton, "#4CAF50", "#45a049", buttonStyle, true);
+        styleActionButton(updateButton, "#2196F3", "#1976D2", buttonStyle, true);
+        styleActionButton(deleteButton, "#F44336", "#d32f2f", buttonStyle, true);
+
+        VBox buttonsBox = new VBox(12, addButton, updateButton, deleteButton);
+        buttonsBox.setAlignment(Pos.CENTER);
+        return buttonsBox;
+    }
+
+    private void styleInputField(TextField tf) {
+        tf.setStyle("-fx-background-color: #d9d9d9; -fx-background-radius: 20; -fx-padding: 10 20;");
+        tf.setPrefWidth(300);
+    }
+
+    private void styleInputArea(TextArea ta) {
+        ta.setStyle("-fx-background-color: #d9d9d9; -fx-background-radius: 20; -fx-padding: 10 20;");
+        ta.setPrefWidth(300);
+    }
+
+    private void styleActionButton(Button btn, String color, String hoverColor, String baseStyle, boolean smaller) {
+        btn.setStyle("-fx-background-color: " + color + "; " + baseStyle + " -fx-text-fill: white;");
+        if (smaller) {
+            btn.setPrefWidth(130);
+            btn.setPrefHeight(40);
+        } else {
+            btn.setPrefWidth(150);
+            btn.setPrefHeight(40);
+        }
+        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: " + hoverColor + "; " + baseStyle + " -fx-text-fill: white;"));
+        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: " + color + "; " + baseStyle + " -fx-text-fill: white;"));
+    }
+
+    // Getters if needed
+    public TableView<Service> getTableView() { return tableView; }
+    public TextField getNameField() { return nameField; }
+    public TextArea getDescArea() { return descArea; }
+    public Button getAddButton() { return addButton; }
+    public Button getUpdateButton() { return updateButton; }
+    public Button getDeleteButton() { return deleteButton; }
+
+    // Service class
+    public static class Service {
+        private final javafx.beans.property.SimpleStringProperty name;
+        private final javafx.beans.property.SimpleStringProperty description;
+
+        public Service(String name, String description) {
+            this.name = new javafx.beans.property.SimpleStringProperty(name);
+            this.description = new javafx.beans.property.SimpleStringProperty(description);
+        }
+
+        public javafx.beans.property.StringProperty nameProperty() { return name; }
+        public javafx.beans.property.StringProperty descriptionProperty() { return description; }
+    }
+}
