@@ -3,6 +3,7 @@ package dao;
 import model.Caregiver;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,6 +37,20 @@ public class CaregiverDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<Caregiver> getAllCaregivers() {
+        List<Caregiver> caregivers = new ArrayList<>();
+        String sql = "{CALL GetAllCaregivers()}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+           ResultSet rs = stmt.executeQuery();
+           while (rs.next()) {
+               caregivers.add(mapResultSetToCaregiver(rs));
+           }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return caregivers;
     }
 
     public Caregiver getCaregiverById(int id) {
@@ -144,6 +159,4 @@ public class CaregiverDAO {
                 rs.getString("employment_type")
         );
     }
-
-
 }
