@@ -126,7 +126,8 @@ public class AdminView {
                 }
             }
 
-            caregiverDAO.updateCaregiverStatus(existing);
+            caregiverDAO.updateCaregiverBackgroundStatus(existing);
+            caregiverDAO.updateCaregiverMedicalClearanceStatus(existing);
             System.out.println("\nCaregiver status updated.");
 
         } catch (NumberFormatException e) {
