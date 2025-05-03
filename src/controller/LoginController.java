@@ -101,11 +101,11 @@ public class LoginController {
 
     private void switchToGuardianRegistration() {
         GuardianRegisterView guardianRegisterView = new GuardianRegisterView(stage, conn);
-        // stage.setScene(guardianRegisterView.getScene());
+        stage.setScene(guardianRegisterView.getScene());
     }
 
     private void switchToCaregiverRegistration() {
         CaregiverRegisterView caregiverRegisterView = new CaregiverRegisterView(stage, conn);
-        // stage.setScene(caregiverRegisterView.getScene());
+        stage.setScene(caregiverRegisterView.getScene());
     }
 }
