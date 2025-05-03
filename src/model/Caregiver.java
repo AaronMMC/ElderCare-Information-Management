@@ -5,10 +5,22 @@ import java.util.List;
 
 public class Caregiver {
 
-    public enum Gender{
+    public enum Gender {
         MALE,
         FEMALE,
         OTHER
+    }
+
+    public enum BackgroundCheckStatus {
+        PASSED,
+        PENDING,
+        FAILED,
+    }
+
+    public enum MedicalClearanceStatus {
+        CLEARED,
+        PENDING,
+        NOT_CLEARED,
     }
  
     private int caregiverID;
@@ -22,14 +34,14 @@ public class Caregiver {
     private String email;
     private String address;
     private List<String> certifications;
-    private boolean backgroundCheckStatus;
-    private boolean medicalClearanceStatus;
+    private BackgroundCheckStatus backgroundCheckStatus;
+    private MedicalClearanceStatus medicalClearanceStatus;
     private String availabilitySchedule;
     private String employmentType;
 
     public Caregiver(int caregiverID, String username, String password, String firstName, String lastName, LocalDateTime dateOfBirth,
                      Gender gender, String contactNumber, String email, String address, List<String> certifications,
-                     boolean backgroundCheckStatus, boolean medicalClearanceStatus, String availabilitySchedule, String employmentType) {
+                     BackgroundCheckStatus backgroundCheckStatus, MedicalClearanceStatus medicalClearanceStatus, String availabilitySchedule, String employmentType) {
         this.caregiverID = caregiverID;
         this.username = username;
         this.password = password;
@@ -59,8 +71,8 @@ public class Caregiver {
         this.email = "";
         this.address = "";
         this.certifications = null;
-        this.backgroundCheckStatus = false;
-        this.medicalClearanceStatus = false;
+        this.backgroundCheckStatus = null;
+        this.medicalClearanceStatus = null;
         this.availabilitySchedule = "";
         this.employmentType = "";
     }
@@ -153,19 +165,19 @@ public class Caregiver {
         this.certifications = certifications;
     }
 
-    public boolean isBackgroundCheckStatus() {
+    public BackgroundCheckStatus getBackgroundCheckStatus() {
         return backgroundCheckStatus;
     }
 
-    public void setBackgroundCheckStatus(boolean backgroundCheckStatus) {
+    public void setBackgroundCheckStatus(BackgroundCheckStatus backgroundCheckStatus) {
         this.backgroundCheckStatus = backgroundCheckStatus;
     }
 
-    public boolean isMedicalClearanceStatus() {
+    public MedicalClearanceStatus getMedicalClearanceStatus() {
         return medicalClearanceStatus;
     }
 
-    public void setMedicalClearanceStatus(boolean medicalClearanceStatus) {
+    public void setMedicalClearanceStatus(MedicalClearanceStatus medicalClearanceStatus) {
         this.medicalClearanceStatus = medicalClearanceStatus;
     }
 

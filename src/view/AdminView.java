@@ -73,8 +73,8 @@ public class AdminView {
                     cg.getFirstName(),
                     cg.getLastName(),
                     cg.getEmail(),
-                    cg.isBackgroundCheckStatus() ? "Passed" : "Failed",
-                    cg.isMedicalClearanceStatus() ? "Cleared" : "Not Cleared",
+                    cg.getBackgroundCheckStatus(),
+                    cg.getMedicalClearanceStatus(),
                     cg.getEmploymentType(),
                     cg.getCertifications()
             );
@@ -92,26 +92,49 @@ public class AdminView {
                 return;
             }
 
-            // Prompt admin for status updates
-            System.out.print("Update background check status (true/false) [" + existing.isBackgroundCheckStatus() + "]: ");
-            String bgStatusInput = scanner.nextLine();
-            if (!bgStatusInput.isEmpty()) {
-                existing.setBackgroundCheckStatus(Boolean.parseBoolean(bgStatusInput));
+            // Background Check Status
+            System.out.println("\nUpdate Background Check Status:");
+            Caregiver.BackgroundCheckStatus[] bgOptions = Caregiver.BackgroundCheckStatus.values();
+            for (int i = 0; i < bgOptions.length; i++) {
+                System.out.printf("%d. %s\n", i + 1, bgOptions[i]);
+            }
+            System.out.print("Choose an option (or press Enter to skip): ");
+            String bgInput = scanner.nextLine().trim();
+            if (!bgInput.isEmpty()) {
+                int bgChoice = Integer.parseInt(bgInput);
+                if (bgChoice >= 1 && bgChoice <= bgOptions.length) {
+                    existing.setBackgroundCheckStatus(bgOptions[bgChoice - 1]);
+                } else {
+                    System.out.println("Invalid choice. Background check status not changed.");
+                }
             }
 
-            System.out.print("Update medical clearance status (true/false) [" + existing.isMedicalClearanceStatus() + "]: ");
-            String medStatusInput = scanner.nextLine();
-            if (!medStatusInput.isEmpty()) {
-                existing.setMedicalClearanceStatus(Boolean.parseBoolean(medStatusInput));
+            // Medical Clearance Status
+            System.out.println("\nUpdate Medical Clearance Status:");
+            Caregiver.MedicalClearanceStatus[] medOptions = Caregiver.MedicalClearanceStatus.values();
+            for (int i = 0; i < medOptions.length; i++) {
+                System.out.printf("%d. %s\n", i + 1, medOptions[i]);
+            }
+            System.out.print("Choose an option (or press Enter to skip): ");
+            String medInput = scanner.nextLine().trim();
+            if (!medInput.isEmpty()) {
+                int medChoice = Integer.parseInt(medInput);
+                if (medChoice >= 1 && medChoice <= medOptions.length) {
+                    existing.setMedicalClearanceStatus(medOptions[medChoice - 1]);
+                } else {
+                    System.out.println("Invalid choice. Medical clearance status not changed.");
+                }
             }
 
             caregiverDAO.updateCaregiverStatus(existing);
-            System.out.println("Caregiver status updated.");
+            System.out.println("\nCaregiver status updated.");
+
         } catch (NumberFormatException e) {
-            System.out.println("Invalid caregiver ID format.");
+            System.out.println("Invalid input. Operation cancelled.");
         } catch (Exception e) {
             System.out.println("An error occurred while updating caregiver.");
             e.printStackTrace();
         }
     }
 }
+

@@ -28,8 +28,8 @@ public class CaregiverDAO {
             stmt.setString(8, caregiver.getEmail());
             stmt.setString(9, caregiver.getAddress());
             stmt.setString(10, String.join(",", caregiver.getCertifications()));
-            stmt.setBoolean(11, caregiver.isBackgroundCheckStatus());
-            stmt.setBoolean(12, caregiver.isMedicalClearanceStatus());
+            stmt.setString(11, caregiver.getBackgroundCheckStatus().name());
+            stmt.setString(12, caregiver.getMedicalClearanceStatus().name());
             stmt.setString(13, caregiver.getAvailabilitySchedule());
             stmt.setString(14, caregiver.getEmploymentType());
 
@@ -71,8 +71,8 @@ public class CaregiverDAO {
                 caregiver.setEmail(rs.getString("email"));
                 caregiver.setAddress(rs.getString("address"));
                 caregiver.setCertifications(Arrays.asList(rs.getString("certifications").split(",")));
-                caregiver.setBackgroundCheckStatus(rs.getBoolean("background_check_status"));
-                caregiver.setMedicalClearanceStatus(rs.getBoolean("medical_clearance_status"));
+                caregiver.setBackgroundCheckStatus(Caregiver.BackgroundCheckStatus.valueOf(rs.getString("background_check_status")));
+                caregiver.setMedicalClearanceStatus(Caregiver.MedicalClearanceStatus.valueOf(rs.getString("medical_clearance_status")));
                 caregiver.setAvailabilitySchedule(rs.getString("availability_schedule"));
                 caregiver.setEmploymentType(rs.getString("employment_type"));
                 return caregiver;
@@ -108,8 +108,9 @@ public class CaregiverDAO {
     public void updateCaregiverStatus(Caregiver caregiver) {
         String sql = "{CALL UpdateCaregiverStatus(?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)){
-            stmt.setBoolean(2, caregiver.isBackgroundCheckStatus());
-            stmt.setBoolean(3, caregiver.isMedicalClearanceStatus());
+            stmt.setString(1, caregiver.getBackgroundCheckStatus().name());
+            stmt.setString(2, caregiver.getMedicalClearanceStatus().name());
+            stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -153,8 +154,8 @@ public class CaregiverDAO {
                 rs.getString("email"),
                 rs.getString("address"),
                 List.of(rs.getString("certifications").split(",")),
-                rs.getBoolean("background_check_status"),
-                rs.getBoolean("medical_clearance_status"),
+                Caregiver.BackgroundCheckStatus.valueOf(rs.getString("background_check_status")),
+                Caregiver.MedicalClearanceStatus.valueOf(rs.getString("medical_clearance_status")),
                 rs.getString("availability_schedule"),
                 rs.getString("employment_type")
         );
