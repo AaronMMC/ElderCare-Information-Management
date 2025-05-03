@@ -19,6 +19,7 @@ public class RoleSelectionView {
         root.setPadding(new Insets(20));
         root.getChildren().add(new Label("Multiple roles found. Please choose your login role:"));
 
+        //Note: Do not alter the for loop since it is responsible for creating buttons of which role is available for a given user based of the string of roles passed into this class.
         for (String role : roles) {
             Button button = new Button(role);
             button.setOnAction(e -> onRoleSelected.accept(role));

@@ -22,6 +22,12 @@ public class Caregiver {
         PENDING,
         NOT_CLEARED,
     }
+
+    public enum EmploymentType {
+        FULL_TIME,
+        PART_TIME,
+        RETIRED
+    }
  
     private int caregiverID;
     private String username;
@@ -37,11 +43,11 @@ public class Caregiver {
     private BackgroundCheckStatus backgroundCheckStatus;
     private MedicalClearanceStatus medicalClearanceStatus;
     private String availabilitySchedule;
-    private String employmentType;
+    private EmploymentType employmentType;
 
     public Caregiver(int caregiverID, String username, String password, String firstName, String lastName, LocalDateTime dateOfBirth,
                      Gender gender, String contactNumber, String email, String address, List<String> certifications,
-                     BackgroundCheckStatus backgroundCheckStatus, MedicalClearanceStatus medicalClearanceStatus, String availabilitySchedule, String employmentType) {
+                     BackgroundCheckStatus backgroundCheckStatus, MedicalClearanceStatus medicalClearanceStatus, String availabilitySchedule, EmploymentType employmentType) {
         this.caregiverID = caregiverID;
         this.username = username;
         this.password = password;
@@ -74,7 +80,7 @@ public class Caregiver {
         this.backgroundCheckStatus = null;
         this.medicalClearanceStatus = null;
         this.availabilitySchedule = "";
-        this.employmentType = "";
+        this.employmentType = null;
     }
 
     public int getCaregiverID() {
@@ -189,11 +195,11 @@ public class Caregiver {
         this.availabilitySchedule = availabilitySchedule;
     }
 
-    public String getEmploymentType() {
+    public EmploymentType getEmploymentType() {
         return employmentType;
     }
 
-    public void setEmploymentType(String employmentType) {
+    public void setEmploymentType(EmploymentType employmentType) {
         this.employmentType = employmentType;
     }
 }

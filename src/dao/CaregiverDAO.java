@@ -31,7 +31,7 @@ public class CaregiverDAO {
             stmt.setString(11, caregiver.getBackgroundCheckStatus().name());
             stmt.setString(12, caregiver.getMedicalClearanceStatus().name());
             stmt.setString(13, caregiver.getAvailabilitySchedule());
-            stmt.setString(14, caregiver.getEmploymentType());
+            stmt.setString(14, caregiver.getEmploymentType().name());
 
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -74,7 +74,7 @@ public class CaregiverDAO {
                 caregiver.setBackgroundCheckStatus(Caregiver.BackgroundCheckStatus.valueOf(rs.getString("background_check_status")));
                 caregiver.setMedicalClearanceStatus(Caregiver.MedicalClearanceStatus.valueOf(rs.getString("medical_clearance_status")));
                 caregiver.setAvailabilitySchedule(rs.getString("availability_schedule"));
-                caregiver.setEmploymentType(rs.getString("employment_type"));
+                caregiver.setEmploymentType(Caregiver.EmploymentType.valueOf(rs.getString("employment_type")));
                 return caregiver;
             }
         } catch (SQLException e) {
@@ -84,7 +84,7 @@ public class CaregiverDAO {
     }
 
     public void updateCaregiver(Caregiver caregiver) {
-        String sql = "{CALL UpdateCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+        String sql = "{CALL UpdateCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, caregiver.getCaregiverID());
             stmt.setString(2, caregiver.getUsername());
@@ -97,20 +97,39 @@ public class CaregiverDAO {
             stmt.setString(9, caregiver.getEmail());
             stmt.setString(10, caregiver.getAddress());
             stmt.setString(11, String.join(",", caregiver.getCertifications()));
-            stmt.setString(12, caregiver.getAvailabilitySchedule());
-            stmt.setString(13, caregiver.getEmploymentType());
+            stmt.setString(12, caregiver.getEmploymentType().name());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public void updateCaregiverStatus(Caregiver caregiver) {
-        String sql = "{CALL UpdateCaregiverStatus(?, ?)}";
+    public void updateCaregiverSchedule(Caregiver caregiver) {
+        String sql = "{CALL UpdateCaregiverSchedule(?,?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setInt(1, caregiver.getCaregiverID());
+            stmt.setString(2, caregiver.getAvailabilitySchedule());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateCaregiverBackgroundStatus(Caregiver caregiver) {
+        String sql = "{CALL UpdateCaregiverBackgroundStatus(?,?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)){
-            stmt.setString(1, caregiver.getBackgroundCheckStatus().name());
-            stmt.setString(2, caregiver.getMedicalClearanceStatus().name());
+            stmt.setInt(1, caregiver.getCaregiverID());
+            stmt.setString(2, caregiver.getBackgroundCheckStatus().name());
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateCaregiverMedicalClearanceStatus(Caregiver caregiver) {
+        String sql = "{CALL UpdateCaregiverMedicalClearanceStatus(?,?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1, caregiver.getCaregiverID());
+            stmt.setString(2, caregiver.getMedicalClearanceStatus().name());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -157,7 +176,7 @@ public class CaregiverDAO {
                 Caregiver.BackgroundCheckStatus.valueOf(rs.getString("background_check_status")),
                 Caregiver.MedicalClearanceStatus.valueOf(rs.getString("medical_clearance_status")),
                 rs.getString("availability_schedule"),
-                rs.getString("employment_type")
+                Caregiver.EmploymentType.valueOf(rs.getString("employment_type"))
         );
     }
 }
