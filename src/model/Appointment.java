@@ -17,6 +17,23 @@ public class Appointment {
     private int duration;
     private LocalDateTime createdDate;
 
+    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate) {
+        this.appointmentID = appointmentID;
+        this.appointmentDate = appointmentDate;
+        this.status = status;
+        this.duration = duration;
+        this.createdDate = createdDate;
+    }
+
+    public Appointment(){
+        this.appointmentID = 0;
+        this.appointmentDate = null;
+        this.status = AppointmentStatus.UNPAID;
+        this.duration = 0;
+        this.createdDate = null;
+        this.appointmentDate = null;
+    }
+
     public int getAppointmentID() {
         return appointmentID;
     }
