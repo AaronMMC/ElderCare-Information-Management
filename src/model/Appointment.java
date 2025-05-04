@@ -3,10 +3,18 @@ package model;
 import java.time.LocalDateTime;
 
 public class Appointment {
+
+    public enum AppointmentStatus {
+        PAID,
+        UNPAID,
+        FINISHED,
+        CANCELED
+    }
+
     private int appointmentID;
     private LocalDateTime appointmentDate;
-    private String status;
-    private int duration; // in minutes
+    private AppointmentStatus status;
+    private int duration;
     private LocalDateTime createdDate;
 
     public int getAppointmentID() {
@@ -25,11 +33,11 @@ public class Appointment {
         this.appointmentDate = appointmentDate;
     }
 
-    public String getStatus() {
+    public AppointmentStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(AppointmentStatus status) {
         this.status = status;
     }
 

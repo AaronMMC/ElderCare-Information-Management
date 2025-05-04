@@ -18,7 +18,7 @@ public class AppointmentDAO {
         String sql = "{CALL InsertAppointment(?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setTimestamp(1, Timestamp.valueOf(appointment.getAppointmentDate()));
-            stmt.setString(2, appointment.getStatus());
+            stmt.setString(2, appointment.getStatus().name());
             stmt.setInt(3, appointment.getDuration());
             stmt.setTimestamp(4, Timestamp.valueOf(appointment.getCreatedDate()));
             stmt.execute();
@@ -82,7 +82,7 @@ public class AppointmentDAO {
         Appointment appt = new Appointment();
         appt.setAppointmentID(rs.getInt("appointment_id"));
         appt.setAppointmentDate(rs.getTimestamp("appointment_date").toLocalDateTime());
-        appt.setStatus(rs.getString("status"));
+        appt.setStatus(Appointment.AppointmentStatus.valueOf(rs.getString("status")));
         appt.setDuration(rs.getInt("duration"));
         appt.setCreatedDate(rs.getTimestamp("creation_date").toLocalDateTime());
         return appt;
