@@ -15,12 +15,11 @@ public class AppointmentDAO {
     }
 
     public void insertAppointment(Appointment appointment){
-        String sql = "{CALL InsertAppointment(?, ?, ?, ?)}";
+            String sql = "{CALL InsertAppointment(?, ?, ?}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setTimestamp(1, Timestamp.valueOf(appointment.getAppointmentDate()));
             stmt.setString(2, appointment.getStatus().name());
             stmt.setInt(3, appointment.getDuration());
-            stmt.setTimestamp(4, Timestamp.valueOf(appointment.getCreatedDate()));
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
