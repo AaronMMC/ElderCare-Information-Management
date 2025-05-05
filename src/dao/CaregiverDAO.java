@@ -59,23 +59,7 @@ public class CaregiverDAO {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                Caregiver caregiver = new Caregiver();
-                caregiver.setCaregiverID(rs.getInt("caregiver_id"));
-                caregiver.setUsername(rs.getString("username"));
-                caregiver.setPassword(rs.getString("password"));
-                caregiver.setFirstName(rs.getString("first_name"));
-                caregiver.setLastName(rs.getString("last_name"));
-                caregiver.setDateOfBirth(rs.getTimestamp("date_of_birth").toLocalDateTime());
-                caregiver.setGender(Caregiver.Gender.valueOf(rs.getString("gender")));
-                caregiver.setContactNumber(rs.getString("contact_number"));
-                caregiver.setEmail(rs.getString("email"));
-                caregiver.setAddress(rs.getString("address"));
-                caregiver.setCertifications(Arrays.asList(rs.getString("certifications").split(",")));
-                caregiver.setBackgroundCheckStatus(Caregiver.BackgroundCheckStatus.valueOf(rs.getString("background_check_status")));
-                caregiver.setMedicalClearanceStatus(Caregiver.MedicalClearanceStatus.valueOf(rs.getString("medical_clearance_status")));
-                caregiver.setAvailabilitySchedule(rs.getString("availability_schedule"));
-                caregiver.setEmploymentType(Caregiver.EmploymentType.valueOf(rs.getString("employment_type")));
-                return caregiver;
+                mapResultSetToCaregiver(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -145,11 +129,10 @@ public class CaregiverDAO {
         }
     }
 
-    public Caregiver findByUsernameAndPassword(String username, String password) {
-        String sql = "{CALL FindCaregiverByUsernameAndPassword(?, ?)}";
+    public Caregiver findByUsername(String username) {
+        String sql = "{CALL FindCaregiverByUsername(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, username);
-            stmt.setString(2, password);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return mapResultSetToCaregiver(rs);

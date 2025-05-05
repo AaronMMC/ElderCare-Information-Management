@@ -1,8 +1,12 @@
 package dao;
 
+import model.Admin;
+import model.Caregiver;
 import model.Guardian;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GuardianDAO {
 
@@ -12,19 +16,46 @@ public class GuardianDAO {
         this.conn = conn;
     }
 
-    public void insertGuardian(Guardian guardian) {
-        String sql = "{CALL InsertGuardian(?, ?, ?, ?, ?, ?, ?)}";
-        try (CallableStatement stmt = conn.prepareCall(sql)) {
-            stmt.setString(1, guardian.getUsername());
-            stmt.setString(2, guardian.getPassword());
-            stmt.setString(3, guardian.getFirstName());
-            stmt.setString(4, guardian.getLastName());
-            stmt.setString(5, guardian.getContactNumber());
-            stmt.setString(6, guardian.getEmail());
-            stmt.setString(7, guardian.getAddress());
-            stmt.executeUpdate();
-        } catch (SQLException e) {
+    public List<Guardian> getAllGuardians() {
+        String sql = "{CALL GetAllGuardians()}";
+        List<Guardian> guardians = new ArrayList<>();
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                guardians.add(mapResultSetToGuardian(rs));
+            }
+        } catch (SQLException e){
             e.printStackTrace();
+        }
+        return guardians;
+    }
+
+    public void insertGuardian(Guardian guardian) {
+        CaregiverDAO caregiverDAO = new CaregiverDAO(conn);
+        AdminDAO adminDAO = new AdminDAO(conn);
+        caregiverDAO.getAllCaregivers();
+        adminDAO.getAllAdmin();
+        getAllGuardians();
+        Guardian anotherGuardian = getGuardianById(0);
+        Caregiver caregiver = caregiverDAO.getCaregiverById(0);
+        Admin admin = adminDAO.getAdminById(0);
+
+        if (!guardian.getUsername().equals(anotherGuardian.getUsername())) {
+            String sql = "{CALL InsertGuardian(?, ?, ?, ?, ?, ?, ?)}";
+            try (CallableStatement stmt = conn.prepareCall(sql)) {
+                stmt.setString(1, guardian.getUsername());
+                stmt.setString(2, guardian.getPassword());
+                stmt.setString(3, guardian.getFirstName());
+                stmt.setString(4, guardian.getLastName());
+                stmt.setString(5, guardian.getContactNumber());
+                stmt.setString(6, guardian.getEmail());
+                stmt.setString(7, guardian.getAddress());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } else {
+            throw new RuntimeException("Username is already taken!");
         }
     }
 
@@ -34,14 +65,7 @@ public class GuardianDAO {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                Guardian guardian = new Guardian();
-                guardian.setGuardianID(rs.getInt("guardian_id"));
-                guardian.setFirstName(rs.getString("first_name"));
-                guardian.setLastName(rs.getString("last_name"));
-                guardian.setContactNumber(rs.getString("contact_number"));
-                guardian.setEmail(rs.getString("email"));
-                guardian.setAddress(rs.getString("address"));
-                return guardian;
+                mapResultSetToGuardian(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -74,11 +98,10 @@ public class GuardianDAO {
         }
     }
 
-    public Guardian findByUsernameAndPassword(String username, String password) {
-        String sql = "{CALL FindGuardianByUsernameAndPassword(?, ?)}";
+    public Guardian findByUsername(String username) {
+        String sql = "{CALL FindGuardianByUsername(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, username);
-            stmt.setString(2, password);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
