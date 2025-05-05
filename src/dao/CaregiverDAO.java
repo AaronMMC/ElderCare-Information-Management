@@ -18,7 +18,7 @@ public class CaregiverDAO {
     }
 
     public void insertCaregiver(Caregiver caregiver) {
-        String sql = "{CALL InsertCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+        String sql = "{CALL InsertCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, caregiver.getUsername());
             stmt.setString(2, caregiver.getPassword());
@@ -30,10 +30,7 @@ public class CaregiverDAO {
             stmt.setString(8, caregiver.getEmail());
             stmt.setString(9, caregiver.getAddress());
             stmt.setString(10, String.join(",", caregiver.getCertifications()));
-            stmt.setString(11, caregiver.getBackgroundCheckStatus().name());
-            stmt.setString(12, caregiver.getMedicalClearanceStatus().name());
-            stmt.setString(13, caregiver.getAvailabilitySchedule());
-            stmt.setString(14, caregiver.getEmploymentType().name());
+            stmt.setString(11, caregiver.getEmploymentType().name());
 
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -84,7 +81,7 @@ public class CaregiverDAO {
             stmt.setString(9, caregiver.getEmail());
             stmt.setString(10, caregiver.getAddress());
             stmt.setString(11, String.join(",", caregiver.getCertifications()));
-            stmt.setString(12, caregiver.getEmploymentType().name());
+            stmt.setString( 12, caregiver.getEmploymentType().name());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
