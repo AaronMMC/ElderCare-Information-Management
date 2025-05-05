@@ -1,6 +1,8 @@
 package dao;
 
+import model.Admin;
 import model.Caregiver;
+import model.Guardian;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -68,6 +70,7 @@ public class CaregiverDAO {
     }
 
     public void updateCaregiver(Caregiver caregiver) {
+        checkUsername(caregiver);
         String sql = "{CALL UpdateCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, caregiver.getCaregiverID());
@@ -85,6 +88,25 @@ public class CaregiverDAO {
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void checkUsername(Caregiver caregiver) {
+        AdminDAO adminDAO = new AdminDAO(conn);
+        GuardianDAO guardianDAO = new GuardianDAO(conn);
+
+        // Gather all existing usernames
+        List<Caregiver> caregivers = getAllCaregivers();
+        List<Admin> admins = adminDAO.getAllAdmin();
+        List<Guardian> guardians = guardianDAO.getAllGuardians();
+
+        // Check for duplicates across all roles
+        boolean usernameExists = caregivers.stream().anyMatch(cg -> cg.getUsername().equalsIgnoreCase(caregiver.getUsername())) ||
+                admins.stream().anyMatch(ad -> ad.getUsername().equalsIgnoreCase(caregiver.getUsername())) ||
+                guardians.stream().anyMatch(gd -> gd.getUsername().equalsIgnoreCase(caregiver.getUsername()));
+
+        if (usernameExists) {
+            throw new RuntimeException("Username is already taken!");
         }
     }
 

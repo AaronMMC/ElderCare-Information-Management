@@ -31,33 +31,41 @@ public class GuardianDAO {
     }
 
     public void insertGuardian(Guardian guardian) {
+        checkUsername(guardian);
+        String sql = "{CALL InsertGuardian(?, ?, ?, ?, ?, ?, ?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setString(1, guardian.getUsername());
+            stmt.setString(2, guardian.getPassword());
+            stmt.setString(3, guardian.getFirstName());
+            stmt.setString(4, guardian.getLastName());
+            stmt.setString(5, guardian.getContactNumber());
+            stmt.setString(6, guardian.getEmail());
+            stmt.setString(7, guardian.getAddress());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to insert guardian.");
+        }
+    }
+
+    private void checkUsername(Guardian guardian) {
         CaregiverDAO caregiverDAO = new CaregiverDAO(conn);
         AdminDAO adminDAO = new AdminDAO(conn);
-        caregiverDAO.getAllCaregivers();
-        adminDAO.getAllAdmin();
-        getAllGuardians();
-        Guardian anotherGuardian = getGuardianById(0);
-        Caregiver caregiver = caregiverDAO.getCaregiverById(0);
-        Admin admin = adminDAO.getAdminById(0);
+        // Gather all existing usernames
+        List<Caregiver> caregivers = caregiverDAO.getAllCaregivers();
+        List<Admin> admins = adminDAO.getAllAdmin();
+        List<Guardian> guardians = getAllGuardians();
 
-        if (!guardian.getUsername().equals(anotherGuardian.getUsername())) {
-            String sql = "{CALL InsertGuardian(?, ?, ?, ?, ?, ?, ?)}";
-            try (CallableStatement stmt = conn.prepareCall(sql)) {
-                stmt.setString(1, guardian.getUsername());
-                stmt.setString(2, guardian.getPassword());
-                stmt.setString(3, guardian.getFirstName());
-                stmt.setString(4, guardian.getLastName());
-                stmt.setString(5, guardian.getContactNumber());
-                stmt.setString(6, guardian.getEmail());
-                stmt.setString(7, guardian.getAddress());
-                stmt.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        } else {
+        // Check for duplicates across all roles
+        boolean usernameExists = caregivers.stream().anyMatch(cg -> cg.getUsername().equalsIgnoreCase(guardian.getUsername())) ||
+                admins.stream().anyMatch(ad -> ad.getUsername().equalsIgnoreCase(guardian.getUsername())) ||
+                guardians.stream().anyMatch(gd -> gd.getUsername().equalsIgnoreCase(guardian.getUsername()));
+
+        if (usernameExists) {
             throw new RuntimeException("Username is already taken!");
         }
     }
+
 
     public Guardian getGuardianById(int id) {
         String sql = "{CALL GetGuardianById(?)}";
