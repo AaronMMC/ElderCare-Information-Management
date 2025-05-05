@@ -68,37 +68,16 @@
 //    }
 //}
 
-//////Appointment
-//import javafx.application.Application;
-//import javafx.stage.Stage;
-//import view.*;
-//import view.CaregiverAppointmentView;
-//
-//public class ElderCareMain extends Application {
-//    @Override
-//    public void start(Stage primaryStage) {
-//        new GuardianView(primaryStage);
-//    }
-//
-//    public static void main(String[] args) {
-//        launch(args);
-//    }
-//}
-//
+////Appointment
 import javafx.application.Application;
 import javafx.stage.Stage;
-import model.Guardian;
-import view.GuardianView;
-
-import java.sql.Connection;
+import view.*;
+import view.CaregiverAppointmentView;
 
 public class ElderCareMain extends Application {
-
     @Override
     public void start(Stage primaryStage) {
-        Connection conn = null;
-        Guardian guardian = null;
-        new GuardianView(primaryStage, conn, guardian);
+        new CaregiverScheduleView(primaryStage);
     }
 
     public static void main(String[] args) {
@@ -106,6 +85,27 @@ public class ElderCareMain extends Application {
     }
 }
 
+//import javafx.application.Application;
+//import javafx.stage.Stage;
+//import model.Guardian;
+//import view.GuardianView;
+//
+//import java.sql.Connection;
+//
+//public class ElderCareMain extends Application {
+//
+//    @Override
+//    public void start(Stage primaryStage) {
+//        Connection conn = null;
+//        Guardian guardian = null;
+//        new GuardianView(primaryStage, conn, guardian);
+//    }
+//
+//    public static void main(String[] args) {
+//        launch(args);
+//    }
+//}
+//
 
 
 
