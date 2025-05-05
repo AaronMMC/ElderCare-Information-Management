@@ -15,15 +15,13 @@ public class Payment {
     private double totalAmount;
     private PaymentMethod paymentMethod;
     private double additionalCharges;
-    private String currency;
     private LocalDateTime transactionDate;
 
-    public Payment(int paymentID, double totalAmount, PaymentMethod paymentMethod, double additionalCharges, String currency, LocalDateTime transactionDate) {
+    public Payment(int paymentID, double totalAmount, PaymentMethod paymentMethod, double additionalCharges, LocalDateTime transactionDate) {
         this.paymentID = paymentID;
         this.totalAmount = totalAmount;
         this.paymentMethod = paymentMethod;
         this.additionalCharges = additionalCharges;
-        this.currency = currency;
         this.transactionDate = transactionDate;
     }
 
@@ -57,14 +55,6 @@ public class Payment {
 
     public void setAdditionalCharges(double additionalCharges) {
         this.additionalCharges = additionalCharges;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
     }
 
     public LocalDateTime getTransactionDate() {

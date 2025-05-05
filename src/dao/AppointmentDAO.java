@@ -76,12 +76,11 @@ public class AppointmentDAO {
     }
 
     private Appointment mapResultSetToAppointment(ResultSet rs) throws SQLException {
-        Appointment appt = new Appointment();
-        appt.setAppointmentID(rs.getInt("appointment_id"));
-        appt.setAppointmentDate(rs.getTimestamp("appointment_date").toLocalDateTime());
-        appt.setStatus(Appointment.AppointmentStatus.valueOf(rs.getString("status")));
-        appt.setDuration(rs.getInt("duration"));
-        appt.setCreatedDate(rs.getTimestamp("creation_date").toLocalDateTime());
-        return appt;
+        return new Appointment(
+                rs.getInt("appointment_id"),
+                rs.getTimestamp("appointment_date").toLocalDateTime(),
+                Appointment.AppointmentStatus.valueOf(rs.getString("status")),
+                rs.getInt("duration"),
+                rs.getTimestamp("creation_date").toLocalDateTime());
     }
 }

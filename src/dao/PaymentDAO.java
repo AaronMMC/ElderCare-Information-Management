@@ -35,7 +35,6 @@ public class PaymentDAO {
                         rs.getDouble("total_amount"),
                         Payment.PaymentMethod.valueOf(rs.getString("payment_method")),
                         rs.getDouble("additional_charges"),
-                        rs.getString("currency"),
                         rs.getTimestamp("transaction_date").toLocalDateTime()
                 );
             }
@@ -56,7 +55,6 @@ public class PaymentDAO {
                         rs.getDouble("total_amount"),
                         Payment.PaymentMethod.valueOf(rs.getString("payment_method")),
                         rs.getDouble("additional_charges"),
-                        rs.getString("currency"),
                         rs.getTimestamp("transaction_date").toLocalDateTime()
                 ));
             }
@@ -68,12 +66,11 @@ public class PaymentDAO {
 
     public void updatePayment(Payment payment) {
         try {
-            CallableStatement stmt = conn.prepareCall("{call update_payment(?, ?, ?, ?, ?, ?)}");
+            CallableStatement stmt = conn.prepareCall("{call update_payment(?, ?, ?, ?, ?)}");
             stmt.setInt(1, payment.getPaymentID());
             stmt.setDouble(2, payment.getTotalAmount());
             stmt.setString(3, payment.getPaymentMethod().name());
             stmt.setDouble(4, payment.getAdditionalCharges());
-            stmt.setString(5, payment.getCurrency());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
