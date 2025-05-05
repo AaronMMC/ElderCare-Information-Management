@@ -12,8 +12,6 @@ import model.Guardian;
 import view.*;
 
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LoginController {
 
@@ -32,7 +30,6 @@ public class LoginController {
         this.caregiverDAO = new CaregiverDAO(conn);
         this.adminDAO = new AdminDAO(conn);
 
-        // wire buttons
         loginView.getSignInButton().setOnAction(e -> handleLogin());
         loginView.getRegisterAsGuardianButton().setOnAction(e -> switchToGuardianRegistration());
         loginView.getRegisterAsCaregiverButton().setOnAction(e -> switchToCaregiverRegistration());
@@ -50,26 +47,38 @@ public class LoginController {
         Caregiver caregiver = caregiverDAO.findByUsername(username);
         Admin admin = adminDAO.findByUsername(username);
 
-        if(guardian == null && caregiver == null && admin == null) {
+        if (guardian == null && caregiver == null && admin == null) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
+            alert.setTitle("Login Failed");
             alert.setHeaderText(null);
-            alert.setContentText("Please enter a valid username and password");
+            alert.setContentText("Username does not exist.");
+            alert.showAndWait();
+            return;
         }
 
-        if(guardian != null){
+        if (guardian != null && guardian.getPassword().equals(password)) {
             GuardianView guardianView = new GuardianView(stage, conn, guardian);
             stage.setScene(guardianView.getScene());
+            return;
         }
-        if (caregiver != null){
+        if (caregiver != null && caregiver.getPassword().equals(password)) {
             CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
             stage.setScene(caregiverView.getScene());
+            return;
         }
-        if (admin != null){
+        if (admin != null && admin.getPassword().equals(password)) {
             AdminView adminView = new AdminView(stage, conn, admin);
             stage.hide();
             adminView.start();
+            return;
         }
+
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Login Failed");
+        alert.setHeaderText(null);
+        alert.setContentText("Incorrect password.");
+        alert.showAndWait();
+
     }
 
     private void switchToGuardianRegistration() {
