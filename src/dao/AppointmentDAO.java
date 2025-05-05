@@ -57,9 +57,10 @@ public class AppointmentDAO {
     }
 
     public void updateAppointment(Appointment appointment) {
-        String sql = "{CALL UpdateAppointment(?)}";
+        String sql = "{CALL UpdateAppointment(?,?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
-            stmt.setString(1, appointment.getStatus().name());
+            stmt.setInt(1, appointment.getAppointmentID());
+            stmt.setString(2, appointment.getStatus().name());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
