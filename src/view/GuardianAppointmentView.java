@@ -64,6 +64,16 @@ public class GuardianAppointmentView {
         Button submitBtn = createSidebarButton("Submit an Appointment");
         Button goBackBtn = createSidebarButton("Go Back");
 
+        submitBtn.setOnAction(e -> {
+            AppointmentView appointmentView = new AppointmentView(stage, conn, guardian);
+            stage.setScene(appointmentView.getScene());
+        });
+
+        goBackBtn.setOnAction(e -> {
+            GuardianView guardianView = new GuardianView(stage, conn, guardian);
+            stage.setScene(guardianView.getScene());
+        });
+
         VBox rightPane = new VBox(30, submitBtn);
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setPadding(new Insets(30));

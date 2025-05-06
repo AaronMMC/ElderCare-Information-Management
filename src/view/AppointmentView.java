@@ -8,11 +8,11 @@ import model.Guardian;
 
 import java.sql.Connection;
 
-public class ElderView {
+public class AppointmentView {
 
     private final Scene scene;
 
-    public ElderView(Stage stage, Connection conn, Guardian guardian) {
+    public AppointmentView(Stage stage, Connection conn, Guardian guardian) {
         HBox root = new HBox();
         root.setPadding(new Insets(20));
 
@@ -22,5 +22,7 @@ public class ElderView {
         stage.show();
     }
 
-    public Scene getScene() {return scene;}
+    public Scene getScene() {
+        return scene;
+    }
 }

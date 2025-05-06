@@ -56,7 +56,7 @@ public class GuardianElderView {
         Button backButton = createSidebarButton("Back");
 
         addElderBtn.setOnAction(e -> {
-            ElderView elderView = new ElderView(stage);
+            ElderView elderView = new ElderView(stage, conn, guardian);
             stage.setScene(elderView.getScene());
         });
 
