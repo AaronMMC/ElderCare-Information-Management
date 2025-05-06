@@ -24,10 +24,11 @@ public class Caregiver {
     }
 
     public enum EmploymentType {
-        FULL_TIME,
-        PART_TIME,
-        RETIRED
+        Full_time,
+        Part_time,
+        Retired
     }
+
  
     private int caregiverID;
     private String username;
@@ -44,6 +45,7 @@ public class Caregiver {
     private MedicalClearanceStatus medicalClearanceStatus;
     private String availabilitySchedule;
     private EmploymentType employmentType;
+
 
     public Caregiver(int caregiverID, String username, String password, String firstName, String lastName, LocalDateTime dateOfBirth,
                      Gender gender, String contactNumber, String email, String address, List<String> certifications,

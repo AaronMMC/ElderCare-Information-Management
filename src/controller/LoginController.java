@@ -73,7 +73,9 @@ public class LoginController {
                     break;
                 case "Admin":
                     AdminView adminView = new AdminView(stage, conn, admin);
+                    stage.hide();
                     adminView.start();
+
                     break;
             }
         } else {

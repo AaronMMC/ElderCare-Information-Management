@@ -1,5 +1,6 @@
 package view;
 
+import controller.LoginController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -59,10 +60,9 @@ public class CaregiverPendingView {
         Button goBackButton = new Button("Go Back");
         styleGoBackButton(goBackButton);
 
-        goBackButton.setOnAction(e -> {
-            System.out.println("Going back to login from pending page...");
-
-
+        goBackButton.setOnAction(e -> { LoginController loginController = new LoginController(mainStage, dbConnection);
+            Scene loginScene = loginController.getLoginScene();
+            mainStage.setScene(loginScene);
         });
 
         VBox rightPane = new VBox(30, rightMessage, goBackButton);

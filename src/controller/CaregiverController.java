@@ -28,4 +28,6 @@ public class CaregiverController {
     public void deleteCaregiver(int caregiverId) {
         caregiverDAO.deleteCaregiver(caregiverId);
     }
+
+
 }

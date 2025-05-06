@@ -14,12 +14,12 @@ public class ElderCareMain extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/eldercare_db", "yourUsername", "yourPassword");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/lalakers", "root", "");
 
             LoginController loginController = new LoginController(primaryStage, conn);
             Scene loginScene = loginController.getLoginScene();
 
-            primaryStage.setTitle("ElderCare Login");
+            primaryStage.setTitle("ElderCare");
             primaryStage.setScene(loginScene);
             primaryStage.show();
 

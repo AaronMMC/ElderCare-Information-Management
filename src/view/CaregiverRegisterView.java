@@ -1,5 +1,6 @@
 package view;
 
+import controller.CaregiverController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -9,7 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import model.Caregiver; 
+import model.Caregiver;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 
 public class CaregiverRegisterView {
@@ -29,10 +32,13 @@ public class CaregiverRegisterView {
     private final ListView<String> certificationsListView = new ListView<>();
     private final Connection dbConnection;
     private final Stage mainStage;
+    private final CaregiverController caregiverController;
+
 
     public CaregiverRegisterView(Stage stage, Connection conn) {
         this.mainStage = stage;
         this.dbConnection = conn;
+        this.caregiverController = new CaregiverController(conn);
 
         Label personalInfoTitle = new Label("Fill up Personal Information");
         personalInfoTitle.setFont(new Font("Arial", 24));
@@ -58,24 +64,20 @@ public class CaregiverRegisterView {
         TextField emailField = createRoundedField("Email Address");
         TextField addressField = createRoundedField("Address");
 
-        
+
         ToggleGroup employmentToggleGroup = new ToggleGroup();
 
         RadioButton rbFullTime = new RadioButton("Full Time");
         rbFullTime.setToggleGroup(employmentToggleGroup);
-        rbFullTime.setUserData(Caregiver.EmploymentType.FULL_TIME);
+        rbFullTime.setUserData(Caregiver.EmploymentType.Full_time);
 
         RadioButton rbPartTime = new RadioButton("Part Time");
         rbPartTime.setToggleGroup(employmentToggleGroup);
-        rbPartTime.setUserData(Caregiver.EmploymentType.PART_TIME);
+        rbPartTime.setUserData(Caregiver.EmploymentType.Part_time);
 
-        RadioButton rbRetired = new RadioButton("Retired");
-        rbRetired.setToggleGroup(employmentToggleGroup);
-        rbRetired.setUserData(Caregiver.EmploymentType.RETIRED);
 
-        HBox employmentBox = new HBox(15, rbFullTime, rbPartTime, rbRetired); 
+        HBox employmentBox = new HBox(15, rbFullTime, rbPartTime);
         employmentBox.setAlignment(Pos.CENTER_LEFT);
-        
 
 
         Label certificationsLabel = new Label("Upload Certifications");
@@ -150,11 +152,11 @@ public class CaregiverRegisterView {
         personalInfoGrid.add(new Label("Address:"), 0, row);
         personalInfoGrid.add(addressField, 1, row);
         row++;
-        
+
         personalInfoGrid.add(new Label("Employment Type:"), 0, row);
         personalInfoGrid.add(employmentBox, 1, row);
         row++;
-        
+
         personalInfoGrid.add(certificationsLabel, 0, row, 2, 1);
         row++;
         personalInfoGrid.add(certificationsBox, 0, row, 2, 1);
@@ -195,17 +197,17 @@ public class CaregiverRegisterView {
             String contactNumber = contactNumberField.getText().trim();
             String email = emailField.getText().trim();
             String address = addressField.getText().trim();
-            
+
             Toggle selectedToggle = employmentToggleGroup.getSelectedToggle();
             Caregiver.EmploymentType selectedEmploymentType = null;
             if (selectedToggle != null) {
                 selectedEmploymentType = (Caregiver.EmploymentType) selectedToggle.getUserData();
             }
-            
+
             String username = usernameField.getText().trim();
             String password = passwordField.getText();
 
-            
+
             if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Missing Information", "Please fill in all required fields.");
                 return;
@@ -218,17 +220,16 @@ public class CaregiverRegisterView {
                 showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select a gender.");
                 return;
             }
-            
+
             if (selectedEmploymentType == null) {
                 showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select an employment type.");
                 return;
             }
-            
+
             if (selectedCertFiles.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Missing Certifications", "Please upload at least one certification file.");
                 return;
             }
-            
 
 
             List<String> base64CertStrings = new ArrayList<>();
@@ -240,31 +241,40 @@ public class CaregiverRegisterView {
                     base64CertStrings.add(encodedString);
                 } catch (IOException ioException) {
                     encodingError = true;
-                    System.err.println("Error reading file: " + file.getName() + " - " + ioException.getMessage());
+                    showAlert(Alert.AlertType.ERROR, "File Read Error", "Could not read one or more certification files. Please check the files and try again: " + file.getName());
+                    return;
                 }
             }
 
-            if (encodingError) {
-                showAlert(Alert.AlertType.ERROR, "File Read Error", "Could not read one or more certification files. Please check the files and try again.");
-                return;
-            }
+            Caregiver newCaregiver = new Caregiver();
+            newCaregiver.setUsername(username);
+            newCaregiver.setPassword(password);
+            newCaregiver.setFirstName(firstName);
+            newCaregiver.setLastName(lastName);
+            newCaregiver.setDateOfBirth(selectedBirthday.atStartOfDay());
+            newCaregiver.setGender(selectedGender);
+            newCaregiver.setContactNumber(contactNumber);
+            newCaregiver.setEmail(email);
+            newCaregiver.setAddress(address);
+            newCaregiver.setCertifications(base64CertStrings);
+            newCaregiver.setEmploymentType(selectedEmploymentType);
 
-            System.out.println("Data gathered by View. Passing control to Controller (simulated)...");
-            
+            try {
+                caregiverController.addCaregiver(newCaregiver);
+                showAlert(Alert.AlertType.INFORMATION, "Registration Successful", "Your account is pending verification.");
 
-            boolean submissionSuccess = true; 
-
-            if (submissionSuccess) {
-                System.out.println("Submission successful. Switching to Pending View...");
                 CaregiverPendingView pendingView = new CaregiverPendingView(mainStage, dbConnection);
                 mainStage.setScene(pendingView.getScene());
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Registration Failed", "Could not submit registration data. Please try again later.");
+
+            } catch (Exception ex) {
+                showAlert(Alert.AlertType.ERROR, "Registration Failed", "An error occurred during registration: " + ex.getMessage());
+                ex.printStackTrace();
             }
         });
 
         backButton.setOnAction(e -> {
-            
+            LoginView loginView = new LoginView();
+            mainStage.setScene(new Scene(loginView.getView(), mainStage.getScene().getWidth(), mainStage.getScene().getHeight()));
         });
 
         stage.setScene(scene);
@@ -324,6 +334,7 @@ public class CaregiverRegisterView {
         button.setOnMouseEntered(e -> button.setStyle(hoverStyle));
         button.setOnMouseExited(e -> button.setStyle(baseStyle));
     }
+
 
     public Scene getScene() {
         return scene;

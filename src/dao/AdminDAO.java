@@ -16,8 +16,9 @@ public class AdminDAO {
     }
 
     public Admin findByUsernameAndPassword(String username, String password) {
-        String sql = "{CALL FindAdminByUsernameAndPassword(?, ?)}";
+        String sql = "{CALL FindAdminByUsernameAndPassword(?,?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)){
+
             stmt.setString(1, username);
             stmt.setString(2, password);
 
@@ -34,7 +35,7 @@ public class AdminDAO {
 
     private Admin mapResultSetToAdmin(ResultSet rs) throws SQLException {
         return new Admin(
-                rs.getInt("adminId"),
+                rs.getInt("admin_id"),
                 rs.getString("username"),
                 rs.getString("password")
         );
