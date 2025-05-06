@@ -21,7 +21,7 @@ public class AppointmentDAO {
             stmt.setInt(2, appointment.getDuration());
             stmt.setInt(3, appointment.getCaregiverID());
             stmt.setInt(4, appointment.getGuardianID());
-            stmt.setInt(5, appointment.getGuardianID());
+            stmt.setInt(5, appointment.getGuardianElderID());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
