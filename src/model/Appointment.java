@@ -31,7 +31,6 @@ public class Appointment {
         this.status = AppointmentStatus.UNPAID;
         this.duration = 0;
         this.createdDate = null;
-        this.appointmentDate = null;
     }
 
     public int getAppointmentID() {
