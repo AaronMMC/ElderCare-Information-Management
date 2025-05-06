@@ -10,7 +10,8 @@ public class Appointment {
         PAID,
         UNPAID,
         FINISHED,
-        CANCELLED
+        CANCELLED,
+        ONGOING
     }
 
     private int appointmentID;
