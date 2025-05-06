@@ -23,7 +23,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 public class CaregiverRegisterView {
 
     private final Scene scene;
@@ -32,7 +31,6 @@ public class CaregiverRegisterView {
     private final Connection conn;
     private final Stage stage;
     private final CaregiverController caregiverController;
-
 
     public CaregiverRegisterView(Stage stage, Connection conn) {
         this.stage = stage;
