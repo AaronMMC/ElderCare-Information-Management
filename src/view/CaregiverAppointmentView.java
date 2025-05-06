@@ -7,12 +7,16 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Caregiver;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class CaregiverAppointmentView {
 
     private final Scene scene;
 
-    public CaregiverAppointmentView(Stage stage) {
+    public CaregiverAppointmentView(Stage stage, Connection conn, Caregiver caregiver) throws SQLException {
 
         // === Title and Search/Sort ===
         Label titleLabel = new Label("Your Appointments");

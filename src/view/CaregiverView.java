@@ -14,6 +14,7 @@ import javafx.stage.Stage;
 import model.Caregiver;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
@@ -159,7 +160,12 @@ public class CaregiverView {
         appointmentsBtn.setOnAction(e -> {
             System.out.println("Switching to CaregiverAppointmentView...");
             Platform.runLater(() -> {
-                CaregiverAppointmentView caregiverAppointmentView = new CaregiverAppointmentView(stage);
+                CaregiverAppointmentView caregiverAppointmentView = null;
+                try {
+                    caregiverAppointmentView = new CaregiverAppointmentView(stage, conn, caregiver);
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
                 stage.setScene(caregiverAppointmentView.getScene());
             });
         });
