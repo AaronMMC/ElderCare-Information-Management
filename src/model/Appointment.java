@@ -16,6 +16,20 @@ public class Appointment {
     private AppointmentStatus status;
     private int duration;
     private LocalDateTime createdDate;
+    private int caregiverID;
+    private int guardianID;
+    private int guardianElderID;
+
+    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int guardianID, int guardianElderID) {
+        this.appointmentID = appointmentID;
+        this.appointmentDate = appointmentDate;
+        this.status = status;
+        this.duration = duration;
+        this.createdDate = createdDate;
+        this.caregiverID = caregiverID;
+        this.guardianID = guardianID;
+        this.guardianElderID = guardianElderID;
+    }
 
     public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate) {
         this.appointmentID = appointmentID;
@@ -31,6 +45,30 @@ public class Appointment {
         this.status = AppointmentStatus.UNPAID;
         this.duration = 0;
         this.createdDate = null;
+    }
+
+    public int getCaregiverID() {
+        return caregiverID;
+    }
+
+    public void setCaregiverID(int caregiverID) {
+        this.caregiverID = caregiverID;
+    }
+
+    public int getGuardianID() {
+        return guardianID;
+    }
+
+    public void setGuardianID(int guardianID) {
+        this.guardianID = guardianID;
+    }
+
+    public int getGuardianElderID() {
+        return guardianElderID;
+    }
+
+    public void setGuardianElderID(int guardianElderID) {
+        this.guardianElderID = guardianElderID;
     }
 
     public int getAppointmentID() {
