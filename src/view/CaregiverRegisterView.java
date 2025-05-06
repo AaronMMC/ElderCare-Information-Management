@@ -1,6 +1,7 @@
 package view;
 
 import controller.CaregiverController;
+import controller.LoginController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -21,23 +22,19 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-
 
 public class CaregiverRegisterView {
 
     private final Scene scene;
     private final List<File> selectedCertFiles = new ArrayList<>();
     private final ListView<String> certificationsListView = new ListView<>();
-    private final Connection dbConnection;
-    private final Stage mainStage;
+    private final Connection conn;
+    private final Stage stage;
     private final CaregiverController caregiverController;
 
-
     public CaregiverRegisterView(Stage stage, Connection conn) {
-        this.mainStage = stage;
-        this.dbConnection = conn;
+        this.stage = stage;
+        this.conn = conn;
         this.caregiverController = new CaregiverController(conn);
 
         Label personalInfoTitle = new Label("Fill up Personal Information");
@@ -208,29 +205,11 @@ public class CaregiverRegisterView {
             String password = passwordField.getText();
 
 
-            if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty()) {
+            if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty() || selectedBirthday == null
+                    || selectedGender == null || contactNumber.isEmpty() || address.isEmpty() || selectedEmploymentType == null || selectedCertFiles.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Missing Information", "Please fill in all required fields.");
                 return;
             }
-            if (selectedBirthday == null) {
-                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select a birth date.");
-                return;
-            }
-            if (selectedGender == null) {
-                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select a gender.");
-                return;
-            }
-
-            if (selectedEmploymentType == null) {
-                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select an employment type.");
-                return;
-            }
-
-            if (selectedCertFiles.isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Missing Certifications", "Please upload at least one certification file.");
-                return;
-            }
-
 
             List<String> base64CertStrings = new ArrayList<>();
             boolean encodingError = false;
@@ -241,40 +220,40 @@ public class CaregiverRegisterView {
                     base64CertStrings.add(encodedString);
                 } catch (IOException ioException) {
                     encodingError = true;
-                    showAlert(Alert.AlertType.ERROR, "File Read Error", "Could not read one or more certification files. Please check the files and try again: " + file.getName());
-                    return;
+                    System.err.println("Error reading file: " + file.getName() + " - " + ioException.getMessage());
                 }
             }
 
-            Caregiver newCaregiver = new Caregiver();
-            newCaregiver.setUsername(username);
-            newCaregiver.setPassword(password);
-            newCaregiver.setFirstName(firstName);
-            newCaregiver.setLastName(lastName);
-            newCaregiver.setDateOfBirth(selectedBirthday.atStartOfDay());
-            newCaregiver.setGender(selectedGender);
-            newCaregiver.setContactNumber(contactNumber);
-            newCaregiver.setEmail(email);
-            newCaregiver.setAddress(address);
-            newCaregiver.setCertifications(base64CertStrings);
-            newCaregiver.setEmploymentType(selectedEmploymentType);
+            if (encodingError) {
+                showAlert(Alert.AlertType.ERROR, "File Read Error", "Could not read one or more certification files. Please check the files and try again.");
+                return;
+            }
 
+            System.out.println("Data gathered by View. Passing control to Controller (simulated)...");
+
+            Caregiver newCaregiver = new Caregiver(username,password,firstName,lastName, selectedBirthday.atStartOfDay(),selectedGender,contactNumber,email,address,base64CertStrings,selectedEmploymentType);
+            boolean submissionSuccess = false;
             try {
+                CaregiverController caregiverController = new CaregiverController(conn);
                 caregiverController.addCaregiver(newCaregiver);
-                showAlert(Alert.AlertType.INFORMATION, "Registration Successful", "Your account is pending verification.");
-
-                CaregiverPendingView pendingView = new CaregiverPendingView(mainStage, dbConnection);
-                mainStage.setScene(pendingView.getScene());
-
+                submissionSuccess = true;
             } catch (Exception ex) {
-                showAlert(Alert.AlertType.ERROR, "Registration Failed", "An error occurred during registration: " + ex.getMessage());
                 ex.printStackTrace();
+            }
+
+            if (submissionSuccess) {
+                System.out.println("Submission successful. Switching to Pending View...");
+                CaregiverPendingView pendingView = new CaregiverPendingView(stage,conn);
+                stage.setScene(pendingView.getScene());
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Registration Failed", "Could not submit registration data. Please try again later.");
             }
         });
 
         backButton.setOnAction(e -> {
-            LoginView loginView = new LoginView();
-            mainStage.setScene(new Scene(loginView.getView(), mainStage.getScene().getWidth(), mainStage.getScene().getHeight()));
+            LoginController loginController = new LoginController(stage, conn);
+            Scene loginScene = loginController.getLoginScene();
+            stage.setScene(loginScene);
         });
 
         stage.setScene(scene);

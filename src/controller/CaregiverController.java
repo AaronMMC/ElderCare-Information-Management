@@ -29,5 +29,4 @@ public class CaregiverController {
         caregiverDAO.deleteCaregiver(caregiverId);
     }
 
-
 }

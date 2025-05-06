@@ -8,7 +8,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -21,18 +20,16 @@ import java.sql.Connection;
 public class CaregiverPendingView {
 
     private Scene scene;
-    private Stage mainStage;
-    private Connection dbConnection;
+    private final Stage stage;
+    private final Connection conn;
 
     public CaregiverPendingView(Stage stage, Connection conn) {
-        this.mainStage = stage;
-        this.dbConnection = conn;
+        this.stage = stage;
+        this.conn = conn;
         buildUI();
     }
 
     private void buildUI() {
-
-
         Label pendingLabel = new Label("Account is\nPending...");
         pendingLabel.setFont(new Font("Arial", 48));
         pendingLabel.setStyle("-fx-font-weight: bold;");
@@ -60,9 +57,10 @@ public class CaregiverPendingView {
         Button goBackButton = new Button("Go Back");
         styleGoBackButton(goBackButton);
 
-        goBackButton.setOnAction(e -> { LoginController loginController = new LoginController(mainStage, dbConnection);
+        goBackButton.setOnAction(e -> {
+            LoginController loginController = new LoginController(stage, conn);
             Scene loginScene = loginController.getLoginScene();
-            mainStage.setScene(loginScene);
+            stage.setScene(loginScene);
         });
 
         VBox rightPane = new VBox(30, rightMessage, goBackButton);
@@ -77,9 +75,9 @@ public class CaregiverPendingView {
 
         double prefWidth = 1000;
         double prefHeight = 700;
-        if (mainStage != null && mainStage.getScene() != null) {
-            prefWidth = mainStage.getScene().getWidth();
-            prefHeight = mainStage.getScene().getHeight();
+        if (stage != null && stage.getScene() != null) {
+            prefWidth = stage.getScene().getWidth();
+            prefHeight = stage.getScene().getHeight();
         }
         this.scene = new Scene(rootLayout, prefWidth, prefHeight);
     }
