@@ -1,6 +1,6 @@
 package dao;
 
-import model.Appointment;
+import model.*;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -15,10 +15,13 @@ public class AppointmentDAO {
     }
 
     public void insertAppointment(Appointment appointment){
-            String sql = "{CALL InsertAppointment(?, ?}";
+            String sql = "{CALL InsertAppointment(?, ?, ?, ?, ?}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setTimestamp(1, Timestamp.valueOf(appointment.getAppointmentDate()));
             stmt.setInt(2, appointment.getDuration());
+            stmt.setInt(3, appointment.getCaregiverID());
+            stmt.setInt(4, appointment.getGuardianID());
+            stmt.setInt(5, appointment.getGuardianID());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -54,6 +57,38 @@ public class AppointmentDAO {
         return appointments;
     }
 
+    public List<Appointment> getAppointmentsByCaregiver(int caregiverID) {
+        List<Appointment> appointments = new ArrayList<>();
+        String sql = "{CALL GetAppointmentsByCaregiver()}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1, caregiverID);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    appointments.add(mapResultSetToAppointment(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return appointments;
+    }
+
+    public List<Appointment> getAppointmentByGuardian(int guardianID) {
+        List<Appointment> appointments = new ArrayList<>();
+        String sql = "{CALL GetAppointmentByGuardian()}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1, guardianID);
+            try (ResultSet rs = stmt.executeQuery()){
+                while (rs.next()) {
+                    appointments.add(mapResultSetToAppointment(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return appointments;
+    }
+
     public void updateAppointment(Appointment appointment) {
         String sql = "{CALL UpdateAppointment(?,?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
@@ -81,6 +116,9 @@ public class AppointmentDAO {
                 rs.getTimestamp("appointment_date").toLocalDateTime(),
                 Appointment.AppointmentStatus.valueOf(rs.getString("status")),
                 rs.getInt("duration"),
-                rs.getTimestamp("creation_date").toLocalDateTime());
+                rs.getTimestamp("creation_date").toLocalDateTime(),
+                rs.getInt("caregiver_id"),
+                rs.getInt("guardian_id"),
+                rs.getInt("guardian_elder_id"));
     }
 }
