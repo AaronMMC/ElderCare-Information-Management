@@ -88,7 +88,7 @@ public class GuardianView {
         appointmentBtn.setOnAction(e -> {
             System.out.println("Switching to GuardianAppointmentView...");
             Platform.runLater(() -> {
-               GuardianAppointmentView guardianAppointmentView = new GuardianAppointmentView(stage);
+               GuardianAppointmentView guardianAppointmentView = new GuardianAppointmentView(stage, conn, guardian);
                stage.setScene(guardianAppointmentView.getScene());
             });
         });
@@ -96,7 +96,7 @@ public class GuardianView {
         elderBtn.setOnAction(e -> {
             System.out.println("Switching to GuardianElderView...");
             Platform.runLater(() -> {
-               GuardianElderView guardianElderView = new GuardianElderView(stage);
+               GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian);
                stage.setScene(guardianElderView.getScene());
             });
         });

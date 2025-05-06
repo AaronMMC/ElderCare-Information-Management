@@ -7,12 +7,15 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Guardian;
+
+import java.sql.Connection;
 
 public class GuardianElderView {
 
     private final Scene scene;
 
-    public GuardianElderView(Stage stage) {
+    public GuardianElderView(Stage stage, Connection conn, Guardian guardian) {
         Label titleLabel = new Label("Your Elders");
         titleLabel.setFont(Font.font("Arial", 24));
         titleLabel.setStyle("-fx-font-weight: bold;");
@@ -51,6 +54,16 @@ public class GuardianElderView {
         // === Right Sidebar ===
         Button addElderBtn = createSidebarButton("Add an Elder");
         Button backButton = createSidebarButton("Back");
+
+        addElderBtn.setOnAction(e -> {
+            ElderView elderView = new ElderView(stage);
+            stage.setScene(elderView.getScene());
+        });
+
+        backButton.setOnAction(e -> {
+            GuardianView guardianView = new GuardianView(stage,conn,guardian);
+            stage.setScene(guardianView.getScene());
+        });
 
         // Right pane setup
         VBox rightPane = new VBox(30, addElderBtn);
