@@ -156,16 +156,28 @@ public class CaregiverView {
         Button servicesBtn = createSidebarButton("Your Services");
         Button logoutBtn = createSidebarButton("Log Out");
 
-        appointmentsBtn.setOnAction(event -> {
-            // To be implemented
+        appointmentsBtn.setOnAction(e -> {
+            System.out.println("Switching to CaregiverAppointmentView...");
+            Platform.runLater(() -> {
+                CaregiverAppointmentView caregiverAppointmentView = new CaregiverAppointmentView(stage);
+                stage.setScene(caregiverAppointmentView.getScene());
+            });
         });
 
-        eldersBtn.setOnAction(event -> {
-            // To be implemented
+        eldersBtn.setOnAction(e -> {
+            System.out.println("Switching to CaregiverElderView...");
+            Platform.runLater(() -> {
+               CaregiverElderView caregiverElderView = new CaregiverElderView(stage);
+               stage.setScene(caregiverElderView.getScene());
+            });
         });
 
-        servicesBtn.setOnAction(event -> {
-            // To be implemented
+        servicesBtn.setOnAction(e -> {
+            System.out.println("Switching to CaregiverServicesView...");
+            Platform.runLater(() -> {
+               CaregiverServiceView caregiverServiceView = new CaregiverServiceView(stage);
+               stage.setScene(caregiverServiceView.getScene());
+            });
         });
 
         logoutBtn.setOnAction(e -> {
