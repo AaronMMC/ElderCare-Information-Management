@@ -12,8 +12,6 @@ import model.Guardian;
 import view.*;
 
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LoginController {
 
@@ -32,7 +30,6 @@ public class LoginController {
         this.caregiverDAO = new CaregiverDAO(conn);
         this.adminDAO = new AdminDAO(conn);
 
-        // wire buttons
         loginView.getSignInButton().setOnAction(e -> handleLogin());
         loginView.getRegisterAsGuardianButton().setOnAction(e -> switchToGuardianRegistration());
         loginView.getRegisterAsCaregiverButton().setOnAction(e -> switchToCaregiverRegistration());
@@ -46,60 +43,59 @@ public class LoginController {
         String username = loginView.getUsernameField().getText();
         String password = loginView.getPasswordField().getText();
 
-        Guardian guardian = guardianDAO.findByUsernameAndPassword(username, password);
-        Caregiver caregiver = caregiverDAO.findByUsernameAndPassword(username, password);
-        Admin admin = adminDAO.findByUsernameAndPassword(username, password);
+        Guardian guardian = guardianDAO.findByUsername(username);
+        Caregiver caregiver = caregiverDAO.findByUsername(username);
+        Admin admin = adminDAO.findByUsername(username);
 
-        List<String> matchedRoles = new ArrayList<>();
-        if (guardian != null) matchedRoles.add("Guardian");
-        if (caregiver != null) matchedRoles.add("Caregiver");
-        if (admin != null) matchedRoles.add("Admin");
-
-        if (matchedRoles.isEmpty()) {
-            new Alert(Alert.AlertType.ERROR, "Invalid username or password").showAndWait();
+        if (guardian == null && caregiver == null && admin == null) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Login Failed");
+            alert.setHeaderText(null);
+            alert.setContentText("Username does not exist.");
+            alert.showAndWait();
             return;
         }
 
-        if (matchedRoles.size() == 1) {
-            String role = matchedRoles.getFirst();
-            switch (role) {
-                case "Guardian":
-                    GuardianView guardianView = new GuardianView(stage, conn, guardian);
-                    stage.setScene(guardianView.getScene());
-                    break;
-                case "Caregiver":
-                    CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
-                    stage.setScene(caregiverView.getScene());
-                    break;
-                case "Admin":
-                    AdminView adminView = new AdminView(stage, conn, admin);
-                    stage.hide();
-                    adminView.start();
-
-                    break;
-            }
-        } else {
-            RoleSelectionView roleSelectionView = new RoleSelectionView(stage, matchedRoles, selectedRole -> {
-                switch (selectedRole) {
-                    case "Guardian":
-                        GuardianView guardianView = new GuardianView(stage, conn, guardian);
-                        stage.setScene(guardianView.getScene());
-                        break;
-                    case "Caregiver":
-                        CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
-                        stage.setScene(caregiverView.getScene());
-                        break;
-                    case "Admin":
-                        stage.hide();
-                        AdminView adminView = new AdminView(stage, conn, admin);
-                        adminView.start();
-                        break;
-                }
-            });
-            stage.setScene(roleSelectionView.getScene());
+        if (guardian != null && guardian.getPassword().equals(password)) {
+            GuardianView guardianView = new GuardianView(stage, conn, guardian);
+            stage.setScene(guardianView.getScene());
+            return;
         }
-    }
+        if (caregiver != null && caregiver.getPassword().equals(password)) {
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.PENDING  && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.PENDING ){
+                CaregiverPendingView pendingView = new CaregiverPendingView(stage, conn);
+                stage.setScene(pendingView.getScene());
+                return;
+            }
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.PASSED && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.CLEARED) {
+                CaregiverView caregiverView = new CaregiverView(stage,conn, caregiver);
+                stage.setScene(caregiverView.getScene());
+                return;
+            }
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.FAILED || caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.NOT_CLEARED) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Login Failed.");
+                alert.setHeaderText(null);
+                alert.setContentText("Your Account was not approve. Please register again.");
+                alert.showAndWait();
+                caregiverDAO.deleteCaregiver(caregiver.getCaregiverID());
+                return;
+            }
+        }
+        if (admin != null && admin.getPassword().equals(password)) {
+            AdminView adminView = new AdminView(stage, conn, admin);
+            stage.hide();
+            adminView.start();
+            return;
+        }
 
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Login Failed");
+        alert.setHeaderText(null);
+        alert.setContentText("Incorrect password.");
+        alert.showAndWait();
+
+    }
 
     private void switchToGuardianRegistration() {
         GuardianRegisterView guardianRegisterView = new GuardianRegisterView(stage, conn);

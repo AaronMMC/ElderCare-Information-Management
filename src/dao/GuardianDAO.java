@@ -1,8 +1,12 @@
 package dao;
 
+import model.Admin;
+import model.Caregiver;
 import model.Guardian;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GuardianDAO {
 
@@ -12,7 +16,22 @@ public class GuardianDAO {
         this.conn = conn;
     }
 
+    public List<Guardian> getAllGuardians() {
+        String sql = "{CALL GetAllGuardians()}";
+        List<Guardian> guardians = new ArrayList<>();
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                guardians.add(mapResultSetToGuardian(rs));
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+        return guardians;
+    }
+
     public void insertGuardian(Guardian guardian) {
+        checkUsername(guardian);
         String sql = "{CALL InsertGuardian(?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, guardian.getUsername());
@@ -25,8 +44,28 @@ public class GuardianDAO {
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
+            throw new RuntimeException("Failed to insert guardian.");
         }
     }
+
+    private void checkUsername(Guardian guardian) {
+        CaregiverDAO caregiverDAO = new CaregiverDAO(conn);
+        AdminDAO adminDAO = new AdminDAO(conn);
+        // Gather all existing usernames
+        List<Caregiver> caregivers = caregiverDAO.getAllCaregivers();
+        List<Admin> admins = adminDAO.getAllAdmin();
+        List<Guardian> guardians = getAllGuardians();
+
+        // Check for duplicates across all roles
+        boolean usernameExists = caregivers.stream().anyMatch(cg -> cg.getUsername().equalsIgnoreCase(guardian.getUsername())) ||
+                admins.stream().anyMatch(ad -> ad.getUsername().equalsIgnoreCase(guardian.getUsername())) ||
+                guardians.stream().anyMatch(gd -> gd.getUsername().equalsIgnoreCase(guardian.getUsername()));
+
+        if (usernameExists) {
+            throw new RuntimeException("Username is already taken!");
+        }
+    }
+
 
     public Guardian getGuardianById(int id) {
         String sql = "{CALL GetGuardianById(?)}";
@@ -34,14 +73,7 @@ public class GuardianDAO {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                Guardian guardian = new Guardian();
-                guardian.setGuardianID(rs.getInt("guardian_id"));
-                guardian.setFirstName(rs.getString("first_name"));
-                guardian.setLastName(rs.getString("last_name"));
-                guardian.setContactNumber(rs.getString("contact_number"));
-                guardian.setEmail(rs.getString("email"));
-                guardian.setAddress(rs.getString("address"));
-                return guardian;
+                mapResultSetToGuardian(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -74,11 +106,10 @@ public class GuardianDAO {
         }
     }
 
-    public Guardian findByUsernameAndPassword(String username, String password) {
-        String sql = "{CALL FindGuardianByUsernameAndPassword(?, ?)}";
+    public Guardian findByUsername(String username) {
+        String sql = "{CALL FindGuardianByUsername(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, username);
-            stmt.setString(2, password);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {

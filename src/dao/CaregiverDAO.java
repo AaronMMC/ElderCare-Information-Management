@@ -1,6 +1,8 @@
 package dao;
 
+import model.Admin;
 import model.Caregiver;
+import model.Guardian;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -27,7 +29,7 @@ public class CaregiverDAO {
             stmt.setString(7, caregiver.getContactNumber());
             stmt.setString(8, caregiver.getEmail());
             stmt.setString(9, caregiver.getAddress());
-            stmt.setString(10, String.join(",", caregiver.getCertifications()));;
+            stmt.setString(10, String.join(",", caregiver.getCertifications()));
             stmt.setString(11, caregiver.getEmploymentType().name());
 
             stmt.executeUpdate();
@@ -56,23 +58,7 @@ public class CaregiverDAO {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                Caregiver caregiver = new Caregiver();
-                caregiver.setCaregiverID(rs.getInt("caregiver_id"));
-                caregiver.setUsername(rs.getString("username"));
-                caregiver.setPassword(rs.getString("password"));
-                caregiver.setFirstName(rs.getString("first_name"));
-                caregiver.setLastName(rs.getString("last_name"));
-                caregiver.setDateOfBirth(rs.getTimestamp("date_of_birth").toLocalDateTime());
-                caregiver.setGender(Caregiver.Gender.valueOf(rs.getString("gender")));
-                caregiver.setContactNumber(rs.getString("contact_number"));
-                caregiver.setEmail(rs.getString("email"));
-                caregiver.setAddress(rs.getString("address"));
-                caregiver.setCertifications(Arrays.asList(rs.getString("certifications").split(",")));
-                caregiver.setBackgroundCheckStatus(Caregiver.BackgroundCheckStatus.valueOf(rs.getString("background_check_status")));
-                caregiver.setMedicalClearanceStatus(Caregiver.MedicalClearanceStatus.valueOf(rs.getString("medical_clearance_status")));
-                caregiver.setAvailabilitySchedule(rs.getString("availability_schedule"));
-                caregiver.setEmploymentType(Caregiver.EmploymentType.valueOf(rs.getString("employment_type")));
-                return caregiver;
+                mapResultSetToCaregiver(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -80,7 +66,8 @@ public class CaregiverDAO {
         return null;
     }
 
-        public void updateCaregiver(Caregiver caregiver) {
+    public void updateCaregiver(Caregiver caregiver) {
+        checkUsername(caregiver);
         String sql = "{CALL UpdateCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, caregiver.getCaregiverID());
@@ -94,10 +81,29 @@ public class CaregiverDAO {
             stmt.setString(9, caregiver.getEmail());
             stmt.setString(10, caregiver.getAddress());
             stmt.setString(11, String.join(",", caregiver.getCertifications()));
-            stmt.setString(12, caregiver.getEmploymentType().name());
+            stmt.setString( 12, caregiver.getEmploymentType().name());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void checkUsername(Caregiver caregiver) {
+        AdminDAO adminDAO = new AdminDAO(conn);
+        GuardianDAO guardianDAO = new GuardianDAO(conn);
+
+        // Gather all existing usernames
+        List<Caregiver> caregivers = getAllCaregivers();
+        List<Admin> admins = adminDAO.getAllAdmin();
+        List<Guardian> guardians = guardianDAO.getAllGuardians();
+
+        // Check for duplicates across all roles
+        boolean usernameExists = caregivers.stream().anyMatch(cg -> cg.getUsername().equalsIgnoreCase(caregiver.getUsername())) ||
+                admins.stream().anyMatch(ad -> ad.getUsername().equalsIgnoreCase(caregiver.getUsername())) ||
+                guardians.stream().anyMatch(gd -> gd.getUsername().equalsIgnoreCase(caregiver.getUsername()));
+
+        if (usernameExists) {
+            throw new RuntimeException("Username is already taken!");
         }
     }
 
@@ -142,11 +148,10 @@ public class CaregiverDAO {
         }
     }
 
-    public Caregiver findByUsernameAndPassword(String username, String password) {
-        String sql = "{CALL FindCaregiverByUsernameAndPassword(?, ?)}";
+    public Caregiver findByUsername(String username) {
+        String sql = "{CALL FindCaregiverByUsername(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, username);
-            stmt.setString(2, password);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return mapResultSetToCaregiver(rs);

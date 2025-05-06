@@ -15,12 +15,10 @@ public class AppointmentDAO {
     }
 
     public void insertAppointment(Appointment appointment){
-        String sql = "{CALL InsertAppointment(?, ?, ?, ?)}";
+            String sql = "{CALL InsertAppointment(?, ?}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setTimestamp(1, Timestamp.valueOf(appointment.getAppointmentDate()));
-            stmt.setString(2, appointment.getStatus().name());
-            stmt.setInt(3, appointment.getDuration());
-            stmt.setTimestamp(4, Timestamp.valueOf(appointment.getCreatedDate()));
+            stmt.setInt(2, appointment.getDuration());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -57,11 +55,10 @@ public class AppointmentDAO {
     }
 
     public void updateAppointment(Appointment appointment) {
-        String sql = "{CALL UpdateAppointment(?, ?, ?, ?, ?)}";
+        String sql = "{CALL UpdateAppointment(?,?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, appointment.getAppointmentID());
-            stmt.setTimestamp(2, Timestamp.valueOf(appointment.getAppointmentDate()));
-            stmt.setInt(4, appointment.getDuration());
+            stmt.setString(2, appointment.getStatus().name());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -79,12 +76,11 @@ public class AppointmentDAO {
     }
 
     private Appointment mapResultSetToAppointment(ResultSet rs) throws SQLException {
-        Appointment appt = new Appointment();
-        appt.setAppointmentID(rs.getInt("appointment_id"));
-        appt.setAppointmentDate(rs.getTimestamp("appointment_date").toLocalDateTime());
-        appt.setStatus(Appointment.AppointmentStatus.valueOf(rs.getString("status")));
-        appt.setDuration(rs.getInt("duration"));
-        appt.setCreatedDate(rs.getTimestamp("creation_date").toLocalDateTime());
-        return appt;
+        return new Appointment(
+                rs.getInt("appointment_id"),
+                rs.getTimestamp("appointment_date").toLocalDateTime(),
+                Appointment.AppointmentStatus.valueOf(rs.getString("status")),
+                rs.getInt("duration"),
+                rs.getTimestamp("creation_date").toLocalDateTime());
     }
 }
