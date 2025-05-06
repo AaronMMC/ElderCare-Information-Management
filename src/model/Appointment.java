@@ -1,6 +1,8 @@
 package model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Appointment {
 
@@ -18,9 +20,9 @@ public class Appointment {
     private LocalDateTime createdDate;
     private int caregiverID;
     private int guardianID;
-    private int guardianElderID;
+    private List<Integer> guardianElderIDs;
 
-    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int guardianID, int guardianElderID) {
+    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int guardianID, List<Integer> guardianElderIDs) {
         this.appointmentID = appointmentID;
         this.appointmentDate = appointmentDate;
         this.status = status;
@@ -28,47 +30,15 @@ public class Appointment {
         this.createdDate = createdDate;
         this.caregiverID = caregiverID;
         this.guardianID = guardianID;
-        this.guardianElderID = guardianElderID;
+        this.guardianElderIDs = guardianElderIDs != null ? guardianElderIDs : new ArrayList<>();
     }
 
     public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate) {
-        this.appointmentID = appointmentID;
-        this.appointmentDate = appointmentDate;
-        this.status = status;
-        this.duration = duration;
-        this.createdDate = createdDate;
+        this(appointmentID, appointmentDate, status, duration, createdDate, 0, 0, new ArrayList<>());
     }
 
-    public Appointment(){
-        this.appointmentID = 0;
-        this.appointmentDate = null;
-        this.status = AppointmentStatus.UNPAID;
-        this.duration = 0;
-        this.createdDate = null;
-    }
-
-    public int getCaregiverID() {
-        return caregiverID;
-    }
-
-    public void setCaregiverID(int caregiverID) {
-        this.caregiverID = caregiverID;
-    }
-
-    public int getGuardianID() {
-        return guardianID;
-    }
-
-    public void setGuardianID(int guardianID) {
-        this.guardianID = guardianID;
-    }
-
-    public int getGuardianElderID() {
-        return guardianElderID;
-    }
-
-    public void setGuardianElderID(int guardianElderID) {
-        this.guardianElderID = guardianElderID;
+    public Appointment() {
+        this(0, null, AppointmentStatus.UNPAID, 0, null, 0, 0, new ArrayList<>());
     }
 
     public int getAppointmentID() {
@@ -109,5 +79,29 @@ public class Appointment {
 
     public void setCreatedDate(LocalDateTime createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public int getCaregiverID() {
+        return caregiverID;
+    }
+
+    public void setCaregiverID(int caregiverID) {
+        this.caregiverID = caregiverID;
+    }
+
+    public int getGuardianID() {
+        return guardianID;
+    }
+
+    public void setGuardianID(int guardianID) {
+        this.guardianID = guardianID;
+    }
+
+    public List<Integer> getGuardianElderIDs() {
+        return guardianElderIDs;
+    }
+
+    public void setGuardianElderIDs(List<Integer> guardianElderIDs) {
+        this.guardianElderIDs = guardianElderIDs != null ? guardianElderIDs : new ArrayList<>();
     }
 }
