@@ -40,6 +40,7 @@
 
 package view;
 
+import controller.GuardianController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -48,6 +49,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Guardian;
 
 import java.sql.Connection;
 
@@ -114,11 +116,46 @@ public class GuardianRegisterView {
 
         // Actions
         signInButton.setOnAction(e -> {
-            System.out.println("Signing in caregiver...");
-            // TODO: Add database insertion logic via CaregiverController
+            System.out.println("Signing in...");
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+            String firstName = firstNameField.getText();
+            String lastName = lastNameField.getText();
+            String birthday = birthdayField.getText();
+            String contactNumber = contactNumberField.getText();
+            String address = addressField.getText();
+
+            if (firstName.isEmpty() || lastName.isEmpty() || birthday.isEmpty() || contactNumber.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please fill in all required fields.");
+            }
+            Guardian guardian = new Guardian(username, password, firstName, lastName, birthday, contactNumber, address);
+            boolean submissionSuccess = false;
+
+            try {
+                GuardianController guardianController = new GuardianController(conn);
+                guardianController.addGuardian(guardian);
+                submissionSuccess = true;
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+            if (submissionSuccess){
+                System.out.println("Switching to Guardian Landing Page.");
+                GuardianView guardianView = new GuardianView(stage,conn,guardian);
+                stage.setScene(guardianView.getScene());
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Registration Failed", "Could not submit registration data. Please try again later.");
+            }
         });
 
         stage.setScene(scene);
+    }
+
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private TextField createRoundedField(String prompt) {

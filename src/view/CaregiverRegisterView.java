@@ -1,5 +1,6 @@
 package view;
 
+import controller.CaregiverController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -204,32 +205,12 @@ public class CaregiverRegisterView {
             
             String username = usernameField.getText().trim();
             String password = passwordField.getText();
-
             
-            if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty()) {
+            if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty() || selectedBirthday == null
+            || selectedGender == null || contactNumber.isEmpty() || address.isEmpty() || selectedEmploymentType == null || selectedCertFiles.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Missing Information", "Please fill in all required fields.");
                 return;
             }
-            if (selectedBirthday == null) {
-                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select a birth date.");
-                return;
-            }
-            if (selectedGender == null) {
-                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select a gender.");
-                return;
-            }
-            
-            if (selectedEmploymentType == null) {
-                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select an employment type.");
-                return;
-            }
-            
-            if (selectedCertFiles.isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Missing Certifications", "Please upload at least one certification file.");
-                return;
-            }
-            
-
 
             List<String> base64CertStrings = new ArrayList<>();
             boolean encodingError = false;
@@ -250,9 +231,16 @@ public class CaregiverRegisterView {
             }
 
             System.out.println("Data gathered by View. Passing control to Controller (simulated)...");
-            
 
-            boolean submissionSuccess = true; 
+            Caregiver newCaregiver = new Caregiver(username,password,firstName,lastName, selectedBirthday.atStartOfDay(),selectedGender,contactNumber,email,address,base64CertStrings,selectedEmploymentType);
+            boolean submissionSuccess = false;
+            try {
+                CaregiverController caregiverController = new CaregiverController(conn);
+                caregiverController.addCaregiver(newCaregiver);
+                submissionSuccess = true;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
 
             if (submissionSuccess) {
                 System.out.println("Submission successful. Switching to Pending View...");

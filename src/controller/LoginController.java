@@ -62,9 +62,25 @@ public class LoginController {
             return;
         }
         if (caregiver != null && caregiver.getPassword().equals(password)) {
-            CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
-            stage.setScene(caregiverView.getScene());
-            return;
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.PENDING  && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.PENDING ){
+                CaregiverPendingView pendingView = new CaregiverPendingView(stage, conn);
+                stage.setScene(pendingView.getScene());
+                return;
+            }
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.PASSED && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.CLEARED) {
+                CaregiverView caregiverView = new CaregiverView(stage,conn, caregiver);
+                stage.setScene(caregiverView.getScene());
+                return;
+            }
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.FAILED || caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.NOT_CLEARED) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Login Failed.");
+                alert.setHeaderText(null);
+                alert.setContentText("Your Account was not approve. Please register again.");
+                alert.showAndWait();
+                caregiverDAO.deleteCaregiver(caregiver.getCaregiverID());
+                return;
+            }
         }
         if (admin != null && admin.getPassword().equals(password)) {
             AdminView adminView = new AdminView(stage, conn, admin);

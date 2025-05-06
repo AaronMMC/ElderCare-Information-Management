@@ -145,6 +145,8 @@
 package view;
 
 import controller.CaregiverController;
+import controller.LoginController;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -234,6 +236,15 @@ public class CaregiverView {
         Button eldersBtn = createSidebarButton("Your Elders");
         Button servicesBtn = createSidebarButton("Your Services");
         Button logoutBtn = createSidebarButton("Log Out");
+
+        logoutBtn.setOnAction(e -> {
+            System.out.println("Logging out...");
+            Platform.runLater(() -> {
+                LoginController loginController = new LoginController(stage, conn);
+                Scene loginScene = loginController.getLoginScene();
+                stage.setScene(loginScene); // Now the scene will be shown again
+            });
+        });
 
 // Push logout button to bottom using VBox with spacing
         VBox topButtons = new VBox(20, appointmentsBtn, eldersBtn, servicesBtn);

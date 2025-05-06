@@ -318,6 +318,8 @@
 //}
 package view;
 
+import controller.LoginController;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -371,6 +373,14 @@ public class GuardianView {
                 createMenuButton("Your Elders")
         );
         Button logOutButton = createMenuButton("Log Out");
+        logOutButton.setOnAction(e -> {
+            System.out.println("Logging out...");
+            Platform.runLater(() -> {
+                LoginController loginController = new LoginController(stage, conn);
+                Scene loginScene = loginController.getLoginScene();
+                stage.setScene(loginScene); // Now the scene will be shown again
+            });
+        });
 
         // Push Log Out button to the bottom
         VBox spacer = new VBox();
