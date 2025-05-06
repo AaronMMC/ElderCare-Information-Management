@@ -81,6 +81,20 @@ public class GuardianDAO {
         return null;
     }
 
+    public Guardian getGuardianByAppointmentId(int appointmentId) {
+        String sql = "{CALL GetGuardianByAppointmentId(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1, appointmentId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                mapResultSetToGuardian(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public void updateGuardian(Guardian guardian) {
         String sql = "{CALL UpdateGuardian(?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {

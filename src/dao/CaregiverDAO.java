@@ -66,6 +66,20 @@ public class CaregiverDAO {
         return null;
     }
 
+    public Caregiver getCaregiverByAppointmentID(int appointmentID) {
+        String sql = "{CALL GetCaregiverByAppointmentID(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1, appointmentID);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                mapResultSetToCaregiver(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public void updateCaregiver(Caregiver caregiver) {
         checkUsername(caregiver);
         String sql = "{CALL UpdateCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
