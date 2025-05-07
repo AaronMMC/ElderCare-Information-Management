@@ -19,7 +19,15 @@ public class GuardianElderController {
         guardianElderDAO.insertGuardianElderLink(guardianElder);
     }
 
-    public List<Elder> getEldersForGuardian(int guardianId) {
-        return guardianElderDAO.getEldersByGuardianId(guardianId);
+    public List<Elder> getAllEldersByGuardianId(int guardianId) {
+        return guardianElderDAO.getAllEldersByGuardianId(guardianId);
+    }
+
+    public GuardianElder getGuardianElderRelationshipByIds(int guardianId, int elderId) {
+        return guardianElderDAO.getGuardianElderRelationshipByIds(guardianId, elderId);
+    }
+
+    public void updateGuardianElderRelationship(GuardianElder guardianElder) {
+        guardianElderDAO.updateGuardianElderRelationship(guardianElder);
     }
 }
