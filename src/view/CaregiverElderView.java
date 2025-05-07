@@ -1,5 +1,8 @@
 package view;
 
+import dao.AppointmentDAO;
+import dao.ElderDAO;
+import dao.ServiceDAO;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -7,16 +10,22 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Appointment;
 import model.Caregiver;
+import model.Elder;
+import model.Service;
 
 import java.sql.Connection;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class CaregiverElderView {
 
     private final Scene scene;
 
     public CaregiverElderView(Stage stage, Connection conn, Caregiver caregiver) {
-        // === Title and Search/Sort ===
         Label titleLabel = new Label("Your Elders");
         titleLabel.setFont(Font.font("Arial", 24));
         titleLabel.setStyle("-fx-font-weight: bold;");
@@ -29,7 +38,6 @@ public class CaregiverElderView {
                 new Label("Sort by:"), sortBox);
         searchSortBox.setAlignment(Pos.CENTER_RIGHT);
 
-        // === Elders Table ===
         GridPane table = new GridPane();
         table.setHgap(20);
         table.setVgap(20);
@@ -37,12 +45,11 @@ public class CaregiverElderView {
         table.setStyle("-fx-border-color: #B891F1; -fx-border-width: 2; -fx-background-color: #F9F9F9;");
         table.setPrefWidth(750);
 
-        // Header row
         Label eldersHeader = new Label("Elders");
         eldersHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
         Label detailsHeader = new Label("Service Details");
         detailsHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
-        Label actionHeader = new Label(""); // Empty header
+        Label actionHeader = new Label("");
 
         eldersHeader.setPrefWidth(150);
         detailsHeader.setPrefWidth(400);
@@ -51,33 +58,79 @@ public class CaregiverElderView {
         table.add(detailsHeader, 1, 0);
         table.add(actionHeader, 2, 0);
 
-        // Example data rows
-        addElderRow(table, 1, "Jose, Judas, & Joseph",
-                "Type of Services: Physical Therapy\nService Names: FEMDOM");
-        addElderRow(table, 2, "Maria",
-                "Type of Service: Physical Therapy\nService Name: FEMDOM");
-        addElderRow(table, 3, "Pedro",
-                "Type of Service: Physical Therapy\nService Name: FEMDOM");
+        ElderDAO elderDAO = new ElderDAO(conn);
+        ServiceDAO serviceDAO = new ServiceDAO(conn);
+        AppointmentDAO appointmentDAO = new AppointmentDAO(conn);
+        List<Appointment> appointments = appointmentDAO.getAllAppointmentsByCaregiver(caregiver.getCaregiverID());
+
+        int rowIndex = 1;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+        for (Appointment appointment : appointments) {
+            List<Elder> elders = elderDAO.getAllEldersByAppointmentId(appointment.getAppointmentID());
+            List<Service> services = serviceDAO.getAllServicesByAppointmentId(appointment.getAppointmentID());
+
+            for (Elder elder : elders) {
+                int age = Period.between(elder.getDateOfBirth().toLocalDate(), LocalDate.now()).getYears();
+
+                String elderInfo = elder.getFirstName() + " " + elder.getLastName() +
+                        "\nAge: " + age +
+                        "\nPhone: " + elder.getContactNumber() +
+                        "\nEmail: " + elder.getEmail() +
+                        "\nAddress: " + elder.getAddress();
+
+                StringBuilder details = new StringBuilder();
+                details.append("Created: ").append(formatter.format(appointment.getCreatedDate()))
+                        .append("\nScheduled: ").append(formatter.format(appointment.getAppointmentDate()))
+                        .append("\nDuration: ").append(appointment.getDuration() / 60).append(" hours")
+                        .append("\nStatus: ").append(appointment.getStatus().name())
+                        .append("\n\nServices:");
+                for (Service service : services) {
+                    details.append("\n- ").append(service.getServiceName())
+                            .append(" (Type: ").append(service.getCategory()).append(")");
+                }
+
+                Label elderLabel = new Label(elderInfo);
+                elderLabel.setPrefWidth(150);
+                elderLabel.setWrapText(true);
+
+                Label detailsLabel = new Label(details.toString());
+                detailsLabel.setPrefWidth(400);
+                detailsLabel.setWrapText(true);
+
+                Button markDoneBtn = createBigGreenButton("Mark as done");
+                markDoneBtn.setOnAction(e -> {
+                    appointment.setStatus(Appointment.AppointmentStatus.FINISHED);
+                    appointmentDAO.updateAppointment(appointment);
+                    detailsLabel.setText(details.toString().replaceFirst("Status: \\w+", "Status: FINISHED"));
+                });
+
+                HBox buttonBox = new HBox(markDoneBtn);
+                buttonBox.setAlignment(Pos.CENTER_RIGHT);
+                buttonBox.setPrefWidth(150);
+
+                table.add(elderLabel, 0, rowIndex);
+                table.add(detailsLabel, 1, rowIndex);
+                table.add(buttonBox, 2, rowIndex);
+                rowIndex++;
+            }
+        }
 
         VBox leftPane = new VBox(20, titleLabel, searchSortBox, table);
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(800);
 
-        // === Right Sidebar ===
         Button goBackBtn = createSidebarButton("Go Back");
-
         VBox rightPane = new VBox();
         rightPane.setPadding(new Insets(30));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setAlignment(Pos.BOTTOM_CENTER);
         rightPane.setPrefWidth(250);
 
-        // Push Go Back button to bottom
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         rightPane.getChildren().addAll(spacer, goBackBtn);
 
-        // === Root Layout ===
         HBox root = new HBox(20, leftPane, rightPane);
         root.setPadding(new Insets(20));
 
@@ -85,27 +138,6 @@ public class CaregiverElderView {
         stage.setTitle("Your Elders");
         stage.setScene(scene);
         stage.show();
-    }
-
-    private void addElderRow(GridPane table, int rowIndex, String elderName, String details) {
-        Label elderLabel = new Label(elderName);
-        elderLabel.setPrefWidth(150);
-        elderLabel.setWrapText(true);
-
-        Label detailsLabel = new Label(details);
-        detailsLabel.setPrefWidth(400);
-        detailsLabel.setWrapText(true);
-
-        Button markDoneBtn = createBigGreenButton("Mark as done");
-
-        // Align button to the right using HBox
-        HBox buttonBox = new HBox(markDoneBtn);
-        buttonBox.setAlignment(Pos.CENTER_RIGHT);
-        buttonBox.setPrefWidth(150);
-
-        table.add(elderLabel, 0, rowIndex);
-        table.add(detailsLabel, 1, rowIndex);
-        table.add(buttonBox, 2, rowIndex);
     }
 
     private TextField createRoundedTextField(String prompt) {

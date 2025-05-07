@@ -30,12 +30,7 @@ public class ServiceDAO {
             stmt.setInt(1, serviceID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                return new Service(
-                        rs.getInt("service_id"),
-                        rs.getString("category"),
-                        rs.getString("service_name"),
-                        rs.getString("description")
-                );
+                return mapResultSetToService(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -49,12 +44,21 @@ public class ServiceDAO {
             CallableStatement stmt = conn.prepareCall("{call get_all_services()}");
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                services.add(new Service(
-                        rs.getInt("service_id"),
-                        rs.getString("category"),
-                        rs.getString("service_name"),
-                        rs.getString("description")
-                ));
+                services.add(mapResultSetToService(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return services;
+    }
+
+    public List<Service> getAllServicesByAppointmentId(int appointmentID) {
+        String sql = "select * from services where appointment_id = ?";
+        List<Service> services = new ArrayList<>();
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                services.add(mapResultSetToService(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -83,5 +87,13 @@ public class ServiceDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private Service mapResultSetToService(ResultSet rs) throws SQLException {
+        return new Service(
+                rs.getInt("service_id"),
+                rs.getString("category"),
+                rs.getString("service_name"),
+                rs.getString("description"));
     }
 }
