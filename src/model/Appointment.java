@@ -10,7 +10,8 @@ public class Appointment {
         PAID,
         UNPAID,
         FINISHED,
-        CANCELLED
+        CANCELLED,
+        ONGOING
     }
 
     private int appointmentID;
@@ -20,9 +21,9 @@ public class Appointment {
     private LocalDateTime createdDate;
     private int caregiverID;
     private int guardianID;
-    private List<Integer> guardianElderIDs;
+    private List<Integer> elderIDs;
 
-    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int guardianID, List<Integer> guardianElderIDs) {
+    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int guardianID, List<Integer> elderIDs) {
         this.appointmentID = appointmentID;
         this.appointmentDate = appointmentDate;
         this.status = status;
@@ -30,7 +31,7 @@ public class Appointment {
         this.createdDate = createdDate;
         this.caregiverID = caregiverID;
         this.guardianID = guardianID;
-        this.guardianElderIDs = guardianElderIDs != null ? guardianElderIDs : new ArrayList<>();
+        this.elderIDs = elderIDs != null ? elderIDs : new ArrayList<>();
     }
 
     public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate) {
@@ -97,11 +98,11 @@ public class Appointment {
         this.guardianID = guardianID;
     }
 
-    public List<Integer> getGuardianElderIDs() {
-        return guardianElderIDs;
+    public List<Integer> getElderIDs() {
+        return elderIDs;
     }
 
-    public void setGuardianElderIDs(List<Integer> guardianElderIDs) {
-        this.guardianElderIDs = guardianElderIDs != null ? guardianElderIDs : new ArrayList<>();
+    public void setElderIDs(List<Integer> elderIDs) {
+        this.elderIDs = elderIDs != null ? elderIDs : new ArrayList<>();
     }
 }

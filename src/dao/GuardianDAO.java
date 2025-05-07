@@ -31,6 +31,7 @@ public class GuardianDAO {
     }
 
     public void insertGuardian(Guardian guardian) {
+        checkUsername(guardian);
         String sql = "{CALL InsertGuardian(?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, guardian.getUsername());
@@ -47,13 +48,45 @@ public class GuardianDAO {
         }
     }
 
+    private void checkUsername(Guardian guardian) {
+        CaregiverDAO caregiverDAO = new CaregiverDAO(conn);
+        AdminDAO adminDAO = new AdminDAO(conn);
+        // Gather all existing usernames
+        List<Caregiver> caregivers = caregiverDAO.getAllCaregivers();
+        List<Admin> admins = adminDAO.getAllAdmin();
+        List<Guardian> guardians = getAllGuardians();
+
+        // Check for duplicates across all roles
+        boolean usernameExists = caregivers.stream().anyMatch(cg -> cg.getUsername().equalsIgnoreCase(guardian.getUsername())) ||
+                admins.stream().anyMatch(ad -> ad.getUsername().equalsIgnoreCase(guardian.getUsername())) ||
+                guardians.stream().anyMatch(gd -> gd.getUsername().equalsIgnoreCase(guardian.getUsername()));
+
+        if (usernameExists) {
+            throw new RuntimeException("Username is already taken!");
+        }
+    }
+
     public Guardian getGuardianById(int id) {
         String sql = "{CALL GetGuardianById(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                return mapResultSetToGuardian(rs);
+                mapResultSetToGuardian(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Guardian getGuardianByAppointmentId(int appointmentId) {
+        String sql = "{CALL GetGuardianByAppointmentId(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1, appointmentId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                mapResultSetToGuardian(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -104,12 +137,12 @@ public class GuardianDAO {
 
     private Guardian mapResultSetToGuardian(ResultSet rs) throws SQLException {
         return new Guardian(
-                rs.getInt("guardian_id"),
+                rs.getInt("guardianID"),
                 rs.getString("username"),
                 rs.getString("password"),
-                rs.getString("first_name"),
-                rs.getString("last_name"),
-                rs.getString("contact_number"),
+                rs.getString("firstName"),
+                rs.getString("lastName"),
+                rs.getString("contactNumber"),
                 rs.getString("email"),
                 rs.getString("address")
         );
@@ -132,4 +165,6 @@ public class GuardianDAO {
         }
         return null;
     }
+
+
 }

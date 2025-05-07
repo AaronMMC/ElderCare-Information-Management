@@ -7,12 +7,16 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Caregiver;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class CaregiverServiceView {
 
     private final Scene scene;
 
-    public CaregiverServiceView(Stage stage) {
+    public CaregiverServiceView(Stage stage, Connection conn, Caregiver caregiver) throws SQLException {
         Label titleLabel = new Label("Your Services");
         titleLabel.setFont(Font.font("Arial", 24));
         titleLabel.setStyle("-fx-font-weight: bold;");

@@ -23,7 +23,7 @@ public class AppointmentDAO {
             stmt.setInt(4, appointment.getGuardianID());
             stmt.setString(5, appointment.getStatus().name());
             stmt.setTimestamp(6, Timestamp.valueOf(appointment.getCreatedDate()));
-            stmt.setString(7, joinElderIDs(appointment.getGuardianElderIDs()));
+            stmt.setString(7, joinElderIDs(appointment.getElderIDs()));
 
             stmt.execute();
         } catch (SQLException e) {
@@ -67,9 +67,9 @@ public class AppointmentDAO {
         return appointments;
     }
 
-    public List<Appointment> getAppointmentsByCaregiver(int caregiverID) {
+    public List<Appointment> getAllAppointmentsByCaregiver(int caregiverID) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "{CALL GetAppointmentsByCaregiver()}";
+        String sql = "{CALL GetAllAppointmentsByCaregiver()}";
         try (CallableStatement stmt = conn.prepareCall(sql)){
             stmt.setInt(1, caregiverID);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -83,9 +83,9 @@ public class AppointmentDAO {
         return appointments;
     }
 
-    public List<Appointment> getAppointmentByGuardian(int guardianID) {
+    public List<Appointment> getAllAppointmentsByGuardian(int guardianID) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "{CALL GetAppointmentByGuardian()}";
+        String sql = "{CALL GetAllAppointmentsByGuardian()}";
         try (CallableStatement stmt = conn.prepareCall(sql)){
             stmt.setInt(1, guardianID);
             try (ResultSet rs = stmt.executeQuery()){
@@ -130,19 +130,19 @@ public class AppointmentDAO {
                 rs.getTimestamp("creation_date").toLocalDateTime(),
                 rs.getInt("caregiver_id"),
                 rs.getInt("guardian_id"),
-                getGuardianElderIDsForAppointment(appointmentID)
+                getElderIDsByAppointmentId(appointmentID)
         );
         return appointment;
     }
 
-    private List<Integer> getGuardianElderIDsForAppointment(int appointmentID) throws SQLException {
+    private List<Integer> getElderIDsByAppointmentId(int appointmentID) throws SQLException {
         List<Integer> elderIDs = new ArrayList<>();
-        String sql = "SELECT guardian_elder_id FROM appointment_elders WHERE appointment_id = ?";
+        String sql = "SELECT elder_id FROM appointment_elders WHERE appointment_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, appointmentID);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    elderIDs.add(rs.getInt("guardian_elder_id"));
+                    elderIDs.add(rs.getInt("elder_id"));
                 }
             }
         }

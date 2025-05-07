@@ -7,12 +7,15 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Caregiver;
+
+import java.sql.Connection;
 
 public class CaregiverElderView {
 
     private final Scene scene;
 
-    public CaregiverElderView(Stage stage) {
+    public CaregiverElderView(Stage stage, Connection conn, Caregiver caregiver) {
         // === Title and Search/Sort ===
         Label titleLabel = new Label("Your Elders");
         titleLabel.setFont(Font.font("Arial", 24));
