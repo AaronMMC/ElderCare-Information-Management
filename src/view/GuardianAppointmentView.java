@@ -119,21 +119,22 @@ public class GuardianAppointmentView {
             if (caregiver == null || !caregiver.getFirstName().toLowerCase().contains(searchTerm.toLowerCase())) continue;
 
             Payment payment = paymentDAO.getPaymentByAppointmentId(appt.getPaymentID());
-            double totalAmount = payment != null ? payment.getTotalAmount() : 0.0;
+            String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
 
             String details = String.format("""
-            Date posted: %s
-            Status: %s
-            Appointment On: %s
-            Balance: %.2f Php
-            Due on: %s
-            """,
+    Date posted: %s
+    Status: %s
+    Appointment On: %s
+    Balance: %s
+    Due on: %s
+    """,
                     appt.getCreatedDate().toLocalDate(),
                     appt.getStatus(),
                     appt.getAppointmentDate().toLocalDate(),
-                    totalAmount,
+                    balance,
                     appt.getCreatedDate().toLocalDate().plusWeeks(1)
             );
+
 
             addAppointmentRow(table, row++, caregiver.getFirstName(), details, appt);
         }

@@ -3,6 +3,7 @@ package view;
 import dao.AppointmentDAO;
 import dao.ElderDAO;
 import dao.GuardianDAO;
+import dao.PaymentDAO;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
@@ -31,6 +32,7 @@ public class CaregiverAppointmentView {
         AppointmentDAO appointmentDAO = new AppointmentDAO(conn);
         GuardianDAO guardianDAO = new GuardianDAO(conn);
         ElderDAO elderDAO = new ElderDAO(conn);
+        PaymentDAO paymentDAO = new PaymentDAO(conn);
 
         List<Appointment> appointmentList = appointmentDAO.getAllAppointmentsByCaregiver(caregiver.getCaregiverID());
         filteredAppointments = new FilteredList<>(FXCollections.observableArrayList(appointmentList), p -> true);
@@ -72,7 +74,7 @@ public class CaregiverAppointmentView {
         table.add(detailsHeader, 1, 0);
         table.add(actionHeader, 2, 0);
 
-        populateTable(table, guardianDAO, elderDAO, appointmentDAO);
+        populateTable(table, guardianDAO, elderDAO, appointmentDAO, paymentDAO);
 
         VBox leftPane = new VBox(20, titleLabel, searchSortBox, table);
         leftPane.setPadding(new Insets(20));
@@ -110,7 +112,7 @@ public class CaregiverAppointmentView {
         stage.show();
     }
 
-    private void populateTable(GridPane table, GuardianDAO guardianDAO, ElderDAO elderDAO, AppointmentDAO appointmentDAO) throws SQLException {
+    private void populateTable(GridPane table, GuardianDAO guardianDAO, ElderDAO elderDAO, AppointmentDAO appointmentDAO, PaymentDAO paymentDAO) throws SQLException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
         table.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) > 0);
@@ -118,29 +120,28 @@ public class CaregiverAppointmentView {
         int rowIndex = 1;
         for (Appointment appointment : filteredAppointments) {
             Guardian guardian = guardianDAO.getGuardianByAppointmentId(appointment.getAppointmentID());
-            List<Elder> elders = elderDAO.getAllEldersByAppointmentId(appointment.getAppointmentID());
 
+            // === Guardian Info ===
             StringBuilder guardianInfo = new StringBuilder();
             guardianInfo.append(guardian.getFirstName()).append(" ").append(guardian.getLastName())
                     .append("\nPhone: ").append(guardian.getContactNumber())
                     .append("\nEmail: ").append(guardian.getEmail())
                     .append("\nAddress: ").append(guardian.getAddress());
 
+            // === Payment Info ===
+            Payment payment = paymentDAO.getPaymentByAppointmentId(appointment.getPaymentID());
+            String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
+            String dueDate = formatter.format(appointment.getCreatedDate().plusWeeks(1));
+
+            // === Appointment Details ===
             StringBuilder details = new StringBuilder();
-            details.append("Created: ").append(formatter.format(appointment.getCreatedDate()))
-                    .append("\nScheduled: ").append(formatter.format(appointment.getAppointmentDate()))
-                    .append("\nDuration: ").append(appointment.getDuration() / 60).append(" hours")
-                    .append("\nStatus: ").append(appointment.getStatus().name());
+            details.append("Date posted: ").append(formatter.format(appointment.getCreatedDate()))
+                    .append("\nStatus: ").append(appointment.getStatus())
+                    .append("\nAppointment On: ").append(formatter.format(appointment.getAppointmentDate()))
+                    .append("\nBalance: ").append(balance)
+                    .append("\nDue on: ").append(dueDate);
 
-            for (Elder elder : elders) {
-                int age = Period.between(elder.getDateOfBirth().toLocalDate(), LocalDate.now()).getYears();
-                details.append("\n\nElder: ").append(elder.getFirstName()).append(" ").append(elder.getLastName())
-                        .append("\nAge: ").append(age)
-                        .append("\nPhone: ").append(elder.getContactNumber())
-                        .append("\nEmail: ").append(elder.getEmail())
-                        .append("\nAddress: ").append(elder.getAddress());
-            }
-
+            // === UI Components ===
             Label guardianLabel = new Label(guardianInfo.toString());
             guardianLabel.setPrefWidth(150);
             guardianLabel.setWrapText(true);
@@ -154,7 +155,6 @@ public class CaregiverAppointmentView {
                 appointment.setStatus(Appointment.AppointmentStatus.ONGOING);
                 appointmentDAO.updateAppointment(appointment);
 
-                // Refresh status line in the label
                 String updatedDetails = details.toString().replaceFirst(
                         "Status: \\w+", "Status: " + appointment.getStatus().name()
                 );
