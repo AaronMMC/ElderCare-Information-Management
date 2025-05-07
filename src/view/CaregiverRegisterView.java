@@ -22,19 +22,29 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 public class CaregiverRegisterView {
 
     private final Scene scene;
     private final List<File> selectedCertFiles = new ArrayList<>();
     private final ListView<String> certificationsListView = new ListView<>();
-    private final Connection conn;
-    private final Stage stage;
+    private final Connection dbConnection;
+    private final Stage mainStage;
     private final CaregiverController caregiverController;
 
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
+
+    private static final String NUMBER_REGEX = "\\d+";
+    private static final Pattern NUMBER_PATTERN = Pattern.compile(NUMBER_REGEX);
+
+
     public CaregiverRegisterView(Stage stage, Connection conn) {
-        this.stage = stage;
-        this.conn = conn;
+        this.mainStage = stage;
+        this.dbConnection = conn;
         this.caregiverController = new CaregiverController(conn);
 
         Label personalInfoTitle = new Label("Fill up Personal Information");
@@ -159,6 +169,7 @@ public class CaregiverRegisterView {
         personalInfoGrid.add(certificationsBox, 0, row, 2, 1);
         row++;
 
+
         VBox leftPane = new VBox(20, personalInfoTitle, personalInfoGrid);
         leftPane.setPadding(new Insets(40));
         leftPane.setPrefWidth(600);
@@ -205,9 +216,38 @@ public class CaregiverRegisterView {
             String password = passwordField.getText();
 
 
-            if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty() || selectedBirthday == null
-                    || selectedGender == null || contactNumber.isEmpty() || address.isEmpty() || selectedEmploymentType == null || selectedCertFiles.isEmpty()) {
+            if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty() || contactNumber.isEmpty() || address.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Missing Information", "Please fill in all required fields.");
+                return;
+            }
+            if (selectedBirthday == null) {
+                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select a birth date.");
+                return;
+            }
+            if (selectedGender == null) {
+                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select a gender.");
+                return;
+            }
+
+            if (selectedEmploymentType == null) {
+                showAlert(Alert.AlertType.WARNING, "Missing Information", "Please select an employment type.");
+                return;
+            }
+
+            if (selectedCertFiles.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Missing Certifications", "Please upload at least one certification file.");
+                return;
+            }
+
+            Matcher emailMatcher = EMAIL_PATTERN.matcher(email);
+            if (!emailMatcher.matches()) {
+                showAlert(Alert.AlertType.WARNING, "Invalid Email Format", "Please enter a valid email address.");
+                return;
+            }
+
+            Matcher numberMatcher = NUMBER_PATTERN.matcher(contactNumber);
+            if (!numberMatcher.matches()) {
+                showAlert(Alert.AlertType.WARNING, "Invalid Contact Number", "Contact number should only contain digits.");
                 return;
             }
 
@@ -220,40 +260,45 @@ public class CaregiverRegisterView {
                     base64CertStrings.add(encodedString);
                 } catch (IOException ioException) {
                     encodingError = true;
-                    System.err.println("Error reading file: " + file.getName() + " - " + ioException.getMessage());
+                    showAlert(Alert.AlertType.ERROR, "File Read Error", "Could not read one or more certification files. Please check the files and try again: " + file.getName());
+                    return;
                 }
             }
 
-            if (encodingError) {
-                showAlert(Alert.AlertType.ERROR, "File Read Error", "Could not read one or more certification files. Please check the files and try again.");
-                return;
-            }
+            Caregiver newCaregiver = new Caregiver();
+            newCaregiver.setUsername(username);
+            newCaregiver.setPassword(password);
+            newCaregiver.setFirstName(firstName);
+            newCaregiver.setLastName(lastName);
+            newCaregiver.setDateOfBirth(selectedBirthday.atStartOfDay());
+            newCaregiver.setGender(selectedGender);
+            newCaregiver.setContactNumber(contactNumber);
+            newCaregiver.setEmail(email);
+            newCaregiver.setAddress(address);
+            newCaregiver.setCertifications(base64CertStrings);
+            newCaregiver.setEmploymentType(selectedEmploymentType);
 
-            System.out.println("Data gathered by View. Passing control to Controller (simulated)...");
-
-            Caregiver newCaregiver = new Caregiver(username,password,firstName,lastName, selectedBirthday.atStartOfDay(),selectedGender,contactNumber,email,address,base64CertStrings,selectedEmploymentType);
-            boolean submissionSuccess = false;
             try {
-                CaregiverController caregiverController = new CaregiverController(conn);
                 caregiverController.addCaregiver(newCaregiver);
-                submissionSuccess = true;
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+                showAlert(Alert.AlertType.INFORMATION, "Registration Successful", "Your account is pending verification.");
 
-            if (submissionSuccess) {
-                System.out.println("Submission successful. Switching to Pending View...");
-                CaregiverPendingView pendingView = new CaregiverPendingView(stage,conn);
-                stage.setScene(pendingView.getScene());
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Registration Failed", "Could not submit registration data. Please try again later.");
+                CaregiverPendingView pendingView = new CaregiverPendingView(mainStage, dbConnection);
+                mainStage.setScene(pendingView.getScene());
+
+            } catch (RuntimeException ex) {
+                showAlert(Alert.AlertType.WARNING, "Registration Failed", ex.getMessage());
+            } catch (Exception ex) {
+                showAlert(Alert.AlertType.ERROR, "Registration Failed", "An error occurred during registration: " + ex.getMessage());
+                ex.printStackTrace();
             }
         });
 
         backButton.setOnAction(e -> {
-            LoginController loginController = new LoginController(stage, conn);
+            LoginController loginController = new LoginController(mainStage, dbConnection);
             Scene loginScene = loginController.getLoginScene();
-            stage.setScene(loginScene);
+            mainStage.setTitle("ElderCare");
+            mainStage.setScene(loginScene);
+            mainStage.show();
         });
 
         stage.setScene(scene);

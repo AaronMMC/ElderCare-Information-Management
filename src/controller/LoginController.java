@@ -36,17 +36,19 @@ public class LoginController {
     }
 
     public Scene getLoginScene() {
-        return new Scene(loginView.getView(), 400, 500);
+        return new Scene(loginView.getView(), 1000, 700);
     }
 
     private void handleLogin() {
         String username = loginView.getUsernameField().getText();
         String password = loginView.getPasswordField().getText();
 
-        Guardian guardian = guardianDAO.findByUsername(username);
-        Caregiver caregiver = caregiverDAO.findByUsername(username);
-        Admin admin = adminDAO.findByUsername(username);
+        Guardian guardian = guardianDAO.findByUsernameAndPassword(username,password);
+        Caregiver caregiver = caregiverDAO.findByUsernameAndPassword(username,password);
+        Admin admin = adminDAO.findByUsernameAndPassword(username,password);
 
+        System.out.println(caregiver.getBackgroundCheckStatus());
+        System.out.println(caregiver.getMedicalClearanceStatus());
         if (guardian == null && caregiver == null && admin == null) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Login Failed");
@@ -62,17 +64,17 @@ public class LoginController {
             return;
         }
         if (caregiver != null && caregiver.getPassword().equals(password)) {
-            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.PENDING  && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.PENDING ){
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Pending  && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Pending ){
                 CaregiverPendingView pendingView = new CaregiverPendingView(stage, conn);
                 stage.setScene(pendingView.getScene());
                 return;
             }
-            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.PASSED && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.CLEARED) {
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Passed && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Cleared) {
                 CaregiverView caregiverView = new CaregiverView(stage,conn, caregiver);
                 stage.setScene(caregiverView.getScene());
                 return;
             }
-            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.FAILED || caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.NOT_CLEARED) {
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Failed || caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Not_Cleared) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Login Failed.");
                 alert.setHeaderText(null);
@@ -106,4 +108,5 @@ public class LoginController {
         CaregiverRegisterView caregiverRegisterView = new CaregiverRegisterView(stage, conn);
         stage.setScene(caregiverRegisterView.getScene());
     }
+
 }

@@ -6,21 +6,21 @@ import java.util.List;
 public class Caregiver {
 
     public enum Gender {
-        MALE,
-        FEMALE,
-        OTHER
+        Male,
+        Female,
+        Other
     }
 
     public enum BackgroundCheckStatus {
-        PASSED,
-        PENDING,
-        FAILED,
+        Passed,
+        Pending,
+        Failed,
     }
 
     public enum MedicalClearanceStatus {
-        CLEARED,
-        PENDING,
-        NOT_CLEARED,
+        Cleared,
+        Pending,
+        Not_Cleared,
     }
 
     public enum EmploymentType {
@@ -67,18 +67,6 @@ public class Caregiver {
         this.employmentType = employmentType;
     }
 
-    public Caregiver(String username, String password, String firstName, String lastName, LocalDateTime localDateTime, Gender selectedGender, String contactNumber, String email, String address, List<String> base64CertStrings, EmploymentType selectedEmploymentType) {
-        this.username = username;
-        this.password = password;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.dateOfBirth = localDateTime;
-        this.gender = selectedGender;
-        this.contactNumber = contactNumber;
-        this.email = email;
-        this.address = address;
-        this.certifications = base64CertStrings;
-    }
 
     public Caregiver() {
         this.caregiverID = 0;

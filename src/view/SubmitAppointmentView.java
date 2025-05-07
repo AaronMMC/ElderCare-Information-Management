@@ -11,11 +11,11 @@ import model.Guardian;
 
 import java.sql.Connection;
 
-public class AppointmentView {
+public class SubmitAppointmentView {
 
     private final Scene scene;
 
-    public AppointmentView(Stage stage, Connection conn, Guardian guardian) {
+    public SubmitAppointmentView(Stage stage, Connection conn, Guardian guardian) {
 
         // === Title ===
         Label titleLabel = new Label("Submit an Appointment");

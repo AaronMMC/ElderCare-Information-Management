@@ -1,6 +1,7 @@
 package view;
 
 import controller.GuardianController;
+import controller.LoginController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -12,45 +13,62 @@ import javafx.stage.Stage;
 import model.Guardian;
 
 import java.sql.Connection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GuardianRegisterView {
 
     private final Scene scene;
+    private final Connection dbConnection;
+    private final Stage mainStage;
+
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
+
+    private static final String NUMBER_REGEX = "\\d+";
+    private static final Pattern NUMBER_PATTERN = Pattern.compile(NUMBER_REGEX);
 
     public GuardianRegisterView(Stage stage, Connection conn) {
-        // Left pane - personal information
+        this.mainStage = stage;
+        this.dbConnection = conn;
+
         Label personalInfoTitle = new Label("Fill up Personal Information");
         personalInfoTitle.setFont(new Font("Arial", 24));
         personalInfoTitle.setStyle("-fx-font-weight: bold;");
 
         GridPane personalInfoGrid = new GridPane();
         personalInfoGrid.setHgap(20);
-        personalInfoGrid.setVgap(20);
+        personalInfoGrid.setVgap(15);
         personalInfoGrid.setAlignment(Pos.CENTER_LEFT);
 
         TextField firstNameField = createRoundedField("First Name");
         TextField lastNameField = createRoundedField("Last Name");
-        TextField birthdayField = createRoundedField("Birthday");
         TextField contactNumberField = createRoundedField("Contact Number");
+        TextField emailField = createRoundedField("Email Address");
         TextField addressField = createRoundedField("Address");
 
-        personalInfoGrid.add(new Label("First Name"), 0, 0);
-        personalInfoGrid.add(firstNameField, 0, 1);
-        personalInfoGrid.add(new Label("Last Name"), 1, 0);
-        personalInfoGrid.add(lastNameField, 1, 1);
-        personalInfoGrid.add(new Label("Birthday"), 0, 2);
-        personalInfoGrid.add(birthdayField, 0, 3);
-        personalInfoGrid.add(new Label("Contact Number"), 1, 2);
-        personalInfoGrid.add(contactNumberField, 1, 3);
-        personalInfoGrid.add(new Label("Address"), 0, 4);
-        personalInfoGrid.add(addressField, 0, 5);
+        int row = 0;
+        personalInfoGrid.add(new Label("First Name:"), 0, row);
+        personalInfoGrid.add(firstNameField, 1, row);
+        row++;
+        personalInfoGrid.add(new Label("Last Name:"), 0, row);
+        personalInfoGrid.add(lastNameField, 1, row);
+        row++;
+        personalInfoGrid.add(new Label("Contact Number:"), 0, row);
+        personalInfoGrid.add(contactNumberField, 1, row);
+        row++;
+        personalInfoGrid.add(new Label("Email Address:"), 0, row);
+        personalInfoGrid.add(emailField, 1, row);
+        row++;
+        personalInfoGrid.add(new Label("Address:"), 0, row);
+        personalInfoGrid.add(addressField, 1, row);
+        row++;
 
         VBox leftPane = new VBox(20, personalInfoTitle, personalInfoGrid);
         leftPane.setPadding(new Insets(40));
         leftPane.setPrefWidth(600);
         leftPane.setAlignment(Pos.TOP_CENTER);
 
-        // Right pane - registration
         Label registerLabel = new Label("Register");
         registerLabel.setFont(new Font("Arial", 24));
         registerLabel.setTextFill(Color.WHITE);
@@ -61,50 +79,78 @@ public class GuardianRegisterView {
         passwordField.setPromptText("Password");
         styleRoundedField(passwordField);
 
-        Button signInButton = new Button("Sign in");
-        signInButton.setStyle("-fx-background-color: white; -fx-text-fill: black; -fx-font-size: 14px; -fx-background-radius: 20;");
-        signInButton.setPrefWidth(120);
+        Button registerButton = new Button("Register");
+        styleRegisterButton(registerButton);
 
-        VBox rightPane = new VBox(20, registerLabel, usernameField, passwordField, signInButton);
+        Button backButton = new Button("Back to Login");
+        styleStandardButton(backButton);
+
+        VBox rightPane = new VBox(20, registerLabel, usernameField, passwordField, registerButton, backButton);
         rightPane.setPadding(new Insets(60));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setAlignment(Pos.CENTER);
-        rightPane.setPrefWidth(300);
+        rightPane.setPrefWidth(400);
 
         HBox rootLayout = new HBox(leftPane, rightPane);
-        this.scene = new Scene(rootLayout, 900, 500);
+        this.scene = new Scene(rootLayout, 1000, 700);
 
-        // Actions
-        signInButton.setOnAction(e -> {
-            System.out.println("Signing in...");
-            String username = usernameField.getText();
+        registerButton.setOnAction(e -> {
+            String username = usernameField.getText().trim();
             String password = passwordField.getText();
-            String firstName = firstNameField.getText();
-            String lastName = lastNameField.getText();
-            String birthday = birthdayField.getText();
-            String contactNumber = contactNumberField.getText();
-            String address = addressField.getText();
+            String firstName = firstNameField.getText().trim();
+            String lastName = lastNameField.getText().trim();
+            String contactNumber = contactNumberField.getText().trim();
+            String email = emailField.getText().trim();
+            String address = addressField.getText().trim();
 
-            if (firstName.isEmpty() || lastName.isEmpty() || birthday.isEmpty() || contactNumber.isEmpty()) {
+            if (username.isEmpty() || password.isEmpty() || firstName.isEmpty() || lastName.isEmpty() || contactNumber.isEmpty() || email.isEmpty() || address.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Missing Information", "Please fill in all required fields.");
+                return;
             }
-            Guardian guardian = new Guardian(username, password, firstName, lastName, birthday, contactNumber, address);
-            boolean submissionSuccess = false;
+
+            Matcher emailMatcher = EMAIL_PATTERN.matcher(email);
+            if (!emailMatcher.matches()) {
+                showAlert(Alert.AlertType.WARNING, "Invalid Email Format", "Please enter a valid email address.");
+                return;
+            }
+
+            Matcher numberMatcher = NUMBER_PATTERN.matcher(contactNumber);
+            if (!numberMatcher.matches()) {
+                showAlert(Alert.AlertType.WARNING, "Invalid Contact Number", "Contact number should only contain digits.");
+                return;
+            }
+
+            Guardian guardian = new Guardian(username, password, firstName, lastName, contactNumber, email, address);
 
             try {
-                GuardianController guardianController = new GuardianController(conn);
+                GuardianController guardianController = new GuardianController(dbConnection);
                 guardianController.addGuardian(guardian);
-                submissionSuccess = true;
-            } catch (Exception e1) {
-                e1.printStackTrace();
+
+                showAlert(Alert.AlertType.INFORMATION, "Registration Successful", "Your account has been created.");
+
+                Guardian registeredGuardian = guardianController.findByUsername(username);
+
+                if (registeredGuardian != null) {
+                    // Assuming GuardianView constructor is GuardianView(Stage stage, Connection conn, Guardian guardian)
+                    GuardianView guardianView = new GuardianView(mainStage, dbConnection, registeredGuardian);
+                    mainStage.setScene(guardianView.getScene());
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Navigation Error", "Registration succeeded, but could not load guardian profile.");
+                    LoginView loginView = new LoginView();
+                    mainStage.setScene(new Scene(loginView.getView(), mainStage.getScene().getWidth(), mainStage.getScene().getHeight()));
+                }
+
+            } catch (RuntimeException ex) {
+                showAlert(Alert.AlertType.WARNING, "Registration Failed", ex.getMessage());
+            } catch (Exception ex) {
+                showAlert(Alert.AlertType.ERROR, "Registration Failed", "An error occurred during registration: " + ex.getMessage());
+                ex.printStackTrace();
             }
-            if (submissionSuccess){
-                System.out.println("Switching to Guardian Landing Page.");
-                GuardianView guardianView = new GuardianView(stage,conn,guardian);
-                stage.setScene(guardianView.getScene());
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Registration Failed", "Could not submit registration data. Please try again later.");
-            }
+        });
+
+        backButton.setOnAction(e -> {
+            LoginView loginView = new LoginView();
+            mainStage.setScene(new Scene(loginView.getView(), mainStage.getScene().getWidth(), mainStage.getScene().getHeight()));
         });
 
         stage.setScene(scene);
@@ -126,8 +172,26 @@ public class GuardianRegisterView {
     }
 
     private void styleRoundedField(TextField field) {
-        field.setStyle("-fx-background-color: lightgray; -fx-background-radius: 20; -fx-padding: 8 16;");
-        field.setPrefWidth(200);
+        field.setStyle("-fx-background-color: #f0f0f0; -fx-background-radius: 15; -fx-padding: 8 12; -fx-border-color: #cccccc; -fx-border-radius: 15;");
+        field.setPrefWidth(250);
+    }
+
+    private void styleStandardButton(Button button) {
+        String baseStyle = "-fx-background-color: white; -fx-text-fill: black; -fx-font-size: 14px; -fx-background-radius: 20; -fx-border-color: #3BB49C; -fx-border-width: 1; -fx-border-radius: 20;";
+        String hoverStyle = "-fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-font-size: 14px; -fx-background-radius: 20; -fx-border-color: #3BB49C; -fx-border-width: 1; -fx-border-radius: 20;";
+        button.setStyle(baseStyle);
+        button.setPrefWidth(150);
+        button.setOnMouseEntered(e -> button.setStyle(hoverStyle));
+        button.setOnMouseExited(e -> button.setStyle(baseStyle));
+    }
+
+    private void styleRegisterButton(Button button) {
+        String baseStyle = "-fx-background-color: #2a8c79; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 20;";
+        String hoverStyle = "-fx-background-color: #1f6f5f; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 20;";
+        button.setStyle(baseStyle);
+        button.setPrefWidth(150);
+        button.setOnMouseEntered(e -> button.setStyle(hoverStyle));
+        button.setOnMouseExited(e -> button.setStyle(baseStyle));
     }
 
     public Scene getScene() {

@@ -65,7 +65,7 @@ public class GuardianAppointmentView {
         Button goBackBtn = createSidebarButton("Go Back");
 
         submitBtn.setOnAction(e -> {
-            AppointmentView appointmentView = new AppointmentView(stage, conn, guardian);
+            SubmitAppointmentView appointmentView = new SubmitAppointmentView(stage, conn, guardian);
             stage.setScene(appointmentView.getScene());
         });
 
