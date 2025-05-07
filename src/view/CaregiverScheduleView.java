@@ -10,6 +10,7 @@ import javafx.stage.Stage;
 import model.Caregiver;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 public class CaregiverScheduleView {
 
@@ -56,6 +57,15 @@ public class CaregiverScheduleView {
 
         // === Right Sidebar ===
         Button goBackBtn = createSidebarButton("Go Back");
+        goBackBtn.setOnAction(e -> {
+            CaregiverAppointmentView caregiverAppointmentView = null;
+            try {
+                caregiverAppointmentView = new CaregiverAppointmentView(stage,conn,caregiver);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            stage.setScene(caregiverAppointmentView.getScene());
+        });
 
         VBox rightPane = new VBox();
         rightPane.setPadding(new Insets(30));
