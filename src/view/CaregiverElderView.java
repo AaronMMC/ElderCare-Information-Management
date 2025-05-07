@@ -24,44 +24,98 @@ import java.util.List;
 public class CaregiverElderView {
 
     private final Scene scene;
+    private final GridPane table = new GridPane();
+    private final AppointmentDAO appointmentDAO;
+    private final ElderDAO elderDAO;
+    private final ServiceDAO serviceDAO;
+    private final Caregiver caregiver;
+    private final ComboBox<String> sortBox = createRoundedComboBox("Filter by Status");
 
     public CaregiverElderView(Stage stage, Connection conn, Caregiver caregiver) {
+        this.caregiver = caregiver;
+        this.appointmentDAO = new AppointmentDAO(conn);
+        this.elderDAO = new ElderDAO(conn);
+        this.serviceDAO = new ServiceDAO(conn);
+
         Label titleLabel = new Label("Your Elders");
         titleLabel.setFont(Font.font("Arial", 24));
         titleLabel.setStyle("-fx-font-weight: bold;");
 
-        TextField searchField = createRoundedTextField("(Searchfield)");
-        ComboBox<String> sortBox = createRoundedComboBox("(Dropdown)");
+        sortBox.getItems().addAll("PAID", "UNPAID", "FINISHED", "CANCELLED", "ONGOING");
+        sortBox.setValue("ONGOING"); // default filter
 
-        HBox searchSortBox = new HBox(20,
-                new Label("Search:"), searchField,
-                new Label("Sort by:"), sortBox);
-        searchSortBox.setAlignment(Pos.CENTER_RIGHT);
+        sortBox.setOnAction(e -> populateTable());
 
-        GridPane table = new GridPane();
+        HBox filterBox = new HBox(20, new Label("Filter by:"), sortBox);
+        filterBox.setAlignment(Pos.CENTER_RIGHT);
+
         table.setHgap(20);
         table.setVgap(20);
         table.setPadding(new Insets(20));
+        table.setMinWidth(700);
+        table.setPrefWidth(700);
         table.setStyle("-fx-border-color: #B891F1; -fx-border-width: 2; -fx-background-color: #F9F9F9;");
         table.setPrefWidth(750);
 
+        ScrollPane scrollPane = new ScrollPane(table);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color:transparent;");
+        scrollPane.setPrefHeight(220); // Adjust based on row height
+
+        VBox leftPane = new VBox(20, titleLabel, filterBox, scrollPane);
+
+        leftPane.setPadding(new Insets(20));
+        leftPane.setPrefWidth(800);
+
+        Button goBackBtn = createSidebarButton("Go Back");
+        goBackBtn.setOnAction(e -> {
+            CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
+            stage.setScene(caregiverView.getScene());
+        });
+
+        VBox rightPane = new VBox();
+        rightPane.setPadding(new Insets(30));
+        rightPane.setStyle("-fx-background-color: #3BB49C;");
+        rightPane.setAlignment(Pos.BOTTOM_CENTER);
+        rightPane.setPrefWidth(250);
+        VBox spacer = new VBox();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+        rightPane.getChildren().addAll(spacer, goBackBtn);
+
+        HBox root = new HBox(20, leftPane, rightPane);
+        root.setPadding(new Insets(20));
+
+        this.scene = new Scene(root, 1100, 600);
+        stage.setTitle("Your Elders");
+        stage.setScene(scene);
+        stage.show();
+
+        populateTable();
+    }
+
+    private void populateTable() {
+        table.getChildren().clear();
+
         Label eldersHeader = new Label("Elders");
         eldersHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
+        eldersHeader.setPrefWidth(150);
+
         Label detailsHeader = new Label("Service Details");
         detailsHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
-        Label actionHeader = new Label("");
-
-        eldersHeader.setPrefWidth(150);
         detailsHeader.setPrefWidth(400);
+
+        Label actionHeader = new Label();
 
         table.add(eldersHeader, 0, 0);
         table.add(detailsHeader, 1, 0);
         table.add(actionHeader, 2, 0);
 
-        ElderDAO elderDAO = new ElderDAO(conn);
-        ServiceDAO serviceDAO = new ServiceDAO(conn);
-        AppointmentDAO appointmentDAO = new AppointmentDAO(conn);
-        List<Appointment> appointments = appointmentDAO.getAllAppointmentsByCaregiver(caregiver.getCaregiverID());
+        String selectedStatus = sortBox.getValue();
+        Appointment.AppointmentStatus filterStatus = Appointment.AppointmentStatus.valueOf(selectedStatus);
+        List<Appointment> appointments = appointmentDAO.getAllAppointmentsByCaregiver(caregiver.getCaregiverID())
+                .stream()
+                .filter(a -> a.getStatus() == filterStatus)
+                .toList();
 
         int rowIndex = 1;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
@@ -72,7 +126,6 @@ public class CaregiverElderView {
 
             for (Elder elder : elders) {
                 int age = Period.between(elder.getDateOfBirth().toLocalDate(), LocalDate.now()).getYears();
-
                 String elderInfo = elder.getFirstName() + " " + elder.getLastName() +
                         "\nAge: " + age +
                         "\nPhone: " + elder.getContactNumber() +
@@ -102,7 +155,7 @@ public class CaregiverElderView {
                 markDoneBtn.setOnAction(e -> {
                     appointment.setStatus(Appointment.AppointmentStatus.FINISHED);
                     appointmentDAO.updateAppointment(appointment);
-                    detailsLabel.setText(details.toString().replaceFirst("Status: \\w+", "Status: FINISHED"));
+                    populateTable(); // Refresh after marking done
                 });
 
                 HBox buttonBox = new HBox(markDoneBtn);
@@ -115,29 +168,6 @@ public class CaregiverElderView {
                 rowIndex++;
             }
         }
-
-        VBox leftPane = new VBox(20, titleLabel, searchSortBox, table);
-        leftPane.setPadding(new Insets(20));
-        leftPane.setPrefWidth(800);
-
-        Button goBackBtn = createSidebarButton("Go Back");
-        VBox rightPane = new VBox();
-        rightPane.setPadding(new Insets(30));
-        rightPane.setStyle("-fx-background-color: #3BB49C;");
-        rightPane.setAlignment(Pos.BOTTOM_CENTER);
-        rightPane.setPrefWidth(250);
-
-        VBox spacer = new VBox();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-        rightPane.getChildren().addAll(spacer, goBackBtn);
-
-        HBox root = new HBox(20, leftPane, rightPane);
-        root.setPadding(new Insets(20));
-
-        this.scene = new Scene(root, 1100, 600);
-        stage.setTitle("Your Elders");
-        stage.setScene(scene);
-        stage.show();
     }
 
     private TextField createRoundedTextField(String prompt) {
