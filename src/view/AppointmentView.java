@@ -7,12 +7,15 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Guardian;
 
-public class SubmitAppointmentView {
+import java.sql.Connection;
+
+public class AppointmentView {
 
     private final Scene scene;
 
-    public SubmitAppointmentView(Stage stage) {
+    public AppointmentView(Stage stage, Connection conn, Guardian guardian) {
 
         // === Title ===
         Label titleLabel = new Label("Submit an Appointment");
