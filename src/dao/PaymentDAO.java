@@ -30,13 +30,20 @@ public class PaymentDAO {
             stmt.setInt(1, paymentID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                return new Payment(
-                        rs.getInt("payment_id"),
-                        rs.getDouble("total_amount"),
-                        Payment.PaymentMethod.valueOf(rs.getString("payment_method")),
-                        rs.getDouble("additional_charges"),
-                        rs.getTimestamp("transaction_date").toLocalDateTime()
-                );
+                mapResultSetToPayment(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Payment getPaymentByAppointmentId(int appointmentID)  {
+        String sql = "{CALL get_payment_by_appointment_id(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+               mapResultSetToPayment(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -50,13 +57,7 @@ public class PaymentDAO {
             CallableStatement stmt = conn.prepareCall("{call get_all_payments()}");
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                payments.add(new Payment(
-                        rs.getInt("payment_id"),
-                        rs.getDouble("total_amount"),
-                        Payment.PaymentMethod.valueOf(rs.getString("payment_method")),
-                        rs.getDouble("additional_charges"),
-                        rs.getTimestamp("transaction_date").toLocalDateTime()
-                ));
+                payments.add(mapResultSetToPayment(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -85,5 +86,14 @@ public class PaymentDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private Payment mapResultSetToPayment(ResultSet rs) throws SQLException {
+        return new Payment(
+                rs.getInt("payment_id"),
+                rs.getDouble("total_amount"),
+                Payment.PaymentMethod.valueOf(rs.getString("payment_method")),
+                rs.getDouble("additional_charges"),
+                rs.getTimestamp("transaction_date").toLocalDateTime());
     }
 }

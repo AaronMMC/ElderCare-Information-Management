@@ -130,7 +130,8 @@ public class AppointmentDAO {
                 rs.getTimestamp("creation_date").toLocalDateTime(),
                 rs.getInt("caregiver_id"),
                 rs.getInt("guardian_id"),
-                getElderIDsByAppointmentId(appointmentID)
+                getElderIDsByAppointmentId(appointmentID),
+                rs.getInt("payment_id")
         );
         return appointment;
     }

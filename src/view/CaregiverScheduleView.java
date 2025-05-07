@@ -7,12 +7,15 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Caregiver;
+
+import java.sql.Connection;
 
 public class CaregiverScheduleView {
 
     private final Scene scene;
 
-    public CaregiverScheduleView(Stage stage) {
+    public CaregiverScheduleView(Stage stage, Connection conn, Caregiver caregiver) {
 
         // === Title ===
         Label titleLabel = new Label("Your Schedule");

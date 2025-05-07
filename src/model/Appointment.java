@@ -22,8 +22,9 @@ public class Appointment {
     private int caregiverID;
     private int guardianID;
     private List<Integer> elderIDs;
+    private int paymentID;
 
-    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int guardianID, List<Integer> elderIDs) {
+    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int guardianID, List<Integer> elderIDs, int paymentID) {
         this.appointmentID = appointmentID;
         this.appointmentDate = appointmentDate;
         this.status = status;
@@ -32,14 +33,23 @@ public class Appointment {
         this.caregiverID = caregiverID;
         this.guardianID = guardianID;
         this.elderIDs = elderIDs != null ? elderIDs : new ArrayList<>();
+        this.paymentID = paymentID;
     }
 
     public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate) {
-        this(appointmentID, appointmentDate, status, duration, createdDate, 0, 0, new ArrayList<>());
+        this(appointmentID, appointmentDate, status, duration, createdDate, 0, 0, new ArrayList<>(),0);
     }
 
     public Appointment() {
-        this(0, null, AppointmentStatus.UNPAID, 0, null, 0, 0, new ArrayList<>());
+        this(0, null, AppointmentStatus.UNPAID, 0, null, 0, 0, new ArrayList<>(),0);
+    }
+
+    public int getPaymentID() {
+        return paymentID;
+    }
+
+    public void setPaymentID(int paymentID) {
+        this.paymentID = paymentID;
     }
 
     public int getAppointmentID() {

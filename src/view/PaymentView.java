@@ -7,12 +7,16 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Appointment;
+import model.Guardian;
+
+import java.sql.Connection;
 
 public class PaymentView{
 
     private final Scene scene;
 
-    public PaymentView(Stage stage) {
+    public PaymentView(Stage stage, Connection conn, Guardian guardian, Appointment appointment) {
 
         // === Title ===
         Label titleLabel = new Label("Payment Details");

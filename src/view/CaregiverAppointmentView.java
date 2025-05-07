@@ -18,6 +18,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class CaregiverAppointmentView {
@@ -80,6 +81,16 @@ public class CaregiverAppointmentView {
         Button scheduleBtn = createSidebarButton("Your Schedule");
         Button goBackBtn = createSidebarButton("Go Back");
 
+        scheduleBtn.setOnAction(e -> {
+            CaregiverScheduleView scheduleView = new CaregiverScheduleView(stage, conn, caregiver);
+            stage.setScene(scheduleView.getScene());
+        });
+
+        goBackBtn.setOnAction(e -> {
+            CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
+            stage.setScene(caregiverView.getScene());
+        });
+
         VBox rightPane = new VBox(30, scheduleBtn);
         rightPane.setPadding(new Insets(30));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
@@ -100,6 +111,8 @@ public class CaregiverAppointmentView {
     }
 
     private void populateTable(GridPane table, GuardianDAO guardianDAO, ElderDAO elderDAO, AppointmentDAO appointmentDAO) throws SQLException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
         table.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) > 0);
 
         int rowIndex = 1;
@@ -114,8 +127,8 @@ public class CaregiverAppointmentView {
                     .append("\nAddress: ").append(guardian.getAddress());
 
             StringBuilder details = new StringBuilder();
-            details.append("Created: ").append(appointment.getCreatedDate())
-                    .append("\nScheduled: ").append(appointment.getAppointmentDate())
+            details.append("Created: ").append(formatter.format(appointment.getCreatedDate()))
+                    .append("\nScheduled: ").append(formatter.format(appointment.getAppointmentDate()))
                     .append("\nDuration: ").append(appointment.getDuration() / 60).append(" hours")
                     .append("\nStatus: ").append(appointment.getStatus().name());
 
@@ -140,7 +153,12 @@ public class CaregiverAppointmentView {
             approveBtn.setOnAction(e -> {
                 appointment.setStatus(Appointment.AppointmentStatus.ONGOING);
                 appointmentDAO.updateAppointment(appointment);
-                detailsLabel.setText(details.toString().replace(appointment.getStatus().name(), "ONGOING"));
+
+                // Refresh status line in the label
+                String updatedDetails = details.toString().replaceFirst(
+                        "Status: \\w+", "Status: " + appointment.getStatus().name()
+                );
+                detailsLabel.setText(updatedDetails);
             });
 
             HBox buttonBox = new HBox(approveBtn);

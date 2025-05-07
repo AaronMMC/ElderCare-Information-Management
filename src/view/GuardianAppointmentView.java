@@ -1,5 +1,9 @@
 package view;
 
+import dao.AppointmentDAO;
+import dao.CaregiverDAO;
+import dao.PaymentDAO;
+import model.Appointment.AppointmentStatus;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -9,63 +13,56 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import model.Guardian;
-
+import model.*;
 import java.sql.Connection;
+import java.util.List;
 
 public class GuardianAppointmentView {
 
     private final Scene scene;
+    private final Stage stage;
+    private final Connection conn;
+    private final Guardian guardian;
 
     public GuardianAppointmentView(Stage stage, Connection conn, Guardian guardian) {
-        // === Logo ===
+        this.stage = stage;
+        this.conn = conn;
+        this.guardian = guardian;
+
         ImageView logo = new ImageView(new Image("file:resources/logo.png"));
         logo.setFitWidth(150);
         logo.setPreserveRatio(true);
 
-        // === Title ===
         Label titleLabel = new Label("Your Appointments");
         titleLabel.setFont(Font.font("Arial", 28));
         titleLabel.setStyle("-fx-font-weight: bold;");
 
-        // === Search/Sort Controls ===
-        TextField searchField = createRoundedTextField("(Searchfield)");
-        ComboBox<String> sortBox = createRoundedComboBox("(Dropdown)");
+        TextField searchField = createRoundedTextField("Search by caregiver's first name");
+        ComboBox<String> sortBox = createRoundedComboBox("Filter by status");
 
         HBox searchSortBox = new HBox(20,
                 new Label("Search:"), searchField,
                 new Label("Sort by:"), sortBox);
         searchSortBox.setAlignment(Pos.CENTER_RIGHT);
 
-        // === Header Section (Title + Controls) ===
         VBox headerBox = new VBox(10, titleLabel, searchSortBox);
         headerBox.setAlignment(Pos.TOP_LEFT);
 
-        // === Appointments Table ===
         GridPane table = new GridPane();
         table.setHgap(10);
         table.setVgap(10);
         table.setPadding(new Insets(20));
         table.setStyle("-fx-border-color: #CBA5F5; -fx-border-width: 2; -fx-background-color: #FDFBFF;");
 
-        // Header row
-        addHeaderRow(table);
-
-        // Data rows
-        addAppointmentRow(table, 1, "Jose", "Date posted: 01/13/2025\nStatus: Pending\nAppointment On: 02/02/2025\nBalance: 0.00Php\nDue on: xxx");
-        addAppointmentRow(table, 2, "Maria", "Date posted: 01/13/2025\nStatus: Pending\nAppointment On: 02/02/2025\nBalance: 0.00Php\nDue on: xxx");
-        addAppointmentRow(table, 3, "Pedro", "Date posted: 01/13/2025\nStatus: Pending\nAppointment On: 02/02/2025\nBalance: 0.00Php\nDue on: xxx");
-
         VBox leftPane = new VBox(20, logo, headerBox, table);
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(850);
 
-        // === Sidebar ===
         Button submitBtn = createSidebarButton("Submit an Appointment");
         Button goBackBtn = createSidebarButton("Go Back");
 
         submitBtn.setOnAction(e -> {
-            SubmitAppointmentView appointmentView = new SubmitAppointmentView(stage, conn, guardian);
+            AppointmentView appointmentView = new AppointmentView(stage, conn, guardian);
             stage.setScene(appointmentView.getScene());
         });
 
@@ -84,7 +81,6 @@ public class GuardianAppointmentView {
         VBox.setVgrow(spacer, Priority.ALWAYS);
         rightPane.getChildren().addAll(spacer, goBackBtn);
 
-        // === Root Layout ===
         HBox root = new HBox(20, leftPane, rightPane);
         root.setPadding(new Insets(20));
 
@@ -92,7 +88,57 @@ public class GuardianAppointmentView {
         stage.setTitle("Guardian Appointments");
         stage.setScene(scene);
         stage.show();
+
+        sortBox.getItems().addAll("UNPAID", "PAID", "ONGOING", "FINISHED", "CANCELLED");
+        sortBox.setValue("UNPAID");
+
+        searchField.textProperty().addListener((obs, oldVal, newVal) ->
+                populateAppointments(table, newVal, AppointmentStatus.valueOf(sortBox.getValue())));
+
+        sortBox.setOnAction(e ->
+                populateAppointments(table, searchField.getText(), AppointmentStatus.valueOf(sortBox.getValue())));
+
+        populateAppointments(table, "", AppointmentStatus.UNPAID);
     }
+
+    private void populateAppointments(GridPane table, String searchTerm, AppointmentStatus filterStatus) {
+        table.getChildren().clear();
+        addHeaderRow(table);
+
+        AppointmentDAO appointmentDAO = new AppointmentDAO(conn);
+        CaregiverDAO caregiverDAO = new CaregiverDAO(conn);
+        PaymentDAO paymentDAO = new PaymentDAO(conn);
+
+        List<Appointment> appointments = appointmentDAO.getAllAppointmentsByGuardian(guardian.getGuardianID());
+        int row = 1;
+
+        for (Appointment appt : appointments) {
+            if (appt.getStatus() != filterStatus) continue;
+
+            Caregiver caregiver = caregiverDAO.getCaregiverById(appt.getCaregiverID());
+            if (caregiver == null || !caregiver.getFirstName().toLowerCase().contains(searchTerm.toLowerCase())) continue;
+
+            Payment payment = paymentDAO.getPaymentByAppointmentId(appt.getPaymentID());
+            double totalAmount = payment != null ? payment.getTotalAmount() : 0.0;
+
+            String details = String.format("""
+            Date posted: %s
+            Status: %s
+            Appointment On: %s
+            Balance: %.2f Php
+            Due on: %s
+            """,
+                    appt.getCreatedDate().toLocalDate(),
+                    appt.getStatus(),
+                    appt.getAppointmentDate().toLocalDate(),
+                    totalAmount,
+                    appt.getCreatedDate().toLocalDate().plusWeeks(1)
+            );
+
+            addAppointmentRow(table, row++, caregiver.getFirstName(), details, appt);
+        }
+    }
+
 
     private void addHeaderRow(GridPane table) {
         Label caregiverHeader = new Label("Caregivers");
@@ -111,7 +157,9 @@ public class GuardianAppointmentView {
         table.add(payHeader, 2, 0);
     }
 
-    private void addAppointmentRow(GridPane table, int rowIndex, String caregiver, String details) {
+    private void addAppointmentRow(GridPane table, int rowIndex, String caregiver, String details, Appointment appointment) {
+        AppointmentDAO appointmentDAO = new AppointmentDAO(conn);
+
         Label caregiverLabel = new Label(caregiver);
         caregiverLabel.setPrefWidth(150);
 
@@ -119,10 +167,21 @@ public class GuardianAppointmentView {
         detailsLabel.setWrapText(true);
         detailsLabel.setPrefWidth(400);
 
-        Button payBtn = createPayButton("Pay");
-        HBox btnBox = new HBox(payBtn);
+        HBox btnBox = new HBox();
         btnBox.setAlignment(Pos.CENTER_RIGHT);
         btnBox.setPrefWidth(150);
+
+        if (appointment.getStatus() == AppointmentStatus.UNPAID) {
+            Button payBtn = createPayButton("Pay");
+            payBtn.setOnAction(e -> {
+                PaymentView paymentView = new PaymentView(stage, conn, guardian, appointment);
+                stage.setScene(paymentView.getScene());
+                appointment.setStatus(AppointmentStatus.PAID);
+                appointmentDAO.updateAppointment(appointment);
+                populateAppointments(table, "", AppointmentStatus.UNPAID);
+            });
+            btnBox.getChildren().add(payBtn);
+        }
 
         table.add(caregiverLabel, 0, rowIndex);
         table.add(detailsLabel, 1, rowIndex);
