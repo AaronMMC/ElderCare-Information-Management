@@ -137,12 +137,12 @@ public class GuardianDAO {
 
     private Guardian mapResultSetToGuardian(ResultSet rs) throws SQLException {
         return new Guardian(
-                rs.getInt("guardianID"),
+                rs.getInt("guardian_id"),
                 rs.getString("username"),
                 rs.getString("password"),
-                rs.getString("firstName"),
-                rs.getString("lastName"),
-                rs.getString("contactNumber"),
+                rs.getString("first_name"),
+                rs.getString("last_name"),
+                rs.getString("contact_number"),
                 rs.getString("email"),
                 rs.getString("address")
         );

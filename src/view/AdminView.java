@@ -3,16 +3,18 @@ package view;
 import controller.LoginController;
 import dao.CaregiverDAO;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.Admin;
@@ -26,368 +28,371 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Base64;
-import java.util.concurrent.CountDownLatch; // To wait for FX thread
-
-// Add imports for JavaFX components you'll use in the new window
 
 public class AdminView {
 
     private final Admin admin;
     private final CaregiverDAO caregiverDAO;
-    private final Scanner scanner;
-    private final Stage stage; // This is the main stage, likely for the login view
+    private final Stage primaryStage;
     private final Connection conn;
+
+    private BorderPane mainLayout; // The root layout for the single window
+    private TableView<Caregiver> caregiverTable;
+    private final ObservableList<Caregiver> caregiverData = FXCollections.observableArrayList();
+    private Node manageCaregiversViewNode; // Cached node for the caregiver table view
 
     public AdminView(Stage parent, Connection conn, Admin admin) {
         this.admin = admin;
         this.caregiverDAO = new CaregiverDAO(conn);
-        this.scanner = new Scanner(System.in);
-        this.stage = parent;
+        this.primaryStage = parent;
         this.conn = conn;
+        // Initialize caregiverTable here to be reused
+        this.caregiverTable = new TableView<>();
+        setupCaregiverTableColumns();
     }
 
-    public void start() {
-        // The main loop runs on the non-JavaFX thread (usually main thread)
-        while (true) {
-            System.out.println("\n=== Admin Panel ===");
-            System.out.println("1. View All Caregivers (Console)");
-            System.out.println("2. Update Caregiver (Console)");
-            System.out.println("3. Logout");
-            System.out.println("4. View Caregiver Details & Certifications (GUI)"); // New GUI Option
-            System.out.print("Choose an option: ");
-            String input = scanner.nextLine();
+    public Scene createAdminScene() {
+        mainLayout = new BorderPane();
+        mainLayout.setPadding(new Insets(10));
 
-            switch (input) {
-                case "1":
-                    viewAllCaregiversConsole(); // Renamed to indicate console output
-                    break;
-                case "2":
-                    updateCaregiverConsole(); // Renamed to indicate console input/output
-                    break;
-                case "3":
-                    logout();
-                    return; // Exit start() method
-                case "4":
-                    viewCaregiverDetailsGUI(); // Call method to launch GUI
-                    break;
-                default:
-                    System.out.println("Invalid choice.");
-            }
+        // Top Navigation Bar
+        HBox topBar = new HBox(10);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(0, 0, 10, 0));
+        Label titleApp = new Label("Admin Dashboard");
+        titleApp.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        Button showCaregiversButton = new Button("Manage Caregivers");
+        showCaregiversButton.setOnAction(e -> mainLayout.setCenter(getManageCaregiversNode()));
+
+        Region spacer = new Region(); // Pushes logout to the right
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button logoutButton = new Button("Logout");
+        logoutButton.setOnAction(e -> logout());
+
+        topBar.getChildren().addAll(titleApp, new Label(" :: "), showCaregiversButton, spacer, logoutButton);
+        mainLayout.setTop(topBar);
+
+        // Set initial view in the center
+        mainLayout.setCenter(getManageCaregiversNode()); // Default to caregiver management
+
+        return new Scene(mainLayout, 950, 700); // Adjusted size
+    }
+
+    // --- Node creation for Manage Caregivers View ---
+    private Node getManageCaregiversNode() {
+        if (manageCaregiversViewNode == null) {
+            manageCaregiversViewNode = createManageCaregiversNodeInternal();
         }
+        loadCaregiverData(); // Always refresh data when showing this view
+        return manageCaregiversViewNode;
     }
 
-    private void logout() {
-        System.out.println("Logging out...");
-        // Use Platform.runLater to switch back to the login view on the FX thread
-        Platform.runLater(() -> {
-            LoginController loginController = new LoginController(stage, conn);
-            Scene loginScene = loginController.getLoginScene(); // Assuming LoginController provides the scene
-            stage.setScene(loginScene);
-            stage.setTitle("Login"); // Set title if needed
-            stage.show(); // Make sure the main stage is visible
+    private Node createManageCaregiversNodeInternal() {
+        BorderPane caregiverManagementLayout = new BorderPane();
+        caregiverManagementLayout.setPadding(new Insets(10));
+
+        // Center: TableView (already initialized and configured in constructor)
+        caregiverManagementLayout.setCenter(caregiverTable);
+
+        // Bottom: Buttons
+        Button refreshButton = new Button("Refresh List");
+        refreshButton.setOnAction(e -> loadCaregiverData());
+
+        Button viewDetailsButton = new Button("View/Update Selected Details");
+        viewDetailsButton.setOnAction(e -> {
+            Caregiver selectedCaregiver = caregiverTable.getSelectionModel().getSelectedItem();
+            if (selectedCaregiver != null) {
+                mainLayout.setCenter(createCaregiverDetailNode(selectedCaregiver));
+            } else {
+                showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a caregiver from the table.");
+            }
         });
+        viewDetailsButton.disableProperty().bind(caregiverTable.getSelectionModel().selectedItemProperty().isNull());
+
+        HBox buttonBox = new HBox(10, refreshButton, viewDetailsButton);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        buttonBox.setPadding(new Insets(10, 0, 0, 0));
+        caregiverManagementLayout.setBottom(buttonBox);
+
+        loadCaregiverData(); // Initial data load for the table
+        return caregiverManagementLayout;
     }
 
-    private void viewAllCaregiversConsole() { // Renamed
-        List<Caregiver> caregivers = caregiverDAO.getAllCaregivers();
-        System.out.println("\n--- All Caregivers ---");
-        if (caregivers.isEmpty()) {
-            System.out.println("No caregivers found.");
-            return;
-        }
-        for (Caregiver cg : caregivers) {
-            // Printing Base64 here is impractical, just indicate presence
-            String certStatus = (cg.getCertifications() != null && !cg.getCertifications().isEmpty())
-                    ? cg.getCertifications().size() + " files(s)" : "None";
-            System.out.printf(
-                    "ID: %d | Name: %s %s | Email: %s | Statuses: BG=%s, Med=%s | Employment: %s | Certifications: %s\n",
-                    cg.getCaregiverID(),
-                    cg.getFirstName(),
-                    cg.getLastName(),
-                    cg.getEmail(),
-                    cg.getBackgroundCheckStatus(),
-                    cg.getMedicalClearanceStatus(),
-                    cg.getEmploymentType(),
-                    certStatus // Show count instead of raw Base64
-            );
-        }
+    @SuppressWarnings("unchecked")
+    private void setupCaregiverTableColumns() {
+        TableColumn<Caregiver, Integer> idColumn = new TableColumn<>("ID");
+        idColumn.setCellValueFactory(new PropertyValueFactory<>("caregiverID"));
+
+        TableColumn<Caregiver, String> firstNameColumn = new TableColumn<>("First Name");
+        firstNameColumn.setCellValueFactory(new PropertyValueFactory<>("firstName"));
+
+        TableColumn<Caregiver, String> lastNameColumn = new TableColumn<>("Last Name");
+        lastNameColumn.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+
+        TableColumn<Caregiver, String> emailColumn = new TableColumn<>("Email");
+        emailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
+        emailColumn.setMinWidth(180);
+
+        TableColumn<Caregiver, Caregiver.BackgroundCheckStatus> bgStatusColumn = new TableColumn<>("BG Check");
+        bgStatusColumn.setCellValueFactory(new PropertyValueFactory<>("backgroundCheckStatus"));
+
+        TableColumn<Caregiver, Caregiver.MedicalClearanceStatus> medStatusColumn = new TableColumn<>("Med Clearance");
+        medStatusColumn.setCellValueFactory(new PropertyValueFactory<>("medicalClearanceStatus"));
+
+        TableColumn<Caregiver, String> employmentColumn = new TableColumn<>("Employment");
+        employmentColumn.setCellValueFactory(new PropertyValueFactory<>("employmentType"));
+
+        TableColumn<Caregiver, String> certsColumn = new TableColumn<>("Certs");
+        certsColumn.setCellValueFactory(cellData -> {
+            int count = (cellData.getValue().getCertifications() != null) ? cellData.getValue().getCertifications().size() : 0;
+            return new SimpleStringProperty(count + " file(s)");
+        });
+
+        caregiverTable.getColumns().addAll(idColumn, firstNameColumn, lastNameColumn, emailColumn, bgStatusColumn, medStatusColumn, employmentColumn, certsColumn);
+        caregiverTable.setItems(caregiverData); // Link data list to table
     }
 
-    private void updateCaregiverConsole() { // Renamed
+    private void loadCaregiverData() {
         try {
-            System.out.print("Enter caregiver ID to update statuses: ");
-            int id = Integer.parseInt(scanner.nextLine());
-
-            Caregiver existing = caregiverDAO.getCaregiverById(id);
-            if (existing == null) {
-                System.out.println("Caregiver not found.");
-                return;
-            }
-
-            // Background Check Status
-            System.out.println("\nUpdate Background Check Status:");
-            Caregiver.BackgroundCheckStatus[] bgOptions = Caregiver.BackgroundCheckStatus.values();
-            for (int i = 0; i < bgOptions.length; i++) {
-                System.out.printf("%d. %s\n", i + 1, bgOptions[i]);
-            }
-            System.out.print("Choose an option (or press Enter to skip): ");
-            String bgInput = scanner.nextLine().trim();
-            if (!bgInput.isEmpty()) {
-                int bgChoice = Integer.parseInt(bgInput);
-                if (bgChoice >= 1 && bgChoice <= bgOptions.length) {
-                    existing.setBackgroundCheckStatus(bgOptions[bgChoice - 1]);
-                } else {
-                    System.out.println("Invalid choice. Background check status not changed.");
-                }
-            }
-
-            // Medical Clearance Status
-            System.out.println("\nUpdate Medical Clearance Status:");
-            Caregiver.MedicalClearanceStatus[] medOptions = Caregiver.MedicalClearanceStatus.values();
-            for (int i = 0; i < medOptions.length; i++) {
-                System.out.printf("%d. %s\n", i + 1, medOptions[i]);
-            }
-            System.out.print("Choose an option (or press Enter to skip): ");
-            String medInput = scanner.nextLine().trim();
-            if (!medInput.isEmpty()) {
-                int medChoice = Integer.parseInt(medInput);
-                if (medChoice >= 1 && medChoice <= medOptions.length) {
-                    existing.setMedicalClearanceStatus(medOptions[medChoice - 1]);
-                } else {
-                    System.out.println("Invalid choice. Medical clearance status not changed.");
-                }
-            }
-
-            // Assuming your DAO methods handle partial updates or you combine changes
-            caregiverDAO.updateCaregiverBackgroundStatus(existing);
-            caregiverDAO.updateCaregiverMedicalClearanceStatus(existing);
-            System.out.println("\nCaregiver status updated.");
-
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input. Operation cancelled.");
+            List<Caregiver> caregivers = caregiverDAO.getAllCaregivers();
+            caregiverData.setAll(caregivers); // Update the observable list
         } catch (Exception e) {
-            System.out.println("An error occurred while updating caregiver: " + e.getMessage());
-            //e.printStackTrace(); // Keep for debugging if needed
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Load Error", "Failed to load caregiver data: " + e.getMessage());
         }
     }
 
+    // --- Node creation for Caregiver Detail and Update View ---
+    private Node createCaregiverDetailNode(Caregiver caregiver) {
+        VBox detailRootLayout = new VBox(15);
+        detailRootLayout.setPadding(new Insets(20));
+        detailRootLayout.setAlignment(Pos.TOP_LEFT);
 
-    // --- GUI Methods (Run on FX Thread) ---
+        // Back Button
+        Button backButton = new Button("← Back to List");
+        backButton.setOnAction(e -> mainLayout.setCenter(getManageCaregiversNode()));
+        HBox backButtonBox = new HBox(backButton);
+        backButtonBox.setPadding(new Insets(0,0,10,0));
 
-    private void viewCaregiverDetailsGUI() {
-        System.out.print("Enter caregiver ID to view details (GUI): ");
-        String idInput = scanner.nextLine();
-        try {
-            int caregiverId = Integer.parseInt(idInput);
+        // Display caregiver details
+        Label nameLabel = new Label("Name: " + caregiver.getFirstName() + " " + caregiver.getLastName());
+        nameLabel.setStyle("-fx-font-weight: bold;");
+        Label emailLabel = new Label("Email: " + caregiver.getEmail());
+        Label employmentLabel = new Label("Employment Type: " + caregiver.getEmploymentType());
 
-            // Fetch caregiver from DB on the current thread
-            Caregiver caregiverToView = caregiverDAO.getCaregiverById(caregiverId);
+        // Status Update Section
+        GridPane statusGrid = new GridPane();
+        statusGrid.setHgap(10);
+        statusGrid.setVgap(10);
+        statusGrid.setPadding(new Insets(10, 0, 10, 0));
 
-            if (caregiverToView == null) {
-                System.out.println("Caregiver not found.");
-                return; // Exit the console method
+        Label bgLabel = new Label("Background Check Status:");
+        ComboBox<Caregiver.BackgroundCheckStatus> bgStatusCombo = new ComboBox<>();
+        bgStatusCombo.getItems().setAll(Caregiver.BackgroundCheckStatus.values());
+        bgStatusCombo.setValue(caregiver.getBackgroundCheckStatus());
+
+        Label medLabel = new Label("Medical Clearance Status:");
+        ComboBox<Caregiver.MedicalClearanceStatus> medStatusCombo = new ComboBox<>();
+        medStatusCombo.getItems().setAll(Caregiver.MedicalClearanceStatus.values());
+        medStatusCombo.setValue(caregiver.getMedicalClearanceStatus());
+
+        statusGrid.add(bgLabel, 0, 0);
+        statusGrid.add(bgStatusCombo, 1, 0);
+        statusGrid.add(medLabel, 0, 1);
+        statusGrid.add(medStatusCombo, 1, 1);
+
+        Button saveStatusButton = new Button("Save Status Changes");
+        saveStatusButton.setOnAction(e -> {
+            boolean changed = false;
+            Caregiver.BackgroundCheckStatus newBgStatus = bgStatusCombo.getValue();
+            Caregiver.MedicalClearanceStatus newMedStatus = medStatusCombo.getValue();
+
+            if (newBgStatus != caregiver.getBackgroundCheckStatus()) {
+                caregiver.setBackgroundCheckStatus(newBgStatus);
+                caregiverDAO.updateCaregiverBackgroundStatus(caregiver);
+                changed = true;
+            }
+            if (newMedStatus != caregiver.getMedicalClearanceStatus()) {
+                caregiver.setMedicalClearanceStatus(newMedStatus);
+                caregiverDAO.updateCaregiverMedicalClearanceStatus(caregiver);
+                changed = true;
             }
 
-            // Use Platform.runLater to create and show the GUI on the JavaFX Application Thread
-            // Use CountDownLatch to pause the console thread until the GUI is ready or closed
-            CountDownLatch latch = new CountDownLatch(1);
+            if (changed) {
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Statuses updated successfully.");
+                // No need to close a stage, just go back to the list
+                mainLayout.setCenter(getManageCaregiversNode()); // This will also trigger data reload
+            } else {
+                showAlert(Alert.AlertType.INFORMATION, "No Change", "No changes were made to the statuses.");
+            }
+        });
 
-            Platform.runLater(() -> {
+        // Certifications Section
+        Label certsTitle = new Label("Certifications:");
+        certsTitle.setStyle("-fx-font-weight: bold; -fx-padding: 10 0 5 0;");
+
+        ListView<String> certListView = new ListView<>();
+        certListView.setPrefHeight(120);
+        List<String> base64CertStrings = caregiver.getCertifications();
+        final int[] certIndexCounter = {0}; // For naming in list view
+
+        if (base64CertStrings != null && !base64CertStrings.isEmpty()) {
+            base64CertStrings.forEach(certStr -> {
+                // Attempt to identify type for display name, very basic
+                String displayCertName = "Certification " + (certIndexCounter[0] + 1);
                 try {
-                    Stage detailStage = new Stage();
-                    detailStage.initOwner(stage); // Optional: Set main stage as owner
-                    detailStage.initModality(Modality.APPLICATION_MODAL); // Optional: Block main window
-                    detailStage.setTitle("Caregiver Details: " + caregiverToView.getFirstName() + " " + caregiverToView.getLastName());
-
-                    // --- Build the GUI Layout ---
-                    VBox rootLayout = new VBox(20);
-                    rootLayout.setPadding(new Insets(20));
-                    rootLayout.setAlignment(Pos.TOP_LEFT);
-
-                    Label nameLabel = new Label("Name: " + caregiverToView.getFirstName() + " " + caregiverToView.getLastName());
-                    Label emailLabel = new Label("Email: " + caregiverToView.getEmail());
-                    Label statusLabel = new Label("Statuses: Background=" + caregiverToView.getBackgroundCheckStatus() + ", Medical=" + caregiverToView.getMedicalClearanceStatus());
-                    Label employmentLabel = new Label("Employment Type: " + caregiverToView.getEmploymentType());
-
-
-                    Label certsTitle = new Label("Certifications:");
-                    certsTitle.setStyle("-fx-font-weight: bold; -fx-underline: true;");
-
-                    ListView<String> certListView = new ListView<>();
-                    certListView.setPrefHeight(150); // Give it some height
-
-                    List<String> base64CertStrings = caregiverToView.getCertifications();
-                    List<String> certNames = new java.util.ArrayList<>();
-                    if (base64CertStrings != null && !base64CertStrings.isEmpty()) {
-                        for (int i = 0; i < base64CertStrings.size(); i++) {
-                            certNames.add("Certification " + (i + 1));
-                        }
-                        certListView.getItems().addAll(certNames);
-                    } else {
-                        certListView.getItems().add("No certifications available.");
-                        certListView.setDisable(true); // Disable list if empty
+                    byte[] tempBytes = Base64.getDecoder().decode(certStr);
+                    String ext = determineFileExtension(tempBytes).toUpperCase();
+                    if (!ext.equals("DAT")) {
+                        displayCertName += " (." + ext + ")";
                     }
+                } catch (Exception ignored) {}
 
-                    Button viewCertButton = new Button("View Selected Certification");
-                    if (certListView.getItems().isEmpty() || certListView.getItems().get(0).equals("No certifications available.")) {
-                        viewCertButton.setDisable(true);
-                    }
-
-                    // Add action to view button
-                    viewCertButton.setOnAction(e -> {
-                        int selectedIndex = certListView.getSelectionModel().getSelectedIndex();
-                        if (selectedIndex >= 0 && selectedIndex < base64CertStrings.size()) {
-                            String selectedBase64 = base64CertStrings.get(selectedIndex);
-                            // Call the method to decode and display/open
-                            handleViewCertification(selectedBase64, "caregiver_" + caregiverToView.getCaregiverID() + "_cert_" + (selectedIndex + 1));
-                        } else {
-                            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a certification to view.");
-                        }
-                    });
-
-
-                    rootLayout.getChildren().addAll(nameLabel, emailLabel, statusLabel, employmentLabel, certsTitle, certListView, viewCertButton);
-
-                    Scene detailScene = new Scene(rootLayout, 600, 500); // Adjust size as needed
-                    detailStage.setScene(detailScene);
-
-                    // Release the latch when the detail stage is closed
-                    detailStage.setOnHidden(e -> latch.countDown());
-
-                    detailStage.showAndWait(); // Show the window and wait for it to close
-                    // This makes the console loop wait
-
-                } catch (Exception e) {
-                    // Handle errors during GUI creation on FX thread
-                    e.printStackTrace();
-                    showAlert(Alert.AlertType.ERROR, "GUI Error", "An error occurred displaying details: " + e.getMessage());
-                    latch.countDown(); // Release latch even on error
-                }
+                certListView.getItems().add(displayCertName);
+                certIndexCounter[0]++;
             });
-
-            // Wait on the console thread until the GUI stage is closed
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                System.err.println("Admin view interrupted while waiting for GUI.");
-            }
-
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid caregiver ID input.");
-        } catch (Exception e) {
-            System.out.println("An error occurred while fetching caregiver details: " + e.getMessage());
-            //e.printStackTrace(); // Keep for debugging if needed
+        } else {
+            certListView.getItems().add("No certifications available.");
+            certListView.setDisable(true);
         }
+
+        Button viewCertButton = new Button("View Selected Certification");
+        if (certListView.isDisabled() || certListView.getItems().isEmpty()) {
+            viewCertButton.setDisable(true);
+        }
+        viewCertButton.setOnAction(e -> {
+            int selectedIndex = certListView.getSelectionModel().getSelectedIndex();
+            if (selectedIndex >= 0 && base64CertStrings != null && selectedIndex < base64CertStrings.size()) {
+                String selectedBase64 = base64CertStrings.get(selectedIndex);
+                // Pass caregiver, base64 string, and the original index for naming
+                handleViewCertification(caregiver, selectedBase64, selectedIndex);
+            } else if (!certListView.isDisabled()) {
+                showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a certification to view.");
+            }
+        });
+
+        Separator separator1 = new Separator();
+        separator1.setPadding(new Insets(10,0,5,0));
+        Separator separator2 = new Separator();
+        separator2.setPadding(new Insets(10,0,5,0));
+
+        detailRootLayout.getChildren().addAll(
+                backButtonBox, nameLabel, emailLabel, employmentLabel,
+                separator1,
+                new Label("Update Statuses:"), statusGrid, saveStatusButton,
+                separator2,
+                certsTitle, certListView, viewCertButton
+        );
+
+        ScrollPane scrollPane = new ScrollPane(detailRootLayout);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true); // Allow vertical scroll if content exceeds view
+        return scrollPane;
     }
 
+    // --- Certification Handling ---
+    private String determineFileExtension(byte[] data) {
+        if (data == null || data.length < 4) return "dat";
+        if (data[0] == (byte)0x89 && data[1] == (byte)0x50 && data[2] == (byte)0x4E && data[3] == (byte)0x47) return "png";
+        if (data.length >= 3 && data[0] == (byte)0xFF && data[1] == (byte)0xD8 && data[2] == (byte)0xFF) return "jpg";
+        if (data[0] == (byte)0x25 && data[1] == (byte)0x50 && data[2] == (byte)0x44 && data[3] == (byte)0x46) return "pdf";
+        if (data[0] == (byte)'G' && data[1] == (byte)'I' && data[2] == (byte)'F' && data[3] == (byte)'8') return "gif";
+        if (data[0] == (byte)0x50 && data[1] == (byte)0x4B && data[2] == (byte)0x03 && data[3] == (byte)0x04) return "zip"; // General for PKZip archives (docx, xlsx, etc.)
+        return "dat";
+    }
 
-    // Helper method to handle decoding and displaying/opening a single certification
-    // This method runs on the JavaFX Application Thread
-    private void handleViewCertification(String base64String, String tempFileNameBase) {
+    private void handleViewCertification(Caregiver caregiver, String base64String, int certIndex) {
         if (base64String == null || base64String.trim().isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "No Data", "Selected certification has no data.");
             return;
         }
-
         try {
             byte[] decodedBytes = Base64.getDecoder().decode(base64String);
+            String fileExtension = determineFileExtension(decodedBytes);
 
-            // --- Attempt to display as Image ---
-            try {
-                // Try loading as an image. This is a common format.
-                Image image = new Image(new ByteArrayInputStream(decodedBytes));
-                if (!image.isError()) {
-                    // It's an image! Display it in a new window.
-                    ImageView imageView = new ImageView(image);
-                    imageView.setFitHeight(600); // Set appropriate size for image viewer
-                    imageView.setPreserveRatio(true);
+            // Sanitize names for use in filenames
+            String sanitizedFirstName = caregiver.getFirstName().replaceAll("[^a-zA-Z0-9_.-]", "_");
+            String sanitizedLastName = caregiver.getLastName().replaceAll("[^a-zA-Z0-9_.-]", "_");
+            String fileNamePrefix = sanitizedFirstName + "_" + sanitizedLastName + "_certification_" + (certIndex + 1);
 
-                    StackPane imagePane = new StackPane(imageView);
-                    imagePane.setPadding(new Insets(10)); // Add some padding
-
-                    Scene imageScene = new Scene(imagePane);
-                    Stage imageStage = new Stage(); // Use a new stage for the image
-                    imageStage.setTitle("Certification Image");
-                    imageStage.setScene(imageScene);
-                    imageStage.sizeToScene(); // Adjust stage size to fit image
-                    imageStage.show();
-                    return; // Exit the method if successfully displayed as image
-
-                }
-                // If image.isError(), fall through to the file opening part
-
-            } catch (IllegalArgumentException e) {
-                // This specific exception might occur if bytes are not even close to image format header
-                System.err.println("Attempted image decode failed: " + e.getMessage());
-                // Fall through to file opening
-            }
-
-
-            // --- If not an image (or image decode failed), save to temp file and open ---
-            System.out.println("Not an image, attempting to open as file via Desktop...");
-
-            // Create a temporary file. Using a common extension like .tmp or none
-            // might work, but knowing the original extension is best.
-            // Here we just use a generic .file extension.
-            Path tempFilePath = Files.createTempFile(tempFileNameBase + "_", ".file");
-
-            try {
-                Files.write(tempFilePath, decodedBytes);
-
-                File tempFile = tempFilePath.toFile();
-                // Use Desktop to open the file with the default system application (e.g., PDF reader, Word)
-                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-                    // Desktop.open() is generally safe off the FX thread, but running it on Platform.runLater
-                    // can sometimes prevent unexpected interactions depending on the OS/JRE.
-                    // However, since handleViewCertification is already on the FX thread, we can call it directly.
-                    try {
-                        Desktop.getDesktop().open(tempFile);
-                        // Optional: Add a shutdown hook to delete the temp file when the application exits
-                        tempFile.deleteOnExit();
-                    } catch (IOException ex) {
-                        showAlert(Alert.AlertType.ERROR, "File Open Error", "Could not open the certification file: " + ex.getMessage());
-                        try { Files.deleteIfExists(tempFilePath); } catch (IOException cleanupEx) {} // Clean up failed temp file
+            // Attempt to display as an image first
+            if (fileExtension.equals("png") || fileExtension.equals("jpg") || fileExtension.equals("gif")) {
+                try {
+                    Image image = new Image(new ByteArrayInputStream(decodedBytes));
+                    if (!image.isError()) {
+                        ImageView imageView = new ImageView(image);
+                        imageView.setFitHeight(600);
+                        imageView.setPreserveRatio(true);
+                        StackPane imagePane = new StackPane(imageView);
+                        imagePane.setPadding(new Insets(10));
+                        Scene imageScene = new Scene(imagePane);
+                        Stage imageStage = new Stage();
+                        imageStage.setTitle(fileNamePrefix + "." + fileExtension); // Use descriptive title
+                        imageStage.initOwner(this.primaryStage); // Owner is the main application stage
+                        imageStage.initModality(Modality.APPLICATION_MODAL);
+                        imageStage.setScene(imageScene);
+                        imageStage.sizeToScene();
+                        imageStage.showAndWait();
+                        return;
                     }
-
-                } else {
-                    showAlert(Alert.AlertType.ERROR, "Opening Failed", "Desktop operations not supported on this system.");
-                    // Manually clean up if Desktop is not supported
-                    try { Files.deleteIfExists(tempFilePath); } catch (IOException cleanupEx) {}
+                } catch (Exception imgEx) {
+                    System.err.println("Tried to load as image based on extension '" + fileExtension + "' but failed: " + imgEx.getMessage());
                 }
-
-            } catch (IOException fileWriteError) {
-                showAlert(Alert.AlertType.ERROR, "File Save Error", "Could not save the certification file: " + fileWriteError.getMessage());
-                // Clean up the failed temp file if it was created
-                try { Files.deleteIfExists(tempFilePath); } catch (IOException cleanupEx) {}
             }
+
+            // If not displayed as an image, open with Desktop
+            Path tempFilePath = Files.createTempFile(fileNamePrefix + "_", "." + fileExtension);
+            Files.write(tempFilePath, decodedBytes);
+            File tempFile = tempFilePath.toFile();
+
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                Desktop.getDesktop().open(tempFile);
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Opening Failed", "Desktop operations not supported.");
+            }
+            // tempFile.deleteOnExit(); // Consider this for cleanup
 
         } catch (IllegalArgumentException e) {
-            // The Base64 string itself is malformed
-            showAlert(Alert.AlertType.ERROR, "Decoding Error", "The selected certification data is corrupt (invalid Base64).");
-            System.err.println("Base64 decoding failed: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Decoding Error", "Certification data is corrupt.");
         } catch (IOException e) {
-            // Error during temp file creation
-            showAlert(Alert.AlertType.ERROR, "File Error", "Could not create temporary file: " + e.getMessage());
-            System.err.println("Temp file creation failed: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "File Error", "Could not create/write temp file: " + e.getMessage());
         } catch (Exception e) {
-            // Catch any other unexpected errors during the process
-            showAlert(Alert.AlertType.ERROR, "Unexpected Error", "An unexpected error occurred: " + e.getMessage());
-            e.printStackTrace(); // Print full stack trace for unexpected errors
+            showAlert(Alert.AlertType.ERROR, "Unexpected Error", "An error occurred: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    // Helper to show alerts on the JavaFX Application Thread
-    private void showAlert(Alert.AlertType alertType, String title, String message) {
-        // Ensure alerts are shown on the FX thread
+    // --- Utility Methods ---
+    private void logout() {
         Platform.runLater(() -> {
+            LoginController loginController = new LoginController(primaryStage, conn);
+            Scene loginScene = loginController.getLoginScene();
+            primaryStage.setScene(loginScene);
+            primaryStage.setTitle("Login");
+            primaryStage.show();
+        });
+    }
+
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        if (Platform.isFxApplicationThread()) {
             Alert alert = new Alert(alertType);
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+            alert.initOwner(primaryStage);
             alert.showAndWait();
-        });
+        } else {
+            Platform.runLater(() -> {
+                Alert alert = new Alert(alertType);
+                alert.setTitle(title);
+                alert.setHeaderText(null);
+                alert.setContentText(message);
+                alert.initOwner(primaryStage);
+                alert.showAndWait();
+            });
+        }
     }
 }

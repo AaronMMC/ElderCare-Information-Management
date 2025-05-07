@@ -47,8 +47,6 @@ public class LoginController {
         Caregiver caregiver = caregiverDAO.findByUsernameAndPassword(username,password);
         Admin admin = adminDAO.findByUsernameAndPassword(username,password);
 
-        System.out.println(caregiver.getBackgroundCheckStatus());
-        System.out.println(caregiver.getMedicalClearanceStatus());
         if (guardian == null && caregiver == null && admin == null) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Login Failed");
@@ -64,7 +62,7 @@ public class LoginController {
             return;
         }
         if (caregiver != null && caregiver.getPassword().equals(password)) {
-            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Pending  && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Pending ){
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Pending  && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Pending && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Not_Cleared){
                 CaregiverPendingView pendingView = new CaregiverPendingView(stage, conn);
                 stage.setScene(pendingView.getScene());
                 return;
@@ -84,18 +82,22 @@ public class LoginController {
                 return;
             }
         }
-        if (admin != null && admin.getPassword().equals(password)) {
-            AdminView adminView = new AdminView(stage, conn, admin);
-            stage.hide();
-            adminView.start();
-            return;
+        if (admin != null) {
+            System.out.println("Admin object found for username: " + admin.getUsername());
+            // Be careful about printing actual passwords to console in production, but for debugging:
+            System.out.println("Stored admin password: [" + admin.getPassword() + "]");
+            System.out.println("Comparison admin.getPassword().equals(password): " + admin.getPassword().equals(password));
+            if (admin.getPassword().equals(password)) {
+                AdminView adminView = new AdminView(stage, conn, admin); // Pass the stage
+                Scene adminScene = adminView.createAdminScene(); // Or similar method in AdminView
+                stage.setScene(adminScene);
+                stage.setTitle("Admin Panel");
+                stage.show(); // Show the stage again, as it was hidden
+                return;
+            } else {
+                System.out.println("Admin password mismatch.");
+            }
         }
-
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Login Failed");
-        alert.setHeaderText(null);
-        alert.setContentText("Incorrect password.");
-        alert.showAndWait();
 
     }
 
