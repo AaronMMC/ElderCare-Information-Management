@@ -44,15 +44,7 @@ public class CaregiverAppointmentView {
         TextField searchField = createRoundedTextField("Search by Guardian's First Name");
         ComboBox<String> sortBox = createRoundedComboBox("Filter by Status");
         sortBox.getItems().addAll("ALL", "PAID", "UNPAID", "FINISHED", "CANCELLED", "ONGOING");
-        sortBox.setValue("ALL");
-
-        searchField.textProperty().addListener((obs, oldVal, newVal) -> updateFilter(searchField, sortBox, guardianDAO));
-        sortBox.setOnAction(e -> updateFilter(searchField, sortBox, guardianDAO));
-
-        HBox searchSortBox = new HBox(20,
-                new Label("Search:"), searchField,
-                new Label("Sort by:"), sortBox);
-        searchSortBox.setAlignment(Pos.CENTER_RIGHT);
+        sortBox.setValue("PAID"); // Default to PAID
 
         GridPane table = new GridPane();
         table.setHgap(20);
@@ -74,9 +66,31 @@ public class CaregiverAppointmentView {
         table.add(detailsHeader, 1, 0);
         table.add(actionHeader, 2, 0);
 
+        // Add listeners AFTER headers are added
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            updateFilter(searchField, sortBox, guardianDAO);
+            populateTable(table, guardianDAO, elderDAO, appointmentDAO, paymentDAO);
+        });
+
+        sortBox.setOnAction(e -> {
+            updateFilter(searchField, sortBox, guardianDAO);
+            populateTable(table, guardianDAO, elderDAO, appointmentDAO, paymentDAO);
+        });
+
+        updateFilter(searchField, sortBox, guardianDAO); // Initial filter
         populateTable(table, guardianDAO, elderDAO, appointmentDAO, paymentDAO);
 
-        VBox leftPane = new VBox(20, titleLabel, searchSortBox, table);
+        HBox searchSortBox = new HBox(20,
+                new Label("Search:"), searchField,
+                new Label("Sort by:"), sortBox);
+        searchSortBox.setAlignment(Pos.CENTER_RIGHT);
+
+        ScrollPane scrollPane = new ScrollPane(table);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(240); // Roughly shows 3 appointment rows
+        scrollPane.setStyle("-fx-background-color: transparent;");
+
+        VBox leftPane = new VBox(20, titleLabel, searchSortBox, scrollPane);
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(800);
 
@@ -112,7 +126,7 @@ public class CaregiverAppointmentView {
         stage.show();
     }
 
-    private void populateTable(GridPane table, GuardianDAO guardianDAO, ElderDAO elderDAO, AppointmentDAO appointmentDAO, PaymentDAO paymentDAO) throws SQLException {
+    private void populateTable(GridPane table, GuardianDAO guardianDAO, ElderDAO elderDAO, AppointmentDAO appointmentDAO, PaymentDAO paymentDAO) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
         table.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) > 0);
@@ -120,6 +134,7 @@ public class CaregiverAppointmentView {
         int rowIndex = 1;
         for (Appointment appointment : filteredAppointments) {
             Guardian guardian = guardianDAO.getGuardianByAppointmentId(appointment.getAppointmentID());
+            if (guardian == null) continue;
 
             // === Guardian Info ===
             StringBuilder guardianInfo = new StringBuilder();
@@ -169,6 +184,7 @@ public class CaregiverAppointmentView {
             table.add(detailsLabel, 1, rowIndex);
             table.add(buttonBox, 2, rowIndex);
             rowIndex++;
+
         }
     }
 
@@ -178,6 +194,8 @@ public class CaregiverAppointmentView {
 
         filteredAppointments.setPredicate(appt -> {
             Guardian guardian = guardianDAO.getGuardianByAppointmentId(appt.getAppointmentID());
+            if (guardian == null) return false;
+
             boolean matchesSearch = guardian.getFirstName().toLowerCase().contains(searchText);
             boolean matchesStatus = selectedStatus.equals("ALL") || appt.getStatus().name().equals(selectedStatus);
             return matchesSearch && matchesStatus;

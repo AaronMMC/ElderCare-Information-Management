@@ -29,10 +29,6 @@ public class GuardianAppointmentView {
         this.conn = conn;
         this.guardian = guardian;
 
-        ImageView logo = new ImageView(new Image("file:resources/logo.png"));
-        logo.setFitWidth(150);
-        logo.setPreserveRatio(true);
-
         Label titleLabel = new Label("Your Appointments");
         titleLabel.setFont(Font.font("Arial", 28));
         titleLabel.setStyle("-fx-font-weight: bold;");
@@ -51,10 +47,17 @@ public class GuardianAppointmentView {
         GridPane table = new GridPane();
         table.setHgap(10);
         table.setVgap(10);
+        table.setMaxWidth(Double.MAX_VALUE);
         table.setPadding(new Insets(20));
         table.setStyle("-fx-border-color: #CBA5F5; -fx-border-width: 2; -fx-background-color: #FDFBFF;");
 
-        VBox leftPane = new VBox(20, logo, headerBox, table);
+        ScrollPane scrollPane = new ScrollPane(table);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background:transparent;");
+        scrollPane.setPrefHeight(500);
+
+        VBox leftPane = new VBox(20, headerBox, scrollPane);
+
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(850);
 
