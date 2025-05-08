@@ -1,9 +1,12 @@
 package dao;
 
+import model.Caregiver;
 import model.CaregiverService;
+import model.Service;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CaregiverServiceDAO {
@@ -86,5 +89,106 @@ public class CaregiverServiceDAO {
             e.printStackTrace();
         }
         return services;
+    }
+
+    public List<Service> getAllServicesByCaregiverId(int caregiverId) {
+        List<Service> services = new ArrayList<>();
+        String sql = "{CALL GetAllServicesByCaregiverId(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                services.add(mapResultSetToService(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return services;
+    }
+
+    public Caregiver getCaregiverByServiceId(int serviceID) {
+        String sql = "{CALL GetCaregiverByServiceId(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                mapResultSetToCaregiver(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Caregiver mapResultSetToCaregiver(ResultSet rs) throws SQLException {
+        String certificationsString = rs.getString("certifications");
+        List<String> certificationsList = (certificationsString != null && !certificationsString.isEmpty())
+                ? Arrays.asList(certificationsString.split(","))
+                : new ArrayList<>();
+
+        Caregiver.Gender gender = null;
+        String genderString = rs.getString("gender");
+        if (genderString != null && !genderString.trim().isEmpty()) {
+            try {
+                gender = Caregiver.Gender.valueOf(genderString.trim());
+            } catch (IllegalArgumentException e) {
+                System.err.println("Warning: Unrecognized gender value from DB: " + genderString);
+            }
+        }
+
+        Caregiver.BackgroundCheckStatus bgStatus = null;
+        String bgStatusString = rs.getString("background_check_status");
+        if (bgStatusString != null && !bgStatusString.trim().isEmpty()) {
+            try {
+                bgStatus = Caregiver.BackgroundCheckStatus.valueOf(bgStatusString.trim());
+            } catch (IllegalArgumentException e) {
+                System.err.println("Warning: Unrecognized background status value from DB: " + bgStatusString);
+            }
+        }
+
+        Caregiver.MedicalClearanceStatus medStatus = null;
+        String medStatusString = rs.getString("medical_clearance_status");
+        if (medStatusString != null && !medStatusString.trim().isEmpty()) {
+            try {
+                medStatus = Caregiver.MedicalClearanceStatus.valueOf(medStatusString.trim());
+            } catch (IllegalArgumentException e) {
+                System.err.println("Warning: Unrecognized medical status value from DB: " + medStatusString);
+            }
+        }
+
+        Caregiver.EmploymentType employmentType = null;
+        String employmentTypeString = rs.getString("employment_type");
+        if (employmentTypeString != null && !employmentTypeString.trim().isEmpty()) {
+            try {
+                employmentType = Caregiver.EmploymentType.valueOf(employmentTypeString.trim());
+            } catch (IllegalArgumentException e) {
+                System.err.println("Warning: Unrecognized employment type value from DB: " + employmentTypeString);
+            }
+        }
+
+
+        return new Caregiver(
+                rs.getInt("caregiver_id"),
+                rs.getString("username"),
+                rs.getString("password"),
+                rs.getString("first_name"),
+                rs.getString("last_name"),
+                rs.getTimestamp("date_of_birth") != null ? rs.getTimestamp("date_of_birth").toLocalDateTime() : null,
+                gender,
+                rs.getString("contact_number"),
+                rs.getString("email"),
+                rs.getString("address"),
+                certificationsList,
+                bgStatus,
+                medStatus,
+                rs.getString("availability_schedule"),
+                employmentType
+        );
+    }
+
+    private Service mapResultSetToService(ResultSet rs) throws SQLException {
+        return new Service(
+                rs.getInt("service_id"),
+                rs.getString("category"),
+                rs.getString("service_name"),
+                rs.getString("description"));
     }
 }

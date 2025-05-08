@@ -33,4 +33,8 @@ public class PaymentController {
     public void deletePayment(int paymentID) {
         paymentDAO.deletePayment(paymentID);
     }
+
+    public Payment getPaymentByAppointmentId(int paymentID) {
+        return paymentDAO.getPaymentByAppointmentId(paymentID);
+    }
 }

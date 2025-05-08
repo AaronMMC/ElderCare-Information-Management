@@ -1,7 +1,7 @@
 package view;
 
+import controller.ElderController;
 import controller.GuardianElderController;
-import dao.ElderDAO;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -167,7 +167,7 @@ public class GuardianElderView {
             elder.setEmail(emailField.getText());
             elder.setAddress(addressField.getText());
             elder.setDateOfBirth(dobPicker.getValue().atStartOfDay());
-            new ElderDAO(conn).updateElder(elder);
+            new ElderController(conn).updateElder(elder);
 
             // Update GuardianElder relationship
             GuardianElder updatedGE = new GuardianElder(guardian.getGuardianID(), elder.getElderID(), relationshipField.getText());
@@ -177,7 +177,7 @@ public class GuardianElderView {
         });
 
         deleteBtn.setOnAction(e -> {
-            new ElderDAO(conn).deleteElder(elder.getElderID());
+            new ElderController(conn).deleteElder(elder.getElderID());
             refreshElderList(conn, guardian);
         });
 

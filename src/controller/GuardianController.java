@@ -51,4 +51,8 @@ public class GuardianController {
 
         return guardianExists || caregiverExists || adminExists;
     }
+
+    public Guardian getGuardianByAppointmentId(int appointmentID) {
+        return guardianDAO.getGuardianByAppointmentId(appointmentID);
+    }
 }

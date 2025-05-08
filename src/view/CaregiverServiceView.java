@@ -1,64 +1,90 @@
 package view;
 
+import controller.CaregiverController;
+import controller.CaregiverServiceController;
+import controller.ServiceController;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.shape.Box;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import model.Caregiver;
+import model.CaregiverService;
+import model.Service;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CaregiverServiceView {
 
     private final Scene scene;
+    private final ObservableList<Service> allServices = FXCollections.observableArrayList();
+    private final TextField searchField = new TextField();
+    private final ComboBox<String> sortBox = new ComboBox<>();
+    private final VBox serviceListContainer = new VBox(20);
+
+    private final Connection conn;
+    private final Caregiver caregiver;
+    private final CaregiverController caregiverController;
+    private final ServiceController serviceController;
+    private final CaregiverServiceController caregiverServiceController;
 
     public CaregiverServiceView(Stage stage, Connection conn, Caregiver caregiver) throws SQLException {
+        this.conn = conn;
+        this.caregiver = caregiver;
+        this.caregiverController = new CaregiverController(conn);
+        this.serviceController = new ServiceController(conn);
+        this.caregiverServiceController = new CaregiverServiceController(conn);
+
         Label titleLabel = new Label("Your Services");
         titleLabel.setFont(Font.font("Arial", 24));
         titleLabel.setStyle("-fx-font-weight: bold;");
 
-        TextField searchField = createRoundedTextField("(Searchfield)");
-        ComboBox<String> sortBox = createRoundedComboBox("(Dropdown)");
+        searchField.setPromptText("Search by Service Name");
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            refreshServiceList(conn, caregiver, caregiverServiceController);
+        });
 
-        HBox searchSortBox = new HBox(20,
-                new Label("Search:"), searchField,
-                new Label("Sort by:"), sortBox);
-        searchSortBox.setAlignment(Pos.CENTER_RIGHT);
+        sortBox.getItems().addAll("ASCENDING", "DESCENDING", "DEFAULT");
+        sortBox.setValue("DEFAULT");
+        sortBox.setOnAction(e -> {
+            refreshServiceList(conn, caregiver, caregiverServiceController);
+        });
 
-        GridPane table = new GridPane();
-        table.setHgap(20);
-        table.setVgap(20);
-        table.setPadding(new Insets(20));
-        table.setStyle("-fx-border-color: #B891F1; -fx-border-width: 2; -fx-background-color: #F9F9F9;");
-        table.setPrefWidth(750);
+        HBox filterBar = new HBox(10, searchField, sortBox);
+        filterBar.setPadding(new Insets(10));
 
-        Label serviceHeader = new Label("Services");
-        serviceHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
-        Label detailsHeader = new Label("Service Details");
-        detailsHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
-        Label actionHeader = new Label("");
+        ScrollPane scrollPane = new ScrollPane(serviceListContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(500);
 
-        serviceHeader.setPrefWidth(150);
-        detailsHeader.setPrefWidth(400);
-
-        table.add(serviceHeader, 0, 0);
-        table.add(detailsHeader, 1, 0);
-        table.add(actionHeader, 2, 0);
-
-        addServiceRow(table, 1, "FEMDOM", "(Category, hourly rate, years of experience & description)");
-        addServiceRow(table, 2, "69", "(Category, hourly rate, years of experience & description)");
-        addServiceRow(table, 3, "SCAT PILGRIM", "(Category, hourly rate, years of experience & description)");
-
-        VBox leftPane = new VBox(20, titleLabel, searchSortBox, table);
+        VBox leftPane = new VBox(20, titleLabel, filterBar, scrollPane);
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(800);
 
         Button scheduleBtn = createSidebarButton("Your Schedule");
         Button goBackBtn = createSidebarButton("Go Back");
+
+        scheduleBtn.setOnAction(e -> {
+            CaregiverScheduleView caregiverScheduleView = new CaregiverScheduleView(stage, conn, caregiver);
+            stage.setScene(caregiverScheduleView.getScene());
+        });
+
+        goBackBtn.setOnAction(e -> {
+            CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
+            stage.setScene(caregiverView.getScene());
+        });
 
         VBox rightPane = new VBox(30, scheduleBtn);
         rightPane.setPadding(new Insets(30));
@@ -88,51 +114,99 @@ public class CaregiverServiceView {
         stage.show();
     }
 
-    private void addServiceRow(GridPane table, int rowIndex, String service, String details) {
-        Label serviceLabel = new Label(service);
-        serviceLabel.setPrefWidth(150);
-        serviceLabel.setWrapText(true);
+    private void refreshServiceList(Connection conn, Caregiver caregiver, CaregiverServiceController caregiverServiceController) {
+        List<Service> services = serviceController.getAllServicesByCaregiverId(caregiver.getCaregiverID());
+        allServices.setAll(services);
 
-        Label detailsLabel = new Label(details);
-        detailsLabel.setPrefWidth(400);
-        detailsLabel.setWrapText(true);
+        String searchText = searchField.getText().toLowerCase();
+        List<Service> filteredServices = new ArrayList<>(allServices.stream()
+                .filter(e -> (e.getServiceName().toLowerCase().contains(searchText))).toList());
+
+        Comparator<Service> serviceComparator;
+        if (sortBox.getValue().equals("DESCENDING")) {
+            serviceComparator = Comparator.comparing(Service::getServiceName).reversed();
+        } else {
+            serviceComparator = Comparator.comparing(Service::getServiceName);
+        }
+
+        filteredServices.sort(serviceComparator);
+
+        serviceListContainer.getChildren().clear();
+        for (Service service : filteredServices) {
+            serviceListContainer.getChildren().add(createServiceRow(service, caregiver, conn));
+        }
+    }
+
+    private HBox createServiceRow(Service service, Caregiver caregiver, Connection conn) {
+        CaregiverService caregiverService = caregiverServiceController.getCaregiverService(caregiver.getCaregiverID(),service.getServiceID());
+        int experienceYears = (caregiverService != null) ? caregiverService.getExperienceYears() : 0;
+        double hourlyRate = (caregiverService != null) ? caregiverService.getHourlyRate() : 0;
+
+        Label nameLabel = new Label(service.getServiceName());
+        nameLabel.setPrefWidth(150);
+
+        TextField nameField = new TextField(service.getServiceName());
+        TextField descriptionField = new TextField(service.getDescription());
+        TextField categoryField = new TextField(service.getCategory());
+        TextField experienceYearsField = new TextField(String.valueOf(experienceYears));
+        TextField hourlyRateField = new TextField(String.valueOf(hourlyRate));
+
+        VBox detailBox = new VBox(5, nameField, categoryField, experienceYearsField, hourlyRateField);
+        detailBox.setPrefWidth(400);
 
         Button editBtn = createBigGreenButton("Edit");
-        Button removeBtn = createBigGreenButton("Remove");
+        Button saveBtn = createBigGreenButton("Save");
+        Button cancelBtn = createBigGreenButton("Cancel");
+        Button deleteBtn = createBigGreenButton("Delete");
 
-        HBox actionBox = new HBox(10, editBtn, removeBtn);
-        actionBox.setAlignment(Pos.CENTER_RIGHT);
-        actionBox.setPrefWidth(150);
+        saveBtn.setDisable(true);
+        cancelBtn.setDisable(true);
 
-        table.add(serviceLabel, 0, rowIndex);
-        table.add(detailsLabel, 1, rowIndex);
-        table.add(actionBox, 2, rowIndex);
+        editBtn.setOnAction(e -> {
+            setEditable(true, nameField, descriptionField, categoryField, experienceYearsField, hourlyRateField);
+            saveBtn.setDisable(false);
+            cancelBtn.setDisable(false);
+        });
+
+        saveBtn.setOnAction(e -> {
+            service.setServiceName(nameField.getText());
+            service.setCategory(categoryField.getText());
+            service.setDescription(descriptionField.getText());
+            serviceController.updateService(service);
+
+            CaregiverService updatedCaregiverService = new CaregiverService(caregiver.getCaregiverID(), service.getServiceID(), experienceYearsField.getLength(), hourlyRateField.getLength());
+            caregiverServiceController.updateCaregiverService(updatedCaregiverService);
+
+            refreshServiceList(conn, caregiver, caregiverServiceController);
+        });
+
+        cancelBtn.setOnAction(e -> {
+            nameField.setText(service.getServiceName());
+            descriptionField.setText(service.getDescription());
+            categoryField.setText(service.getCategory());
+            experienceYearsField.setText(String.valueOf(experienceYears));
+            hourlyRateField.setText(String.valueOf(hourlyRate));
+            setEditable(false, nameField, descriptionField, categoryField, experienceYearsField, hourlyRateField);
+            saveBtn.setDisable(true);
+            cancelBtn.setDisable(true);
+        });
+        deleteBtn.setOnAction(e -> {
+            serviceController.deleteService(service.getServiceID());
+            refreshServiceList(conn, caregiver, caregiverServiceController);
+        });
+
+        VBox buttonBox = new VBox(10, editBtn, saveBtn, cancelBtn, deleteBtn);
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.setPrefWidth(150);
+
+        return new HBox(20, nameLabel, detailBox, buttonBox);
     }
 
-    private TextField createRoundedTextField(String prompt) {
-        TextField tf = new TextField();
-        tf.setPromptText(prompt);
-        tf.setStyle("""
-            -fx-background-radius: 15;
-            -fx-border-radius: 15;
-            -fx-background-color: #D9D9D9;
-            -fx-border-color: transparent;
-            -fx-padding: 8 12;
-        """);
-        return tf;
-    }
-
-    private ComboBox<String> createRoundedComboBox(String prompt) {
-        ComboBox<String> cb = new ComboBox<>();
-        cb.setPromptText(prompt);
-        cb.setStyle("""
-            -fx-background-radius: 15;
-            -fx-border-radius: 15;
-            -fx-background-color: #D9D9D9;
-            -fx-border-color: transparent;
-            -fx-padding: 4 8;
-        """);
-        return cb;
+    private void setEditable(boolean editable, Object... controls) {
+        for (Object control : controls) {
+            if (control instanceof TextInputControl textField)
+                textField.setEditable(editable);
+        }
     }
 
     private Button createBigGreenButton(String text) {

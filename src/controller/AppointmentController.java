@@ -1,6 +1,5 @@
 package controller;
 
-import dao.AppointmentDAO;
 import model.Appointment;
 
 import java.sql.Connection;
@@ -8,29 +7,33 @@ import java.util.List;
 
 public class AppointmentController {
 
-    private final AppointmentDAO appointmentDAO;
+    private final dao.AppointmentController appointmentController;
 
     public AppointmentController(Connection conn) {
-        this.appointmentDAO = new AppointmentDAO(conn);
+        this.appointmentController = new dao.AppointmentController(conn);
     }
 
     public void addAppointment(Appointment appointment) {
-        appointmentDAO.insertAppointment(appointment);
+        appointmentController.insertAppointment(appointment);
     }
 
     public Appointment getAppointmentById(int id) {
-        return appointmentDAO.getAppointmentById(id);
+        return appointmentController.getAppointmentById(id);
     }
 
     public List<Appointment> getAllAppointments() {
-        return appointmentDAO.getAllAppointments();
+        return appointmentController.getAllAppointments();
     }
 
     public void updateAppointment(Appointment appointment) {
-        appointmentDAO.updateAppointment(appointment);
+        appointmentController.updateAppointment(appointment);
     }
 
     public void deleteAppointment(int id) {
-        appointmentDAO.deleteAppointment(id);
+        appointmentController.deleteAppointment(id);
+    }
+
+    public List<Appointment> getAllAppointmentsByCaregiver(int caregiverID) {
+        return appointmentController.getAllAppointmentsByCaregiver(caregiverID);
     }
 }

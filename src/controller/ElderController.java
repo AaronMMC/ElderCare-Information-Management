@@ -33,4 +33,8 @@ public class ElderController {
     public void deleteElder(int elderId) {
         elderDAO.deleteElder(elderId);
     }
+
+    public List<Elder> getAllEldersByAppointmentId(int appointmentID) {
+        return elderDAO.getAllEldersByAppointmentId(appointmentID);
+    }
 }

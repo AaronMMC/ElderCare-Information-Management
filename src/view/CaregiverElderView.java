@@ -1,8 +1,8 @@
 package view;
 
-import dao.AppointmentDAO;
-import dao.ElderDAO;
-import dao.ServiceDAO;
+import controller.AppointmentController;
+import controller.ElderController;
+import controller.ServiceController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -25,17 +25,17 @@ public class CaregiverElderView {
 
     private final Scene scene;
     private final GridPane table = new GridPane();
-    private final AppointmentDAO appointmentDAO;
-    private final ElderDAO elderDAO;
-    private final ServiceDAO serviceDAO;
+    private final AppointmentController appointmentController;
+    private final ElderController elderController;
+    private final ServiceController serviceController;
     private final Caregiver caregiver;
     private final ComboBox<String> sortBox = createRoundedComboBox("Filter by Status");
 
     public CaregiverElderView(Stage stage, Connection conn, Caregiver caregiver) {
         this.caregiver = caregiver;
-        this.appointmentDAO = new AppointmentDAO(conn);
-        this.elderDAO = new ElderDAO(conn);
-        this.serviceDAO = new ServiceDAO(conn);
+        this.appointmentController = new AppointmentController(conn);
+        this.elderController = new ElderController(conn);
+        this.serviceController = new ServiceController(conn);
 
         Label titleLabel = new Label("Your Elders");
         titleLabel.setFont(Font.font("Arial", 24));
@@ -112,7 +112,7 @@ public class CaregiverElderView {
 
         String selectedStatus = sortBox.getValue();
         Appointment.AppointmentStatus filterStatus = Appointment.AppointmentStatus.valueOf(selectedStatus);
-        List<Appointment> appointments = appointmentDAO.getAllAppointmentsByCaregiver(caregiver.getCaregiverID())
+        List<Appointment> appointments = appointmentController.getAllAppointmentsByCaregiver(caregiver.getCaregiverID())
                 .stream()
                 .filter(a -> a.getStatus() == filterStatus)
                 .toList();
@@ -121,8 +121,8 @@ public class CaregiverElderView {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
         for (Appointment appointment : appointments) {
-            List<Elder> elders = elderDAO.getAllEldersByAppointmentId(appointment.getAppointmentID());
-            List<Service> services = serviceDAO.getAllServicesByAppointmentId(appointment.getAppointmentID());
+            List<Elder> elders = elderController.getAllEldersByAppointmentId(appointment.getAppointmentID());
+            List<Service> services = serviceController.getAllServicesByAppointmentId(appointment.getAppointmentID());
 
             for (Elder elder : elders) {
                 int age = Period.between(elder.getDateOfBirth().toLocalDate(), LocalDate.now()).getYears();
@@ -154,7 +154,7 @@ public class CaregiverElderView {
                 Button markDoneBtn = createBigGreenButton("Mark as done");
                 markDoneBtn.setOnAction(e -> {
                     appointment.setStatus(Appointment.AppointmentStatus.FINISHED);
-                    appointmentDAO.updateAppointment(appointment);
+                    appointmentController.updateAppointment(appointment);
                     populateTable(); // Refresh after marking done
                 });
 

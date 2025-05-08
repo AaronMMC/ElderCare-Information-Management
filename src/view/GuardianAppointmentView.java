@@ -1,15 +1,13 @@
 package view;
 
-import dao.AppointmentDAO;
-import dao.CaregiverDAO;
-import dao.PaymentDAO;
+import controller.CaregiverController;
+import controller.PaymentController;
+import dao.AppointmentController;
 import model.Appointment.AppointmentStatus;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -108,20 +106,20 @@ public class GuardianAppointmentView {
         table.getChildren().clear();
         addHeaderRow(table);
 
-        AppointmentDAO appointmentDAO = new AppointmentDAO(conn);
-        CaregiverDAO caregiverDAO = new CaregiverDAO(conn);
-        PaymentDAO paymentDAO = new PaymentDAO(conn);
+        AppointmentController appointmentController = new AppointmentController(conn);
+        CaregiverController caregiverController = new CaregiverController(conn);
+        PaymentController paymentController = new PaymentController(conn);
 
-        List<Appointment> appointments = appointmentDAO.getAllAppointmentsByGuardian(guardian.getGuardianID());
+        List<Appointment> appointments = appointmentController.getAllAppointmentsByGuardian(guardian.getGuardianID());
         int row = 1;
 
         for (Appointment appt : appointments) {
             if (appt.getStatus() != filterStatus) continue;
 
-            Caregiver caregiver = caregiverDAO.getCaregiverById(appt.getCaregiverID());
+            Caregiver caregiver = caregiverController.getCaregiverById(appt.getCaregiverID());
             if (caregiver == null || !caregiver.getFirstName().toLowerCase().contains(searchTerm.toLowerCase())) continue;
 
-            Payment payment = paymentDAO.getPaymentByAppointmentId(appt.getPaymentID());
+            Payment payment = paymentController.getPaymentByAppointmentId(appt.getPaymentID());
             String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
 
             String details = String.format("""
@@ -162,7 +160,7 @@ public class GuardianAppointmentView {
     }
 
     private void addAppointmentRow(GridPane table, int rowIndex, String caregiver, String details, Appointment appointment) {
-        AppointmentDAO appointmentDAO = new AppointmentDAO(conn);
+        AppointmentController appointmentController = new AppointmentController(conn);
 
         Label caregiverLabel = new Label(caregiver);
         caregiverLabel.setPrefWidth(150);
@@ -181,7 +179,7 @@ public class GuardianAppointmentView {
                 PaymentView paymentView = new PaymentView(stage, conn, guardian, appointment);
                 stage.setScene(paymentView.getScene());
                 appointment.setStatus(AppointmentStatus.PAID);
-                appointmentDAO.updateAppointment(appointment);
+                appointmentController.updateAppointment(appointment);
                 populateAppointments(table, "", AppointmentStatus.UNPAID);
             });
             btnBox.getChildren().add(payBtn);

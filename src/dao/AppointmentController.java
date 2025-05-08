@@ -6,11 +6,11 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AppointmentDAO {
+public class AppointmentController {
 
     private final Connection conn;
 
-    public AppointmentDAO(Connection conn) {
+    public AppointmentController(Connection conn) {
         this.conn = conn;
     }
 

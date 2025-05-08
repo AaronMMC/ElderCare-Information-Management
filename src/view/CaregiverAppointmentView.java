@@ -1,9 +1,9 @@
 package view;
 
-import dao.AppointmentDAO;
-import dao.ElderDAO;
-import dao.GuardianDAO;
-import dao.PaymentDAO;
+import controller.AppointmentController;
+import controller.ElderController;
+import controller.GuardianController;
+import controller.PaymentController;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
@@ -17,8 +17,6 @@ import model.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -26,15 +24,19 @@ public class CaregiverAppointmentView {
 
     private final Scene scene;
     private final FilteredList<Appointment> filteredAppointments;
+    private final AppointmentController appointmentController;
+    private final GuardianController guardianController;
+    private final ElderController elderController;
+    private final PaymentController paymentController;
 
     public CaregiverAppointmentView(Stage stage, Connection conn, Caregiver caregiver) throws SQLException {
 
-        AppointmentDAO appointmentDAO = new AppointmentDAO(conn);
-        GuardianDAO guardianDAO = new GuardianDAO(conn);
-        ElderDAO elderDAO = new ElderDAO(conn);
-        PaymentDAO paymentDAO = new PaymentDAO(conn);
+        this.appointmentController = new AppointmentController(conn);
+        this.guardianController = new GuardianController(conn);
+        this.elderController = new ElderController(conn);
+        this.paymentController = new PaymentController(conn);
 
-        List<Appointment> appointmentList = appointmentDAO.getAllAppointmentsByCaregiver(caregiver.getCaregiverID());
+        List<Appointment> appointmentList = appointmentController.getAllAppointmentsByCaregiver(caregiver.getCaregiverID());
         filteredAppointments = new FilteredList<>(FXCollections.observableArrayList(appointmentList), p -> true);
 
         Label titleLabel = new Label("Your Appointments");
@@ -68,17 +70,17 @@ public class CaregiverAppointmentView {
 
         // Add listeners AFTER headers are added
         searchField.textProperty().addListener((obs, oldVal, newVal) -> {
-            updateFilter(searchField, sortBox, guardianDAO);
-            populateTable(table, guardianDAO, elderDAO, appointmentDAO, paymentDAO);
+            updateFilter(searchField, sortBox, guardianController);
+            populateTable(table, guardianController, elderController, appointmentController, paymentController);
         });
 
         sortBox.setOnAction(e -> {
-            updateFilter(searchField, sortBox, guardianDAO);
-            populateTable(table, guardianDAO, elderDAO, appointmentDAO, paymentDAO);
+            updateFilter(searchField, sortBox, guardianController);
+            populateTable(table, guardianController, elderController, appointmentController, paymentController);
         });
 
-        updateFilter(searchField, sortBox, guardianDAO); // Initial filter
-        populateTable(table, guardianDAO, elderDAO, appointmentDAO, paymentDAO);
+        updateFilter(searchField, sortBox, guardianController); // Initial filter
+        populateTable(table, guardianController, elderController, appointmentController, paymentController);
 
         HBox searchSortBox = new HBox(20,
                 new Label("Search:"), searchField,
@@ -126,14 +128,14 @@ public class CaregiverAppointmentView {
         stage.show();
     }
 
-    private void populateTable(GridPane table, GuardianDAO guardianDAO, ElderDAO elderDAO, AppointmentDAO appointmentDAO, PaymentDAO paymentDAO) {
+    private void populateTable(GridPane table, GuardianController guardianController, ElderController elderController, AppointmentController appointmentController, PaymentController paymentController) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
         table.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) > 0);
 
         int rowIndex = 1;
         for (Appointment appointment : filteredAppointments) {
-            Guardian guardian = guardianDAO.getGuardianByAppointmentId(appointment.getAppointmentID());
+            Guardian guardian = guardianController.getGuardianByAppointmentId(appointment.getAppointmentID());
             if (guardian == null) continue;
 
             // === Guardian Info ===
@@ -144,7 +146,7 @@ public class CaregiverAppointmentView {
                     .append("\nAddress: ").append(guardian.getAddress());
 
             // === Payment Info ===
-            Payment payment = paymentDAO.getPaymentByAppointmentId(appointment.getPaymentID());
+            Payment payment = paymentController.getPaymentByAppointmentId(appointment.getPaymentID());
             String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
             String dueDate = formatter.format(appointment.getCreatedDate().plusWeeks(1));
 
@@ -168,7 +170,7 @@ public class CaregiverAppointmentView {
             Button approveBtn = createBigGreenButton("Approve");
             approveBtn.setOnAction(e -> {
                 appointment.setStatus(Appointment.AppointmentStatus.ONGOING);
-                appointmentDAO.updateAppointment(appointment);
+                appointmentController.updateAppointment(appointment);
 
                 String updatedDetails = details.toString().replaceFirst(
                         "Status: \\w+", "Status: " + appointment.getStatus().name()
@@ -188,12 +190,12 @@ public class CaregiverAppointmentView {
         }
     }
 
-    private void updateFilter(TextField searchField, ComboBox<String> sortBox, GuardianDAO guardianDAO) {
+    private void updateFilter(TextField searchField, ComboBox<String> sortBox, GuardianController guardianController) {
         String searchText = searchField.getText().toLowerCase();
         String selectedStatus = sortBox.getValue();
 
         filteredAppointments.setPredicate(appt -> {
-            Guardian guardian = guardianDAO.getGuardianByAppointmentId(appt.getAppointmentID());
+            Guardian guardian = guardianController.getGuardianByAppointmentId(appt.getAppointmentID());
             if (guardian == null) return false;
 
             boolean matchesSearch = guardian.getFirstName().toLowerCase().contains(searchText);

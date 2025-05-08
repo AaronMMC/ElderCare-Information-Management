@@ -33,4 +33,12 @@ public class ServiceController {
     public void deleteService(int serviceID) {
         serviceDAO.deleteService(serviceID);
     }
+
+    public List<Service> getAllServicesByAppointmentId(int appointmentID) {
+        return serviceDAO.getAllServicesByAppointmentId(appointmentID);
+    }
+
+    public List<Service> getAllServicesByCaregiverId(int caregiverID) {
+
+    }
 }
