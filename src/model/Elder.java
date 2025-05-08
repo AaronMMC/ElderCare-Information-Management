@@ -21,6 +21,25 @@ public class Elder {
         this.address = address;
     }
 
+    public Elder(String firstName, String lastName, LocalDateTime dateOfBirth, String contactNumber, String email, String address) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dateOfBirth = dateOfBirth;
+        this.contactNumber = contactNumber;
+        this.email = email;
+        this.address = address;
+    }
+
+    public Elder() {
+        this.elderID = -1;
+        this.firstName = "";
+        this.lastName = "";
+        this.dateOfBirth = null;
+        this.contactNumber = "";
+        this.email = "";
+        this.address = "";
+    }
+
     public int getElderID() {
         return elderID;
     }
