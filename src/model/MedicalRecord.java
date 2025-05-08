@@ -18,6 +18,7 @@ public class MedicalRecord {
     private Status medicationStatus;
     private Status treatmentStatus;
     private LocalDateTime lastModified;
+    private int elderID;
 
     public MedicalRecord(int medicalRecordID, String diagnosis, String medications, String treatmentPlan, Status medicationStatus, Status treatmentStatus, LocalDateTime lastModified) {
         this.medicalRecordID = medicalRecordID;
@@ -27,6 +28,36 @@ public class MedicalRecord {
         this.medicationStatus = medicationStatus;
         this.treatmentStatus = treatmentStatus;
         this.lastModified = lastModified;
+    }
+
+    public MedicalRecord(int medicalRecordID, String diagnosis, String medications, String treatmentPlan, Status medicationStatus, Status treatmentStatus, LocalDateTime lastModified, int elderID) {
+        this.medicalRecordID = medicalRecordID;
+        this.diagnosis = diagnosis;
+        this.medications = medications;
+        this.treatmentPlan = treatmentPlan;
+        this.medicationStatus = medicationStatus;
+        this.treatmentStatus = treatmentStatus;
+        this.lastModified = lastModified;
+        this.elderID = elderID;
+    }
+
+    public MedicalRecord() {
+        this.medicalRecordID = -1;
+        this.diagnosis = null;
+        this.medications = null;
+        this.treatmentPlan = null;
+        this.medicationStatus = null;
+        this.treatmentStatus = null;
+        this.lastModified = null;
+        this.elderID = -1;
+    }
+
+    public int getElderID() {
+        return elderID;
+    }
+
+    public void setElderID(int elderID) {
+        this.elderID = elderID;
     }
 
     public int getMedicalRecordID() {
