@@ -22,7 +22,6 @@ public class AppointmentDAO {
             stmt.setInt(3, appointment.getCaregiverID());
             stmt.setInt(4, appointment.getGuardianID());
             stmt.setString(5, appointment.getStatus().name());
-            stmt.setTimestamp(6, Timestamp.valueOf(appointment.getCreatedDate()));
             stmt.setString(7, joinElderIDs(appointment.getElderIDs()));
 
             stmt.execute();
