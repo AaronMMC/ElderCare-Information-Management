@@ -7,10 +7,10 @@ import java.util.List;
 
 public class AppointmentController {
 
-    private final dao.AppointmentController appointmentController;
+    private final MedicalRecordController.AppointmentController appointmentController;
 
     public AppointmentController(Connection conn) {
-        this.appointmentController = new dao.AppointmentController(conn);
+        this.appointmentController = new MedicalRecordController.AppointmentController(conn);
     }
 
     public void addAppointment(Appointment appointment) {

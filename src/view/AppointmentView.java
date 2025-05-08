@@ -107,6 +107,7 @@ public class AppointmentView {
         HBox filterBox = new HBox(10, filterLabel, filterDropdown);
         filterBox.setAlignment(Pos.CENTER_LEFT);
 
+        // Caregiver displays
         caregiverDropdown.setOnAction(e -> {
             certBox.getChildren().clear();
             model.Caregiver selected = caregiverDropdown.getValue();
