@@ -57,6 +57,19 @@ public class MedicalRecordDAO {
         return records;
     }
 
+    public MedicalRecord getMedicalRecordsByGuardianId(int guardianID) {
+        String sql = "{CALL GetMedicalRecordsByGuardianId(?)}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToMedicalRecord(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public void updateMedicalRecord(MedicalRecord record) {
         String sql = "{CALL UpdateMedicalRecord(?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
