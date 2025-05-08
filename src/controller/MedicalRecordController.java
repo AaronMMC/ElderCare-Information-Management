@@ -114,7 +114,7 @@ public class MedicalRecordController {
 
         public List<Appointment> getAllAppointmentsByGuardian(int guardianID) {
             List<Appointment> appointments = new ArrayList<>();
-            String sql = "{CALL GetAllAppointmentsByGuardian()}";
+            String sql = "{CALL GetAllAppointmentsByGuardianId(?)}";
             try (CallableStatement stmt = conn.prepareCall(sql)){
                 stmt.setInt(1, guardianID);
                 try (ResultSet rs = stmt.executeQuery()){
