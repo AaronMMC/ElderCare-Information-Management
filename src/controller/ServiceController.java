@@ -39,6 +39,6 @@ public class ServiceController {
     }
 
     public List<Service> getAllServicesByCaregiverId(int caregiverID) {
-
+        return serviceDAO.getAllServicesByCaregiverId(caregiverID);
     }
 }

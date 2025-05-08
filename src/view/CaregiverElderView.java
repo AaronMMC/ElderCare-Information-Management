@@ -24,7 +24,10 @@ import java.util.List;
 public class CaregiverElderView {
 
     private final Scene scene;
+    private final Stage stage;
     private final GridPane table = new GridPane();
+
+    private final Connection conn;
     private final AppointmentController appointmentController;
     private final ElderController elderController;
     private final ServiceController serviceController;
@@ -33,6 +36,8 @@ public class CaregiverElderView {
 
     public CaregiverElderView(Stage stage, Connection conn, Caregiver caregiver) {
         this.caregiver = caregiver;
+        this.conn = conn;
+        this.stage = stage;
         this.appointmentController = new AppointmentController(conn);
         this.elderController = new ElderController(conn);
         this.serviceController = new ServiceController(conn);
@@ -156,6 +161,13 @@ public class CaregiverElderView {
                     appointment.setStatus(Appointment.AppointmentStatus.FINISHED);
                     appointmentController.updateAppointment(appointment);
                     populateTable(); // Refresh after marking done
+                });
+
+                //TODO: Medical Record portal
+                Button seeRecordBtn = createBigGreenButton("See Medical Record");
+                seeRecordBtn.setOnAction(e -> {
+                   MedicalRecordView medicalRecordView = new MedicalRecordView(stage, conn, elder);
+                   stage.setScene(medicalRecordView.getScene());
                 });
 
                 HBox buttonBox = new HBox(markDoneBtn);

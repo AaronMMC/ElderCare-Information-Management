@@ -66,6 +66,21 @@ public class ServiceDAO {
         return services;
     }
 
+    public List<Service> getAllServicesByCaregiverId(int caregiverID) {
+        String sql = "select * from caregiver_service where caregiver_id = ?";//TODO: Pa correct nung sql dapat ang i return neto is all services based sa caregiverid
+        List<Service> services = new ArrayList<>();
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                services.add(mapResultSetToService(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return services;
+
+    }
+
     public void updateService(Service service) {
         try {
             CallableStatement stmt = conn.prepareCall("{call update_service(?, ?, ?, ?)}");
