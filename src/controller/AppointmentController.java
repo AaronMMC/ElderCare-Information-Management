@@ -1,39 +1,41 @@
 package controller;
 
+import dao.AppointmentDAO;
 import model.Appointment;
 
-import java.sql.Connection;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AppointmentController {
 
-    private final MedicalRecordController.AppointmentController appointmentController;
+    private final AppointmentDAO appointmentDAO;
 
     public AppointmentController(Connection conn) {
-        this.appointmentController = new MedicalRecordController.AppointmentController(conn);
-    }
-
-    public void addAppointment(Appointment appointment) {
-        appointmentController.insertAppointment(appointment);
-    }
-
-    public Appointment getAppointmentById(int id) {
-        return appointmentController.getAppointmentById(id);
+        this.appointmentDAO = new AppointmentDAO(conn);
     }
 
     public List<Appointment> getAllAppointments() {
-        return appointmentController.getAllAppointments();
-    }
-
-    public void updateAppointment(Appointment appointment) {
-        appointmentController.updateAppointment(appointment);
-    }
-
-    public void deleteAppointment(int id) {
-        appointmentController.deleteAppointment(id);
+        return appointmentDAO.getAllAppointments();
     }
 
     public List<Appointment> getAllAppointmentsByCaregiver(int caregiverID) {
-        return appointmentController.getAllAppointmentsByCaregiver(caregiverID);
+        return appointmentDAO.getAllAppointmentsByCaregiver(caregiverID);
+    }
+
+    public List<Appointment> getAllAppointmentsByGuardian(int guardianID) {
+        return appointmentDAO.getAllAppointmentsByGuardian(guardianID);
+    }
+
+    public Appointment getAppointmentById(int id) {
+        return appointmentDAO.getAppointmentById(id);
+    }
+
+    public void addAppointment(Appointment appointment) {
+        appointmentDAO.insertAppointment(appointment);
+    }
+
+    public void updateAppointment(Appointment appointment) {
+        appointmentDAO.updateAppointment(appointment);
     }
 }

@@ -1,5 +1,6 @@
 package view;
 
+import controller.AppointmentController;
 import controller.CaregiverController;
 import controller.MedicalRecordController;
 import controller.PaymentController;
@@ -106,7 +107,7 @@ public class GuardianAppointmentView {
         table.getChildren().clear();
         addHeaderRow(table);
 
-        MedicalRecordController.AppointmentController appointmentController = new MedicalRecordController.AppointmentController(conn);
+        AppointmentController appointmentController = new AppointmentController(conn);
         CaregiverController caregiverController = new CaregiverController(conn);
         PaymentController paymentController = new PaymentController(conn);
 
@@ -160,7 +161,7 @@ public class GuardianAppointmentView {
     }
 
     private void addAppointmentRow(GridPane table, int rowIndex, String caregiver, String details, Appointment appointment) {
-        MedicalRecordController.AppointmentController appointmentController = new MedicalRecordController.AppointmentController(conn);
+        AppointmentController appointmentController = new AppointmentController(conn);
 
         Label caregiverLabel = new Label(caregiver);
         caregiverLabel.setPrefWidth(150);
