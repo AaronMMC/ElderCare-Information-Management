@@ -45,15 +45,14 @@ public class MedicalRecordController {
         }
 
         public void insertAppointment(Appointment appointment) {
-            String sql = "{CALL InsertAppointmentWithElders(?, ?, ?, ?, ?, ?, ?)}";
+            String sql = "{CALL InsertAppointmentWithElders(?, ?, ?, ?, ?, ?)}";
             try (CallableStatement stmt = conn.prepareCall(sql)) {
                 stmt.setTimestamp(1, Timestamp.valueOf(appointment.getAppointmentDate()));
                 stmt.setInt(2, appointment.getDuration());
                 stmt.setInt(3, appointment.getCaregiverID());
                 stmt.setInt(4, appointment.getGuardianID());
                 stmt.setString(5, appointment.getStatus().name());
-                stmt.setTimestamp(6, Timestamp.valueOf(appointment.getCreatedDate()));
-                stmt.setString(7, joinElderIDs(appointment.getElderIDs()));
+                stmt.setString(6, joinElderIDs(appointment.getElderIDs()));
 
                 stmt.execute();
             } catch (SQLException e) {
