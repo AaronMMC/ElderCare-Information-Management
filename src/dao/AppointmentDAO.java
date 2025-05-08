@@ -69,7 +69,7 @@ public class AppointmentDAO {
 
     public List<Appointment> getAllAppointmentsByCaregiver(int caregiverID) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "{CALL GetAllAppointmentsByCaregiver()}";
+        String sql = "{CALL GetAllAppointmentsByCaregiverId(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)){
             stmt.setInt(1, caregiverID);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -85,7 +85,7 @@ public class AppointmentDAO {
 
     public List<Appointment> getAllAppointmentsByGuardian(int guardianID) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "{CALL GetAllAppointmentsByGuardian()}";
+        String sql = "{CALL GetAllAppointmentsByGuardianId(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)){
             stmt.setInt(1, guardianID);
             try (ResultSet rs = stmt.executeQuery()){
