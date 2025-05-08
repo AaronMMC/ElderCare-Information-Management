@@ -185,9 +185,12 @@ public class PaymentView{
 
         payButton.setOnAction(event -> {
             try {
-                double amountPaid = Double.parseDouble(amountInput.getText());
-                if (amountPaid > 0) {
+                double amountToPay = payment.getTotalAmount();
+                double amountEntered = Double.parseDouble(amountInput.getText());
+
+                if (amountEntered > 0 && amountEntered <= amountToPay) {
                     double currentTotal = payment.getTotalAmount();
+                    double amountPaid = Math.min(amountEntered, currentTotal); // Ensure we don't deduct more than the total
                     payment.setTotalAmount(Math.max(0, currentTotal - amountPaid));
                     payment.setPaymentMethod(paymentMethod);
                     paymentController.addPayment(payment);
@@ -208,8 +211,10 @@ public class PaymentView{
                     amountField.setText(formatPeso(payment.getTotalAmount()));
 
                     paymentStage.close();
+                } else if (amountEntered <= 0) {
+                    showAlert("Invalid Input", "Please enter an amount greater than zero.");
                 } else {
-                    showAlert("Invalid Input", "Please enter a valid amount.");
+                    showAlert("Invalid Input", "Amount entered exceeds the total amount to be paid (" + formatPeso(amountToPay) + ").");
                 }
             } catch (NumberFormatException e) {
                 showAlert("Invalid Input", "Please enter a numeric amount.");
