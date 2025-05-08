@@ -62,7 +62,7 @@ public class LoginController {
             return;
         }
         if (caregiver != null && caregiver.getPassword().equals(password)) {
-            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Pending  && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Pending && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Not_Cleared){
+            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Pending  && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Pending){
                 CaregiverPendingView pendingView = new CaregiverPendingView(stage, conn);
                 stage.setScene(pendingView.getScene());
                 return;

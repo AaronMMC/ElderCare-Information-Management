@@ -20,7 +20,7 @@ public class GuardianElderController {
     }
 
     public List<Elder> getAllEldersByGuardianId(int guardianId) {
-        return guardianElderDAO.getAllEldersByGuardianId(guardianId);
+        return guardianElderDAO. getAllEldersByGuardianId(guardianId);
     }
 
     public GuardianElder getGuardianElderRelationshipByIds(int guardianId, int elderId) {
