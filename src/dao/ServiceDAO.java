@@ -17,7 +17,7 @@ public class ServiceDAO {
             CallableStatement stmt = conn.prepareCall("{call insert_service(?, ?, ?)}");
             stmt.setString(1, service.getCategory());
             stmt.setString(2, service.getServiceName());
-            stmt.setString(3, service.getDescription());
+            stmt.setDouble(3, service.getPrice());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -72,7 +72,7 @@ public class ServiceDAO {
             stmt.setInt(1, service.getServiceID());
             stmt.setString(2, service.getCategory());
             stmt.setString(3, service.getServiceName());
-            stmt.setString(4, service.getDescription());
+            stmt.setDouble(4, service.getPrice());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -94,6 +94,6 @@ public class ServiceDAO {
                 rs.getInt("service_id"),
                 rs.getString("category"),
                 rs.getString("service_name"),
-                rs.getString("description"));
+                rs.getDouble("price"));
     }
 }

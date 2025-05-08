@@ -5,14 +5,11 @@ import controller.CaregiverServiceController;
 import controller.ServiceController;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Box;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import model.Caregiver;
@@ -24,7 +21,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CaregiverServiceView {
 
@@ -146,7 +142,7 @@ public class CaregiverServiceView {
         nameLabel.setPrefWidth(150);
 
         TextField nameField = new TextField(service.getServiceName());
-        TextField descriptionField = new TextField(service.getDescription());
+        TextField descriptionField = new TextField(String.valueOf(service.getPrice()));
         TextField categoryField = new TextField(service.getCategory());
         TextField experienceYearsField = new TextField(String.valueOf(experienceYears));
         TextField hourlyRateField = new TextField(String.valueOf(hourlyRate));
@@ -171,7 +167,7 @@ public class CaregiverServiceView {
         saveBtn.setOnAction(e -> {
             service.setServiceName(nameField.getText());
             service.setCategory(categoryField.getText());
-            service.setDescription(descriptionField.getText());
+            service.setPrice(Double.parseDouble(descriptionField.getText()));
             serviceController.updateService(service);
 
             CaregiverService updatedCaregiverService = new CaregiverService(caregiver.getCaregiverID(), service.getServiceID(), experienceYearsField.getLength(), hourlyRateField.getLength());
@@ -182,7 +178,7 @@ public class CaregiverServiceView {
 
         cancelBtn.setOnAction(e -> {
             nameField.setText(service.getServiceName());
-            descriptionField.setText(service.getDescription());
+            descriptionField.setText(String.valueOf(service.getPrice()));
             categoryField.setText(service.getCategory());
             experienceYearsField.setText(String.valueOf(experienceYears));
             hourlyRateField.setText(String.valueOf(hourlyRate));

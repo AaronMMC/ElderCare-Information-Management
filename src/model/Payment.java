@@ -25,6 +25,14 @@ public class Payment {
         this.transactionDate = transactionDate;
     }
 
+    public Payment() {
+        this.paymentID = 0;
+        this.totalAmount = 0;
+        this.paymentMethod = PaymentMethod.OTHER;
+        this.additionalCharges = 0;
+        this.transactionDate = null;
+    }
+
     public int getPaymentID() {
         return paymentID;
     }

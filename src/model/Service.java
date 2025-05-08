@@ -4,13 +4,13 @@ public class Service {
     private int serviceID;
     private String category;
     private String serviceName;
-    private String description;
+    private double price;
 
-    public Service(int serviceID, String category, String serviceName, String description) {
+    public Service(int serviceID, String category, String serviceName, double price) {
         this.serviceID = serviceID;
         this.category = category;
         this.serviceName = serviceName;
-        this.description = description;
+        this.price = price;
     }
 
     public int getServiceID() {
@@ -37,11 +37,11 @@ public class Service {
         this.serviceName = serviceName;
     }
 
-    public String getDescription() {
-        return description;
+    public double getPrice() {
+        return price;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setPrice(double price) {
+        this.price = price;
     }
 }

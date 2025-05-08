@@ -189,6 +189,6 @@ public class CaregiverServiceDAO {
                 rs.getInt("service_id"),
                 rs.getString("category"),
                 rs.getString("service_name"),
-                rs.getString("description"));
+                rs.getDouble("price"));
     }
 }

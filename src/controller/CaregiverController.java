@@ -6,6 +6,7 @@ import dao.GuardianDAO;
 import model.Caregiver;
 
 import java.sql.Connection;
+import java.util.List;
 
 public class CaregiverController {
 
@@ -46,5 +47,9 @@ public class CaregiverController {
         boolean adminExists = adminDAO.findByUsername(username) != null; // Assuming AdminDAO has findByUsername
 
         return caregiverExists || guardianExists || adminExists;
+    }
+
+    public List<Caregiver> getAllCaregivers() {
+        return caregiverDAO.getAllCaregivers();
     }
 }

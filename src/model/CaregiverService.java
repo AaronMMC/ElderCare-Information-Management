@@ -13,6 +13,11 @@ public class CaregiverService {
         this.hourlyRate = hourlyRate;
     }
 
+    public CaregiverService(int serviceId, int caregiverId) {
+        this.serviceId = serviceId;
+        this.caregiverId = caregiverId;
+    }
+
     public int getCaregiverId() { return caregiverId; }
 
     public void setCaregiverId(int caregiverId) { this.caregiverId = caregiverId; }

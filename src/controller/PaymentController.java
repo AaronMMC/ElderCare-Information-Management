@@ -1,7 +1,10 @@
 package controller;
 
 import dao.PaymentDAO;
+import model.Appointment;
+import model.CaregiverService;
 import model.Payment;
+import model.Service;
 
 import java.sql.Connection;
 import java.util.List;
@@ -20,6 +23,10 @@ public class PaymentController {
 
     public Payment getPaymentById(int paymentID) {
         return paymentDAO.getPaymentByID(paymentID);
+    }
+
+    public Payment getPaymentByAllServices(Appointment appointment, List<CaregiverService> caregiverService, List<Service> services) {
+        return paymentDAO.getPaymentByAllServices(appointment, caregiverService, services);
     }
 
     public List<Payment> getAllPayments() {

@@ -1,6 +1,7 @@
 package dao;
 
-import model.Payment;
+import model.*;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,48 @@ public class PaymentDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Payment getPaymentByAllServices(Appointment appointment, List<CaregiverService> caregiverServices, List<Service> services) {
+        double totalServiceCost = 0.0;
+        double additionalCharges = 0.0;
+        int durationInSeconds = appointment.getDuration();
+        double durationInHours = durationInSeconds / 3600.0; // Convert to hours
+
+        // Sum up the prices of all selected services and calculate corresponding additional charges
+        for (Service service : services) {
+            totalServiceCost += service.getPrice();
+
+            // Find the corresponding CaregiverService for the current Service
+            CaregiverService correspondingCaregiverService = findCaregiverServiceForService(service, caregiverServices);
+
+            if (correspondingCaregiverService != null) {
+                double hourlyRate = correspondingCaregiverService.getHourlyRate();
+                additionalCharges += hourlyRate * durationInHours;
+            } else {
+                // This case should ideally not happen based on your clarification,
+                // but it's good practice to handle potential unexpected scenarios.
+                System.err.println("Error: No CaregiverService found for service: " + service.getServiceName());
+                // You might want to throw an exception or handle this differently.
+            }
+        }
+
+        // Create new Payment object and set values
+        Payment payment = new Payment();
+        payment.setTotalAmount(totalServiceCost);
+        payment.setAdditionalCharges(additionalCharges);
+
+        return payment;
+    }
+
+    // You'll still need this method to link a Service to its CaregiverService
+    private CaregiverService findCaregiverServiceForService(Service service, List<CaregiverService> caregiverServices) {
+        for (CaregiverService caregiverService : caregiverServices) {
+            if (caregiverService.getServiceId() == service.getServiceID()) {
+                return caregiverService;
+            }
         }
         return null;
     }
