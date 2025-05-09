@@ -130,9 +130,7 @@ public class ElderView {
 
 
                 if (newElder.getElderID() > 0) {
-                    GuardianElder newGELink = new GuardianElder(guardian.getGuardianID(), newElder.getElderID(), relationship);
                     try {
-                        guardianElderController.linkGuardianToElder(newGELink);
                         showAlert(Alert.AlertType.INFORMATION, "Success", "Elder added and linking process initiated successfully.");
 
                         firstNameField.clear();
@@ -167,7 +165,7 @@ public class ElderView {
         // === Right Sidebar ===
         Button goBackBtn = createSidebarButton("Go Back");
         goBackBtn.setOnAction(e -> {
-            GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian);
+            GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian, elderController);
             stage.setScene(guardianElderView.getScene());
         });
 
