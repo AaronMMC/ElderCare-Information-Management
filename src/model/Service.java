@@ -13,6 +13,13 @@ public class Service {
         this.price = price;
     }
 
+    public Service() {
+        this.serviceID = -1;
+        this.category = "";
+        this.serviceName = "";
+        this.price = 0;
+    }
+
     public int getServiceID() {
         return serviceID;
     }
