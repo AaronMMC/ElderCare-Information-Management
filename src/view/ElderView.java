@@ -15,16 +15,27 @@ import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.regex.Pattern;
 
 public class ElderView {
 
     private final Scene scene;
     private final ElderController elderController;
 
+
     public ElderView(Stage stage, Connection conn, Guardian guardian) {
         this.elderController = new ElderController(conn);
 
-        // === Title ===
+        if (guardian != null) {
+            System.out.println("ElderView received Guardian ID: " + guardian.getGuardianID());
+        } else {
+            System.err.println("ElderView received a NULL Guardian object!");
+
+            showAlert(Alert.AlertType.ERROR, "Initialization Error", "Guardian data not available. Cannot add elder.");
+
+        }
+
+
         Label title = new Label("Add an Elder");
         title.setFont(new Font("Arial", 24));
         title.setStyle("-fx-font-weight: bold;");
@@ -38,10 +49,20 @@ public class ElderView {
         TextField firstNameField = createRoundedField("First Name");
         TextField lastNameField = createRoundedField("Last Name");
         DatePicker birthdayPicker = createRoundedDatePicker("Birthday");
-        TextField contactField = createRoundedField("Contact Number");
+        TextField contactField = createRoundedField("Contact Number (09xxxxxxxxx or +639xxxxxxxxx)");
         TextField addressField = createRoundedField("Address");
-        TextField emailField = createRoundedField("Email");
+        TextField emailField = createRoundedField("Email (e.g., user@example.com)");
         TextField relationshipField = createRoundedField("Relationship");
+
+
+        birthdayPicker.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                setDisable(empty || date.isAfter(LocalDate.now()));
+            }
+        });
+
 
         formGrid.add(new Label("First Name:"), 0, 0);
         formGrid.add(firstNameField, 0, 1);
@@ -63,36 +84,75 @@ public class ElderView {
         Button addButton = createMainButton("Add");
 
         cancelButton.setOnAction(e -> {
-            firstNameField.setPromptText("First Name");
-            lastNameField.setPromptText("Last Name");
-            birthdayPicker.setValue(null); // Clear the datepicker
-            contactField.setPromptText("Contact Number");
-            addressField.setPromptText("Address");
-            emailField.setPromptText("Email");
-            relationshipField.setPromptText("Relationship");
-            cancelButton.setDisable(true);
-            addButton.setDisable(true);
-
-            System.out.println("Cancel button clicked.");
+            firstNameField.clear();
+            lastNameField.clear();
+            birthdayPicker.setValue(null);
+            contactField.clear();
+            addressField.clear();
+            emailField.clear();
+            relationshipField.clear();
         });
 
         addButton.setOnAction(e -> {
             String firstName = firstNameField.getText();
             String lastName = lastNameField.getText();
             LocalDate birthdayDate = birthdayPicker.getValue();
-            LocalDateTime birthdayDateTime = null;
-            if (birthdayDate != null) {
-                birthdayDateTime = birthdayDate.atTime(LocalTime.MIDNIGHT);
-            }
             String contactNumber = contactField.getText();
             String address = addressField.getText();
             String email = emailField.getText();
             String relationship = relationshipField.getText();
 
-            Elder newElder = new Elder(firstName, lastName, birthdayDateTime, contactNumber, email, address, guardian.getGuardianID(), relationship);
-            elderController.addElder(newElder);
 
-            System.out.println("Elder added.");
+            if (guardian == null || guardian.getGuardianID() <= 0) {
+                showAlert(Alert.AlertType.ERROR, "System Error", "Guardian information is missing. Cannot add elder.");
+                return;
+            }
+
+
+            if (firstName.isEmpty() || lastName.isEmpty() || birthdayDate == null ||
+                    contactNumber.isEmpty() || address.isEmpty() || email.isEmpty() || relationship.isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Validation Error", "All fields are required.");
+                return;
+            }
+
+            if (birthdayDate.isAfter(LocalDate.now())) {
+                showAlert(Alert.AlertType.ERROR, "Validation Error", "Birthday cannot be in the future.");
+                return;
+            }
+
+
+            LocalDateTime birthdayDateTime = birthdayDate.atTime(LocalTime.MIDNIGHT);
+
+            Elder newElder = new Elder(firstName, lastName, birthdayDateTime, contactNumber, email, address, guardian.getGuardianID());
+
+            try {
+                elderController.addElder(newElder);
+
+
+                if (newElder.getElderID() > 0) {
+                    GuardianElder newGELink = new GuardianElder(guardian.getGuardianID(), newElder.getElderID(), relationship);
+                    try {
+                        guardianElderController.linkGuardianToElder(newGELink);
+                        showAlert(Alert.AlertType.INFORMATION, "Success", "Elder added and linking process initiated successfully.");
+
+                        firstNameField.clear();
+                        lastNameField.clear();
+                        birthdayPicker.setValue(null);
+                        contactField.clear();
+                        addressField.clear();
+                        emailField.clear();
+                        relationshipField.clear();
+                    } catch (Exception linkEx) {
+                        showAlert(Alert.AlertType.ERROR, "Link Error", "Elder added, but an error occurred during linking: " + linkEx.getMessage());
+                        linkEx.printStackTrace();
+                    }
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Add Error", "Failed to add elder or retrieve elder ID for linking. Please check elder list or try again. The elder might not have been saved.");
+                }
+            } catch (Exception ex) {
+                showAlert(Alert.AlertType.ERROR, "Operation Error", "An error occurred while adding the elder: " + ex.getMessage());
+                ex.printStackTrace();
+            }
         });
 
         HBox buttonBox = new HBox(20, cancelButton, addButton);
@@ -107,7 +167,7 @@ public class ElderView {
         // === Right Sidebar ===
         Button goBackBtn = createSidebarButton("Go Back");
         goBackBtn.setOnAction(e -> {
-            GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian, new ElderController(conn));
+            GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian);
             stage.setScene(guardianElderView.getScene());
         });
 
@@ -121,14 +181,12 @@ public class ElderView {
         VBox.setVgrow(spacer, Priority.ALWAYS);
         rightPane.getChildren().addAll(spacer, goBackBtn);
 
-        // === Root Layout ===
         HBox root = new HBox(20, leftPane, rightPane);
         root.setPadding(new Insets(20));
 
-        this.scene = new Scene(root, 1100, 600);
-        stage.setTitle("Your Elders");
+        this.scene = new Scene(root, 1100, 650);
+        stage.setTitle("Add Elder");
         stage.setScene(scene);
-        stage.show();
 
     }
 
@@ -136,7 +194,7 @@ public class ElderView {
         TextField field = new TextField();
         field.setPromptText(prompt);
         field.setStyle("-fx-background-color: lightgray; -fx-background-radius: 20; -fx-padding: 8 16;");
-        field.setPrefWidth(250);
+        field.setPrefWidth(300);
         return field;
     }
 
@@ -144,7 +202,7 @@ public class ElderView {
         DatePicker datePicker = new DatePicker();
         datePicker.setPromptText(prompt);
         datePicker.setStyle("-fx-background-color: lightgray; -fx-background-radius: 20; -fx-padding: 8 16;");
-        datePicker.setPrefWidth(250);
+        datePicker.setPrefWidth(300);
         return datePicker;
     }
 
@@ -160,6 +218,14 @@ public class ElderView {
         button.setStyle("-fx-background-color: white; -fx-text-fill: black; -fx-font-size: 14px; -fx-background-radius: 20;");
         button.setPrefWidth(120);
         return button;
+    }
+
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     public Scene getScene() {
