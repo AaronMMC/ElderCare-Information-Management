@@ -26,20 +26,19 @@ public class ElderView {
     private final GuardianElderController guardianElderController;
 
 
-
     public ElderView(Stage stage, Connection conn, Guardian guardian) {
         this.elderController = new ElderController(conn);
         this.guardianElderController = new GuardianElderController(conn);
         System.out.println(guardian.getGuardianID());
-        // This is a good check. If guardian or guardian.getGuardianID() is problematic,
-        // the issue is in how ElderView is being called from the previous view.
+
+
         if (guardian != null) {
             System.out.println("ElderView received Guardian ID: " + guardian.getGuardianID());
         } else {
             System.err.println("ElderView received a NULL Guardian object!");
-            // Optionally, show an error and prevent view creation if guardian is null
+
             showAlert(Alert.AlertType.ERROR, "Initialization Error", "Guardian data not available. Cannot add elder.");
-            // You might want to throw an exception or handle this more gracefully
+
         }
 
 
@@ -59,7 +58,7 @@ public class ElderView {
         TextField addressField = createRoundedField("Address");
         TextField emailField = createRoundedField("Email (e.g., user@example.com)");
         TextField relationshipField = createRoundedField("Relationship");
-        // Elder elder; // This local variable was unused and uninitialized for its previous purpose
+
 
         birthdayPicker.setDayCellFactory(picker -> new DateCell() {
             @Override
@@ -107,13 +106,12 @@ public class ElderView {
             String email = emailField.getText();
             String relationship = relationshipField.getText();
 
-            // Check if guardian object or its ID is valid before proceeding
+
             if (guardian == null || guardian.getGuardianID() <= 0) {
                 showAlert(Alert.AlertType.ERROR, "System Error", "Guardian information is missing. Cannot add elder.");
                 return;
             }
 
-            // Removed problematic line: elder = elder.setGuardianId(guardian.getGuardianID());
 
             if (firstName.isEmpty() || lastName.isEmpty() || birthdayDate == null ||
                     contactNumber.isEmpty() || address.isEmpty() || email.isEmpty() || relationship.isEmpty()) {
@@ -127,22 +125,20 @@ public class ElderView {
             }
 
 
-
             LocalDateTime birthdayDateTime = birthdayDate.atTime(LocalTime.MIDNIGHT);
-            // This is the correct way to create the newElder object with the guardianId
+
             Elder newElder = new Elder(firstName, lastName, birthdayDateTime, contactNumber, email, address, guardian.getGuardianID());
 
             try {
-                elderController.addElder(newElder); // Assumes controller handles ID setting on newElder if needed by DAO
+                elderController.addElder(newElder);
 
-                // This check relies on elderController.addElder (or the DAO it calls)
-                // populating newElder.elderID if the insert is successful.
+
                 if (newElder.getElderID() > 0) {
                     GuardianElder newGELink = new GuardianElder(guardian.getGuardianID(), newElder.getElderID(), relationship);
                     try {
-                        guardianElderController.linkGuardianToElder(newGELink); // Assuming this is void, try-catch for errors
+                        guardianElderController.linkGuardianToElder(newGELink);
                         showAlert(Alert.AlertType.INFORMATION, "Success", "Elder added and linking process initiated successfully.");
-                        // Clear fields after successful operation
+
                         firstNameField.clear();
                         lastNameField.clear();
                         birthdayPicker.setValue(null);
@@ -174,7 +170,7 @@ public class ElderView {
 
         Button goBackBtn = createSidebarButton("Go Back");
         goBackBtn.setOnAction(e -> {
-            // Ensure guardian object is passed back if needed by GuardianElderView
+
             GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian);
             stage.setScene(guardianElderView.getScene());
         });
@@ -195,7 +191,7 @@ public class ElderView {
         this.scene = new Scene(root, 1100, 650);
         stage.setTitle("Add Elder");
         stage.setScene(scene);
-        // stage.show(); // Stage is typically shown by the calling controller or view that instantiates this one
+
     }
 
     private TextField createRoundedField(String prompt) {
