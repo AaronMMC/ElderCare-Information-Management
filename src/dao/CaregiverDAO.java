@@ -216,7 +216,7 @@ public class CaregiverDAO {
         }
 
         Caregiver.BackgroundCheckStatus bgStatus = null;
-        String bgStatusString = rs.getString("background_check_status");
+        String bgStatusString = rs.getString("backgroundCheckStatus");
         if (bgStatusString != null && !bgStatusString.trim().isEmpty()) {
             try {
                 bgStatus = Caregiver.BackgroundCheckStatus.valueOf(bgStatusString.trim());
@@ -226,7 +226,7 @@ public class CaregiverDAO {
         }
 
         Caregiver.MedicalClearanceStatus medStatus = null;
-        String medStatusString = rs.getString("medical_clearance_status");
+        String medStatusString = rs.getString("medicalClearanceStatus");
         if (medStatusString != null && !medStatusString.trim().isEmpty()) {
             try {
                 medStatus = Caregiver.MedicalClearanceStatus.valueOf(medStatusString.trim());
@@ -236,7 +236,7 @@ public class CaregiverDAO {
         }
 
         Caregiver.EmploymentType employmentType = null;
-        String employmentTypeString = rs.getString("employment_type");
+        String employmentTypeString = rs.getString("employmentType");
         if (employmentTypeString != null && !employmentTypeString.trim().isEmpty()) {
             try {
                 employmentType = Caregiver.EmploymentType.valueOf(employmentTypeString.trim());
@@ -250,17 +250,17 @@ public class CaregiverDAO {
                 rs.getInt("caregiver_id"),
                 rs.getString("username"),
                 rs.getString("password"),
-                rs.getString("first_name"),
-                rs.getString("last_name"),
-                rs.getTimestamp("date_of_birth") != null ? rs.getTimestamp("date_of_birth").toLocalDateTime() : null,
+                rs.getString("firstName"),
+                rs.getString("lastName"),
+                rs.getTimestamp("dateOfBirth") != null ? rs.getTimestamp("dateOfBirth").toLocalDateTime() : null,
                 gender,
-                rs.getString("contact_number"),
+                rs.getString("contactNumber"),
                 rs.getString("email"),
                 rs.getString("address"),
                 certificationsList,
                 bgStatus,
                 medStatus,
-                rs.getString("availability_schedule"),
+                rs.getString("availabilitySchedule"),
                 employmentType
         );
     }

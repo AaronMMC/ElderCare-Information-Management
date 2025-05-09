@@ -140,9 +140,9 @@ public class GuardianDAO {
                 rs.getInt("guardian_id"),
                 rs.getString("username"),
                 rs.getString("password"),
-                rs.getString("first_name"),
-                rs.getString("last_name"),
-                rs.getString("contact_number"),
+                rs.getString("firstName"),
+                rs.getString("lastName"),
+                rs.getString("contactNumber"),
                 rs.getString("email"),
                 rs.getString("address")
         );

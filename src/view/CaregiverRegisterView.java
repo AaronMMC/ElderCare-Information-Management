@@ -61,7 +61,14 @@ public class CaregiverRegisterView {
         DatePicker birthdayPicker = new DatePicker();
         birthdayPicker.setPromptText("Select Birthday");
         styleDatePicker(birthdayPicker);
-
+        final LocalDate today = LocalDate.now(); // Use current date
+        birthdayPicker.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                setDisable(empty || date.isAfter(today));
+            }
+        });
         ComboBox<Caregiver.Gender> genderComboBox = new ComboBox<>();
         genderComboBox.getItems().addAll(Caregiver.Gender.values());
         genderComboBox.setPromptText("Select Gender");
@@ -300,6 +307,8 @@ public class CaregiverRegisterView {
             mainStage.setScene(loginScene);
             mainStage.show();
         });
+
+
 
         stage.setScene(scene);
     }

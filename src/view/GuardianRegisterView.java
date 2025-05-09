@@ -149,9 +149,12 @@ public class GuardianRegisterView {
         });
 
         backButton.setOnAction(e -> {
-            LoginView loginView = new LoginView();
-            mainStage.setScene(new Scene(loginView.getView(), mainStage.getScene().getWidth(), mainStage.getScene().getHeight()));
-        });
+                LoginController loginController = new LoginController(mainStage, dbConnection);
+                Scene loginScene = loginController.getLoginScene();
+                mainStage.setTitle("ElderCare");
+                mainStage.setScene(loginScene);
+                mainStage.show();
+                });
 
         stage.setScene(scene);
     }

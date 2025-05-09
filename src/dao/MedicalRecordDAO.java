@@ -15,12 +15,19 @@ public class MedicalRecordDAO {
     }
 
     public void insertMedicalRecord(MedicalRecord record) {
-        String sql = "{CALL InsertMedicalRecord(?, ?, ?, ?, ?)}";
+        String sql =  "INSERT INTO medicalrecord (\n" +
+                "    diagnosis,\n" +
+                "    medications,\n" +
+                "    treatmentPlan,\n" +
+                "    medicationStatus,\n" +
+                "    treatmentStatus\n" +
+                ") \n" +
+                "VALUES (?, ?, ?, ?, ?);";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, record.getDiagnosis());
             stmt.setString(2, record.getMedications());
             stmt.setString(3, record.getTreatmentPlan());
-            stmt.setString(5, record.getMedicationStatus().name());;
+            stmt.setString(4, record.getMedicationStatus().name());;
             stmt.setString(5, record.getTreatmentStatus().name());
             stmt.execute();
         } catch (SQLException e) {
@@ -29,7 +36,7 @@ public class MedicalRecordDAO {
     }
 
     public MedicalRecord getMedicalRecordById(int id) {
-        String sql = "{CALL GetMedicalRecordById(?)}";
+        String sql = "Select * FROM medicalrecord WHERE medicalRecord_id = ?";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -45,7 +52,7 @@ public class MedicalRecordDAO {
 
     public List<MedicalRecord> getAllMedicalRecords() {
         List<MedicalRecord> records = new ArrayList<>();
-        String sql = "{CALL GetAllMedicalRecords()}";
+        String sql = "Select * FROM medicalrecord";
         try (CallableStatement stmt = conn.prepareCall(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
@@ -58,8 +65,13 @@ public class MedicalRecordDAO {
     }
 
     public MedicalRecord getMedicalRecordsByGuardianId(int guardianID) {
-        String sql = "{CALL GetMedicalRecordsByGuardianId(?)}";
+        String sql = "SELECT mr.*\n" +
+                "    FROM medicalrecord mr\n" +
+                "    INNER JOIN guardianelder ge ON mr.elder_id = ge.elder_id\n" +
+                "    INNER JOIN guardian g ON ge.guardian_id = g.guardian_id\n" +
+                "    WHERE g.guardian_id = ?";
         try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1, guardianID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return mapResultSetToMedicalRecord(rs);
@@ -86,7 +98,7 @@ public class MedicalRecordDAO {
     }
 
     public void deleteMedicalRecord(int id) {
-        String sql = "{CALL DeleteMedicalRecord(?)}";
+        String sql = "DELETE FROM medicalrecord WHERE medicalRecord_id = ?";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, id);
             stmt.execute();
