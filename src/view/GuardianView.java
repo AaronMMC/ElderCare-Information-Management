@@ -26,7 +26,8 @@ public class GuardianView {
         titleLabel.setFont(Font.font("Arial", 28));
         titleLabel.setStyle("-fx-font-weight: bold;");
 
-
+        guardian.getGuardianID();
+        System.out.println(guardian.getGuardianID());
         TextField firstNameField = new TextField(guardian.getFirstName());
         TextField lastNameField = new TextField(guardian.getLastName());
         TextField contactField = new TextField(guardian.getContactNumber());
