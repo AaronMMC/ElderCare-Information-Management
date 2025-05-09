@@ -127,6 +127,7 @@ public class CaregiverServiceView {
     }
 
     private void showAddServicePanel() {
+        //TODO: Make this gui better
         Stage serviceStage = new Stage();
         serviceStage.setTitle("Add a Service");
 
@@ -176,7 +177,7 @@ public class CaregiverServiceView {
             caregiverServiceController.addCaregiverService(updatedCaregiverService);
 
             refreshServiceList(conn, caregiver, caregiverServiceController);
-
+            serviceStage.close();
         });
     }
 
