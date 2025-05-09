@@ -71,6 +71,7 @@ public class CaregiverServiceView {
 
         Button scheduleBtn = createSidebarButton("Your Schedule");
         Button goBackBtn = createSidebarButton("Go Back");
+        Button addService = createBigGreenButton("Add Service");
 
         scheduleBtn.setOnAction(e -> {
             CaregiverScheduleView caregiverScheduleView = new CaregiverScheduleView(stage, conn, caregiver);
@@ -82,7 +83,11 @@ public class CaregiverServiceView {
             stage.setScene(caregiverView.getScene());
         });
 
-        VBox rightPane = new VBox(30, scheduleBtn);
+        addService.setOnAction(e -> {
+            showAddServicePanel();
+        });
+
+        VBox rightPane = new VBox(30, scheduleBtn, addService);
         rightPane.setPadding(new Insets(30));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setAlignment(Pos.TOP_CENTER);
@@ -94,6 +99,17 @@ public class CaregiverServiceView {
 
         Button cancelButton = createBigGreenButton("Cancel");
         Button saveButton = createBigGreenButton("Save Changes");
+    
+
+        cancelButton.setOnAction(e -> {
+            CaregiverView caregiverView = new CaregiverView(stage,conn,caregiver);
+            stage.setScene(caregiverView.getScene());
+        });
+
+        saveButton.setOnAction(e -> {
+
+        });
+
 
         HBox bottomButtons = new HBox(30, cancelButton, saveButton);
         bottomButtons.setAlignment(Pos.CENTER);
@@ -108,6 +124,38 @@ public class CaregiverServiceView {
         stage.setTitle("Services");
         stage.setScene(scene);
         stage.show();
+    }
+
+    private void showAddServicePanel() {
+        Stage serviceStage = new Stage();
+        serviceStage.setTitle("Add a Service");
+
+        Label serviceNameLabel = new Label("Service name: ");
+        TextField serviceNameInput = new TextField();
+
+        Label serviceCategoryLabel = new Label("Category: ")
+        TextField serviceCategoryInput = new TextField();
+
+        Label servicePriceLabel = new Label("Price: ")
+        TextField servicePriceInput = new TextField();
+
+        Button add = new Button("Add");
+
+        VBox layout = new VBox(20, serviceNameLabel, serviceNameInput, serviceCategoryLabel, serviceCategoryInput, servicePriceLabel, servicePriceInput, add);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(30));
+        leftPane.setPrefWidth(700);
+
+        Scene scene = new Scene(layout, 300, 150);
+        paymentStage.setScene(scene);
+        paymentStage.show();
+
+        add.setOnAction(e -> {
+            String serviceName = serviceNameInput.getText();
+            String serviceCategory = serviceCategoryInput.getText();
+            double servicePrice = Double.parseDouble(servicePriceInput.getText()));
+
+        });
     }
 
     private void refreshServiceList(Connection conn, Caregiver caregiver, CaregiverServiceController caregiverServiceController) {
