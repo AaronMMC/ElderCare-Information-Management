@@ -123,7 +123,7 @@ public class ElderView {
 
             LocalDateTime birthdayDateTime = birthdayDate.atTime(LocalTime.MIDNIGHT);
 
-            Elder newElder = new Elder(firstName, lastName, birthdayDateTime, contactNumber, email, address, guardian.getGuardianID());
+            Elder newElder = new Elder(firstName, lastName, birthdayDateTime, contactNumber, email, address, guardian.getGuardianID(), relationship);
 
             try {
                 elderController.addElder(newElder);
