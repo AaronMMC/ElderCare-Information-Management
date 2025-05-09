@@ -29,7 +29,7 @@ public class MedicalRecordController {
     }
 
     public MedicalRecord getMedicalRecordByElderId(int elderId) {
-        return medicalRecordDAO.getMedicalRecordById(elderId);
+        return medicalRecordDAO.getMedicalRecordByElderId(elderId);
     }
 
     public void updateMedicalRecord(MedicalRecord medicalRecord) {

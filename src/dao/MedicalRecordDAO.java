@@ -64,7 +64,7 @@ public class MedicalRecordDAO {
         return records;
     }
 
-    public MedicalRecord getMedicalRecordsByElderId(int elderID) {
+    public MedicalRecord getMedicalRecordByElderId(int elderID) {
         String sql = "SELECT mr.*\n" +
                 "    FROM medicalrecord mr\n" +
                 "    INNER JOIN guardianelder ge ON mr.elder_id = ge.elder_id\n" +
