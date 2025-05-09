@@ -25,8 +25,9 @@ public class ServiceDAO {
     }
 
     public Service getServiceByID(int serviceID) {
+        String sql = "SELECT * FROM service WHERE service_id = ?";
         try {
-            CallableStatement stmt = conn.prepareCall("{call get_service_by_id(?)}");
+            CallableStatement stmt = conn.prepareCall(sql);
             stmt.setInt(1, serviceID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -39,9 +40,10 @@ public class ServiceDAO {
     }
 
     public List<Service> getAllServices() {
+        String sql = "Select * FROM service";
         List<Service> services = new ArrayList<>();
         try {
-            CallableStatement stmt = conn.prepareCall("{call get_all_services()}");
+            CallableStatement stmt = conn.prepareCall(sql);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 services.add(mapResultSetToService(rs));
@@ -53,9 +55,14 @@ public class ServiceDAO {
     }
 
     public List<Service> getAllServicesByAppointmentId(int appointmentID) {
-        String sql = "select * from services where appointment_id = ?";
+        String sql = "SELECT s.*\n" +
+                "    FROM service s\n" +
+                "    INNER JOIN caregiverservice cs ON s.service_id = cs.service_id\n" +
+                "    INNER JOIN appointment a ON cs.caregiver_id = a.caregiver_id\n" +
+                "    WHERE a.appointment_id = ?";
         List<Service> services = new ArrayList<>();
         try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1,appointmentID);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 services.add(mapResultSetToService(rs));
@@ -100,8 +107,10 @@ public class ServiceDAO {
     }
 
     public void deleteService(int serviceID) {
+        String sql = "DELETE FROM service \n" +
+                "    WHERE service_id = ?";
         try {
-            CallableStatement stmt = conn.prepareCall("{call delete_service(?)}");
+            CallableStatement stmt = conn.prepareCall(sql);
             stmt.setInt(1, serviceID);
             stmt.executeUpdate();
         } catch (SQLException e) {

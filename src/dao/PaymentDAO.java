@@ -26,8 +26,9 @@ public class PaymentDAO {
     }
 
     public Payment getPaymentByID(int paymentID)  {
+        String sql = "SELECT * FROM payment WHERE payment_id = ?";
         try {
-            CallableStatement stmt = conn.prepareCall("{call get_payment_by_id(?)}");
+            CallableStatement stmt = conn.prepareCall(sql);
             stmt.setInt(1, paymentID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -40,8 +41,10 @@ public class PaymentDAO {
     }
 
     public Payment getPaymentByAppointmentId(int appointmentID)  {
-        String sql = "{CALL get_payment_by_appointment_id(?)}";
+        String sql = "SELECT p.* FROM payment p INNER JOIN appointment a ON a.payment_id = p.payment_id \n" +
+                "    WHERE a.appointment_id = ?";
         try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1,appointmentID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                mapResultSetToPayment(rs);
@@ -95,9 +98,10 @@ public class PaymentDAO {
     }
 
     public List<Payment> getAllPayments() {
+        String sql = "Select * FROM payment";
         List<Payment> payments = new ArrayList<>();
         try {
-            CallableStatement stmt = conn.prepareCall("{call get_all_payments()}");
+            CallableStatement stmt = conn.prepareCall(sql);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 payments.add(mapResultSetToPayment(rs));
@@ -122,8 +126,10 @@ public class PaymentDAO {
     }
 
     public void deletePayment(int paymentID) {
+        String sql = "DELETE FROM payment \n" +
+                "    WHERE payment_id = ?";
         try {
-            CallableStatement stmt = conn.prepareCall("{call delete_payment(?)}");
+            CallableStatement stmt = conn.prepareCall(sql);
             stmt.setInt(1, paymentID);
             stmt.executeUpdate();
         } catch (SQLException e) {
