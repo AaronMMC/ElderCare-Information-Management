@@ -245,7 +245,6 @@ public class CaregiverDAO {
             }
         }
 
-
         return new Caregiver(
                 rs.getInt("caregiver_id"),
                 rs.getString("username"),
@@ -263,6 +262,8 @@ public class CaregiverDAO {
                 rs.getString("availabilitySchedule"),
                 employmentType
         );
+
+
     }
 
     public Caregiver findByUsernameAndPassword(String username, String password) {
