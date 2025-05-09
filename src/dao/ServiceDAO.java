@@ -65,11 +65,16 @@ public class ServiceDAO {
         }
         return services;
     }
-
-    public List<Service> getAllServicesByCaregiverId(int caregiverID) {
-        String sql = "select * from caregiver_service where caregiver_id = ?";//TODO: Pa correct nung sql dapat ang i return neto is all services based sa caregiverid
+    ///Incorrect number of arguments for PROCEDURE lalakers2.InsertElder; expected 7, got 6
+    public List<Service> getAllServicesByCaregiverId(int caregiverId) {
+        String sql = "  SELECT s.*\n" +
+                "    FROM service s\n" +
+                "    INNER JOIN caregiverservice cs ON s.service_id = cs.service_id\n" +
+                "    INNER JOIN caregiver c ON cs.caregiver_id = c.caregiver_id\n" +
+                "    WHERE c.caregiver_id = ?";
         List<Service> services = new ArrayList<>();
         try (CallableStatement stmt = conn.prepareCall(sql)){
+            stmt.setInt(1, caregiverId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 services.add(mapResultSetToService(rs));
