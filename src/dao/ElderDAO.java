@@ -14,7 +14,7 @@ public class ElderDAO {
         this.conn = conn;
     }
 
-    public void insertElder(Elder elder) {
+    public void insertElder(Elder elder) throws SQLException {
         String sql = "{CALL InsertElder(?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, elder.getFirstName());
@@ -27,7 +27,7 @@ public class ElderDAO {
             stmt.setString(8, elder.getRelationship());
             stmt.execute();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw e;
         }
     }
 

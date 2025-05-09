@@ -128,27 +128,22 @@ public class ElderView {
             try {
                 elderController.addElder(newElder);
 
+                try {
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Elder added and linking process initiated successfully.");
 
-                if (newElder.getElderID() > 0) {
-                    try {
-                        showAlert(Alert.AlertType.INFORMATION, "Success", "Elder added and linking process initiated successfully.");
-
-                        firstNameField.clear();
-                        lastNameField.clear();
-                        birthdayPicker.setValue(null);
-                        contactField.clear();
-                        addressField.clear();
-                        emailField.clear();
-                        relationshipField.clear();
-                    } catch (Exception linkEx) {
-                        showAlert(Alert.AlertType.ERROR, "Link Error", "Elder added, but an error occurred during linking: " + linkEx.getMessage());
-                        linkEx.printStackTrace();
-                    }
-                } else {
-                    showAlert(Alert.AlertType.ERROR, "Add Error", "Failed to add elder or retrieve elder ID for linking. Please check elder list or try again. The elder might not have been saved.");
+                    firstNameField.clear();
+                    lastNameField.clear();
+                    birthdayPicker.setValue(null);
+                    contactField.clear();
+                    addressField.clear();
+                    emailField.clear();
+                    relationshipField.clear();
+                } catch (Exception linkEx) {
+                    showAlert(Alert.AlertType.ERROR, "Link Error", "Elder added, but an error occurred during linking: " + linkEx.getMessage());
+                    linkEx.printStackTrace();
                 }
             } catch (Exception ex) {
-                showAlert(Alert.AlertType.ERROR, "Operation Error", "An error occurred while adding the elder: " + ex.getMessage());
+                showAlert(Alert.AlertType.ERROR, "Add Error", "Failed to add elder or retrieve elder ID for linking. Please check elder list or try again. The elder might not have been saved.");
                 ex.printStackTrace();
             }
         });

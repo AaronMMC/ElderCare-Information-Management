@@ -4,6 +4,7 @@ import dao.ElderDAO;
 import model.Elder;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 public class ElderController {
@@ -14,7 +15,7 @@ public class ElderController {
         elderDAO = new ElderDAO(conn);
     }
 
-    public void addElder(Elder elder) {
+    public void addElder(Elder elder) throws SQLException {
         elderDAO.insertElder(elder);
     }
 
