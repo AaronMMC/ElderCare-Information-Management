@@ -10,6 +10,44 @@ public class Elder {
     private String contactNumber;
     private String email;
     private String address;
+    private int guardianId;
+    private String relationship;
+
+
+    public Elder(int elderID, String firstName, String lastName, LocalDateTime dateOfBirth, String contactNumber, String email, String address, int guardianId, String relationship) {
+        this.elderID = elderID;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dateOfBirth = dateOfBirth;
+        this.contactNumber = contactNumber;
+        this.email = email;
+        this.address = address;
+        this.guardianId = guardianId;
+        this.relationship = relationship;
+    }
+
+
+    public Elder(String firstName, String lastName, LocalDateTime dateOfBirth, String contactNumber, String email, String address, int guardianId, String relationship) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dateOfBirth = dateOfBirth;
+        this.contactNumber = contactNumber;
+        this.email = email;
+        this.address = address;
+        this.guardianId = guardianId;
+        this.relationship = relationship;
+    }
+
+
+    public Elder(String firstName, String lastName, LocalDateTime dateOfBirth, String contactNumber, String email, String address, int guardianId) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dateOfBirth = dateOfBirth;
+        this.contactNumber = contactNumber;
+        this.email = email;
+        this.address = address;
+        this.guardianId = guardianId;
+    }
 
     public Elder(int elderID, String firstName, String lastName, LocalDateTime dateOfBirth, String contactNumber, String email, String address) {
         this.elderID = elderID;
@@ -94,5 +132,21 @@ public class Elder {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public int getGuardianId() {
+        return guardianId;
+    }
+
+    public void setGuardianId(int guardianId) {
+        this.guardianId = guardianId;
+    }
+
+    public String getRelationship() {
+        return relationship;
+    }
+
+    public void setRelationship(String relationship) {
+        this.relationship = relationship;
     }
 }

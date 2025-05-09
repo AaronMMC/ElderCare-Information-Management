@@ -32,7 +32,6 @@ public class AppointmentView {
     private final CaregiverController caregiverController;
     private final GuardianController guardianController;
     private final ElderController elderController;
-    private final GuardianElderController guardianElderController;
     private final ServiceController serviceController;
     private final PaymentController paymentController;
 
@@ -45,7 +44,6 @@ public class AppointmentView {
         this.caregiverController = new CaregiverController(conn);
         this.guardianController = new GuardianController(conn);
         this.elderController = new ElderController(conn);
-        this.guardianElderController = new GuardianElderController(conn);
         this.serviceController = new ServiceController(conn);
         this.paymentController = new PaymentController(conn);
 
@@ -259,7 +257,7 @@ public class AppointmentView {
         VBox elderListBox = new VBox(10);
         elderListBox.setPadding(new Insets(10));
 
-        guardianElderController.getAllEldersByGuardianId(guardian.getGuardianID()).forEach(elder -> {
+        elderController.getAllEldersByGuardianId(guardian.getGuardianID()).forEach(elder -> {
             CheckBox cb = new CheckBox(elder.getFirstName() + " " + elder.getLastName());
             cb.setUserData(elder);
             cb.setOnAction(e -> {

@@ -1,7 +1,6 @@
 package view;
 
 import controller.ElderController;
-import controller.GuardianElderController;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -13,7 +12,6 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import model.Elder;
 import model.Guardian;
-import model.GuardianElder;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -29,11 +27,14 @@ public class GuardianElderView {
     private final VBox elderListContainer = new VBox(20);
     private final TextField searchField = new TextField();
     private final ComboBox<String> sortComboBox = new ComboBox<>();
+    private ElderController elderController;
 
-    public GuardianElderView(Stage stage, Connection conn, Guardian guardian) {
+    public GuardianElderView(Stage stage, Connection conn, Guardian guardian, ElderController elderController) {
         Label titleLabel = new Label("Your Elders");
         titleLabel.setFont(Font.font("Arial", 24));
         titleLabel.setStyle("-fx-font-weight: bold;");
+
+        this.elderController = elderController;
 
         searchField.setPromptText("Search elder by name...");
         searchField.textProperty().addListener((obs, oldVal, newVal) -> refreshElderList(conn, guardian));
@@ -82,10 +83,8 @@ public class GuardianElderView {
     }
 
     private void refreshElderList(Connection conn, Guardian guardian) {
-        GuardianElderController guardianElderController = new GuardianElderController(conn);
-
         // Already returns List<Elder> — no need to map GuardianElder
-        List<Elder> elders = guardianElderController.getAllEldersByGuardianId(guardian.getGuardianID());
+        List<Elder> elders = elderController.getAllEldersByGuardianId(guardian.getGuardianID());
         allElders.setAll(elders);
 
         String searchText = searchField.getText().toLowerCase();
@@ -114,9 +113,7 @@ public class GuardianElderView {
 
 
     private HBox createElderRow(Elder elder, Guardian guardian, Connection conn) {
-        GuardianElderController guardianElderController = new GuardianElderController(conn);
-        GuardianElder relationship = guardianElderController.getGuardianElderRelationshipByIds(guardian.getGuardianID(), elder.getElderID());
-        String relationshipType = (relationship != null) ? relationship.getRelationshipType() : "Unknown";
+        String relationshipType = elderController.getRelationshipByGuardianId(guardian.getGuardianID());
 
         Label nameLabel = new Label(elder.getFirstName() + " " + elder.getLastName());
         nameLabel.setPrefWidth(150);
@@ -168,11 +165,6 @@ public class GuardianElderView {
             elder.setAddress(addressField.getText());
             elder.setDateOfBirth(dobPicker.getValue().atStartOfDay());
             new ElderController(conn).updateElder(elder);
-
-            // Update GuardianElder relationship
-            GuardianElder updatedGE = new GuardianElder(guardian.getGuardianID(), elder.getElderID(), relationshipField.getText());
-            guardianElderController.updateGuardianElderRelationship(updatedGE);
-
             refreshElderList(conn, guardian);
         });
 

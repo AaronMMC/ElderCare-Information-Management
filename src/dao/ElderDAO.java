@@ -15,7 +15,7 @@ public class ElderDAO {
     }
 
     public void insertElder(Elder elder) {
-        String sql = "{CALL InsertElder(?, ?, ?, ?, ?, ?,?)}";
+        String sql = "{CALL InsertElder(?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, elder.getFirstName());
             stmt.setString(2, elder.getLastName());
@@ -23,13 +23,16 @@ public class ElderDAO {
             stmt.setString(4, elder.getContactNumber());
             stmt.setString(5, elder.getEmail());
             stmt.setString(6, elder.getAddress());
-            stmt.setString(7, elder.getAddress());
+            stmt.setInt(7, elder.getGuardianId());
+            stmt.setString(8, elder.getRelationship());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+
+    // TODO : Update the methods below in according to the new datafields of the Elder
     public Elder getElderById(int id) {
         String sql = "{CALL GetElderById(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
@@ -121,4 +124,51 @@ public class ElderDAO {
                 rs.getString("address")
         );
     }
+
+    public List<Elder> retrieveEldersWithGuardianId(int guardianId) {
+        List<Elder> elders = new ArrayList<>();
+        String sql = "{CALL RetrieveAllEldersWithGuardianId(?)}"; // TODO : review the stored procedure of this one. (Jim Made)
+        try (CallableStatement statement = conn.prepareCall(sql)) {
+            statement.setInt(1, guardianId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    Elder elder = new Elder();
+                    elder.setElderID(resultSet.getInt("elder_id"));
+                    elder.setFirstName(resultSet.getString("firstName"));
+                    elder.setLastName(resultSet.getString("lastName"));
+                    elder.setDateOfBirth(resultSet.getTimestamp("dateOfBirth").toLocalDateTime());
+                    elder.setContactNumber(resultSet.getString("contactNumber"));
+                    elder.setEmail(resultSet.getString("email"));
+                    elder.setAddress(resultSet.getString("address"));
+                    elder.setGuardianId(resultSet.getInt("guardian_id"));
+                    elder.setRelationship(resultSet.getString("relationship"));
+
+                    elders.add(elder);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving elders with guardianId: " + guardianId, e);
+        }
+        return elders;
+    }
+
+    public String getRelationshipByGuardianId(int guardianID) {
+        String relationship = null; //
+        String sql = "SELECT relationship FROM elder WHERE guardian_id = ? LIMIT 1"; // Assuming only one relationship per guardian for now.
+        // this is not a stored procedure but rather, a straight query from the code
+        try (PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setInt(1, guardianID);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next())
+                    relationship = resultSet.getString("relationship");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving relationship by guardianId: " + guardianID, e);
+        }
+
+        return relationship; // Will return null if no relationship found for the given guardianID.
+    }
+
 }

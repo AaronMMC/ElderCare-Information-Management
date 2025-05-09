@@ -34,7 +34,17 @@ public class ElderController {
         elderDAO.deleteElder(elderId);
     }
 
+
+    public List<Elder> getAllEldersByGuardianId(int guardianId) {
+        return elderDAO.retrieveEldersWithGuardianId(guardianId);
+    }
+
     public List<Elder> getAllEldersByAppointmentId(int appointmentID) {
         return elderDAO.getAllEldersByAppointmentId(appointmentID);
+    }
+
+
+    public String getRelationshipByGuardianId(int guardianID) {
+        return elderDAO.getRelationshipByGuardianId(guardianID);
     }
 }

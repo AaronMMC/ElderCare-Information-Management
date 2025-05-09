@@ -1,3 +1,5 @@
+package main;
+
 import controller.LoginController;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -14,7 +16,7 @@ public class ElderCareMain extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/lalakers2", "root", "");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/lalakers", "jimhendrix", "jimhendrix24");
 
             LoginController loginController = new LoginController(primaryStage, conn);
             Scene loginScene = loginController.getLoginScene();

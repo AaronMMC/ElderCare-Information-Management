@@ -1,5 +1,6 @@
 package view;
 
+import controller.ElderController;
 import controller.GuardianController;
 import controller.LoginController;
 import javafx.geometry.Insets;
@@ -120,7 +121,7 @@ public class GuardianView {
 
         elderBtn.setOnAction(e -> {
             System.out.println("Switching to GuardianElderView...");
-                GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian);
+                GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian, new ElderController(conn));
                 stage.setScene(guardianElderView.getScene());
         });
 

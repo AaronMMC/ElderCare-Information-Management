@@ -1,7 +1,6 @@
 package view;
 
 import controller.ElderController;
-import controller.GuardianElderController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -11,7 +10,6 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import model.Elder;
 import model.Guardian;
-import model.GuardianElder;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -22,11 +20,9 @@ public class ElderView {
 
     private final Scene scene;
     private final ElderController elderController;
-    private final GuardianElderController guardianElderController;
 
     public ElderView(Stage stage, Connection conn, Guardian guardian) {
         this.elderController = new ElderController(conn);
-        this.guardianElderController = new GuardianElderController(conn);
 
         // === Title ===
         Label title = new Label("Add an Elder");
@@ -93,11 +89,8 @@ public class ElderView {
             String email = emailField.getText();
             String relationship = relationshipField.getText();
 
-            Elder newElder = new Elder(firstName, lastName, birthdayDateTime, contactNumber, email, address);
+            Elder newElder = new Elder(firstName, lastName, birthdayDateTime, contactNumber, email, address, guardian.getGuardianID(), relationship);
             elderController.addElder(newElder);
-
-            GuardianElder newGELink = new GuardianElder(guardian.getGuardianID(), newElder.getElderID(), relationship);
-            guardianElderController.linkGuardianToElder(newGELink);
 
             System.out.println("Elder added.");
         });
@@ -114,7 +107,7 @@ public class ElderView {
         // === Right Sidebar ===
         Button goBackBtn = createSidebarButton("Go Back");
         goBackBtn.setOnAction(e -> {
-            GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian);
+            GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian, new ElderController(conn));
             stage.setScene(guardianElderView.getScene());
         });
 
