@@ -165,7 +165,7 @@ public class CaregiverElderView {
 
                 Button seeRecordBtn = createBigGreenButton("See Medical Record");
                 seeRecordBtn.setOnAction(e -> {
-                   MedicalRecordView medicalRecordView = new MedicalRecordView(stage, conn, elder);
+                   MedicalRecordView medicalRecordView = new MedicalRecordView(stage, conn, elder, caregiver);
                    stage.setScene(medicalRecordView.getScene());
                 });
 

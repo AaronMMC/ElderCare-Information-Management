@@ -64,14 +64,14 @@ public class MedicalRecordDAO {
         return records;
     }
 
-    public MedicalRecord getMedicalRecordsByGuardianId(int guardianID) {
+    public MedicalRecord getMedicalRecordsByElderId(int elderID) {
         String sql = "SELECT mr.*\n" +
                 "    FROM medicalrecord mr\n" +
                 "    INNER JOIN guardianelder ge ON mr.elder_id = ge.elder_id\n" +
                 "    INNER JOIN guardian g ON ge.guardian_id = g.guardian_id\n" +
-                "    WHERE g.guardian_id = ?";
+                "    WHERE mr.elder_id = ?";
         try (CallableStatement stmt = conn.prepareCall(sql)){
-            stmt.setInt(1, guardianID);
+            stmt.setInt(1, elderID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return mapResultSetToMedicalRecord(rs);

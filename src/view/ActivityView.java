@@ -1,5 +1,8 @@
 package view;
 
+import controller.ActivityController;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -7,73 +10,245 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import model.Activity;
 import model.Appointment;
+import model.Caregiver;
 
 import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class ActivityView {
 
     private final Scene scene;
+    private final ActivityController activityController;
+    private final List<Activity> activityList;
+    private final TableView<Activity> activityTableView;
+    private final Button saveBtn;
+    private final Button cancelBtn;
 
-    public ActivityView(Stage stage, Connection conn, Appointment appointment) {
+    public ActivityView(Stage stage, Connection conn, Appointment appointment, Caregiver caregiver) {
+        this.activityController = new ActivityController(conn);
+        this.activityList = activityController.getAllActivitiesByAppointment(appointment);
+        this.activityTableView = new TableView<>(FXCollections.observableList(activityList));
+        this.saveBtn = createRoundedGreenButton("Save Changes");
+        this.cancelBtn = createRoundedGreenButton("Cancel");
+        saveBtn.setDisable(true);
+        cancelBtn.setDisable(true);
+
         // === Title ===
         Label titleLabel = new Label("Activity Log");
         titleLabel.setFont(Font.font("Arial", 26));
         titleLabel.setStyle("-fx-font-weight: bold;");
 
-        // === Table Headers ===
-        GridPane table = new GridPane();
-        table.setHgap(10);
-        table.setVgap(10);
-        table.setPadding(new Insets(10));
-        table.setStyle("-fx-border-color: #B891F1; -fx-border-width: 2; -fx-background-color: white;");
-        table.setPrefWidth(750);
+        // === Table Columns ===
+        TableColumn<Activity, String> titleColumn = new TableColumn<>("Activity Title");
+        titleColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
+        titleColumn.setPrefWidth(200);
+        titleColumn.setCellFactory(tc -> new EditingCell());
 
-        Label titleHeader = new Label("Activity Title");
-        titleHeader.setStyle("-fx-background-color: #E2C8FD; -fx-font-weight: bold; -fx-padding: 10;");
-        titleHeader.setPrefWidth(200);
-        Label detailsHeader = new Label("Activity Details");
-        detailsHeader.setStyle("-fx-background-color: #E2C8FD; -fx-font-weight: bold; -fx-padding: 10;");
-        detailsHeader.setPrefWidth(400);
+        TableColumn<Activity, String> detailsColumn = new TableColumn<>("Activity Details");
+        detailsColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDescription()));
+        detailsColumn.setPrefWidth(400);
+        detailsColumn.setCellFactory(tc -> new EditingCell());
 
-        table.add(titleHeader, 0, 0);
-        table.add(detailsHeader, 1, 0);
+        TableColumn<Activity, String> timestampColumn = new TableColumn<>("Timestamp");
+        timestampColumn.setCellValueFactory(cellData -> {
+            Timestamp timestamp = cellData.getValue().getTimestamp();
+            if (timestamp != null) {
+                LocalDateTime localDateTime = timestamp.toLocalDateTime();
+                return new SimpleStringProperty(localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            } else {
+                return new SimpleStringProperty(""); // Or handle null timestamp as needed
+            }
+        });
+        timestampColumn.setPrefWidth(150);
 
-        // === Dummy Rows (Dynamic in future) ===
-        int totalRows = 8; // Increased number of rows to fill space
-        for (int i = 1; i <= totalRows; i++) {
-            TextField titleField = new TextField("Activity " + i);
-            titleField.setPrefWidth(200);
+        TableColumn<Activity, Void> actionsColumn = new TableColumn<>("Actions");
+        actionsColumn.setPrefWidth(150);
+        actionsColumn.setCellFactory(param -> new TableCell<Activity, Void>() {
+            private final Button editBtn = createRoundedGreenButton("Edit");
+            private final Button removeBtn = createRoundedGreenButton("Remove");
+            private boolean editing = false;
+            private String originalTitle;
+            private String originalDescription;
 
-            TextField detailsField = new TextField("Details for activity " + i);
-            detailsField.setPrefWidth(400);
+            {
+                HBox actionsBox = new HBox(10, editBtn, removeBtn);
+                actionsBox.setAlignment(Pos.CENTER);
+                setGraphic(actionsBox);
 
-            Button editBtn = createRoundedGreenButton("Edit");
-            Button removeBtn = createRoundedGreenButton("Remove");
+                editBtn.setOnAction(event -> {
+                    Activity activity = getTableRow().getItem();
+                    if (activity != null) {
+                        if (!editing) {
+                            startEdit(activity);
+                        } else {
+                            commitEdit(activity);
+                        }
+                    }
+                });
 
-            HBox actionsBox = new HBox(10, editBtn, removeBtn);
-            actionsBox.setAlignment(Pos.CENTER);
+                removeBtn.setOnAction(event -> {
+                    Activity activity = getTableRow().getItem();
+                    if (activity != null) {
+                        activityController.deleteActivity(activity);
+                        activityList.remove(activity);
+                        activityTableView.refresh();
+                    }
+                });
+            }
 
-            table.add(titleField, 0, i);
-            table.add(detailsField, 1, i);
-            table.add(actionsBox, 2, i);
-        }
+            private void startEdit(Activity activity) {
+                editing = true;
+                editBtn.setText("Save");
+                originalTitle = activity.getTitle();
+                originalDescription = activity.getDescription();
+                activityTableView.setEditable(true);
+                activityTableView.edit(getIndex(), titleColumn);
+                activityTableView.edit(getIndex(), detailsColumn);
+                saveBtn.setDisable(false);
+                cancelBtn.setDisable(false);
+            }
+
+            private void commitEdit(Activity activity) {
+                editing = false;
+                editBtn.setText("Edit");
+                activityTableView.setEditable(false);
+                activityController.updateActivity(activity);
+                saveBtn.setDisable(true);
+                cancelBtn.setDisable(true);
+                activityTableView.refresh();
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(new HBox(10, editBtn, removeBtn));
+                }
+            }
+        });
+
+        activityTableView.getColumns().addAll(titleColumn, detailsColumn, timestampColumn, actionsColumn);
+        activityTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        activityTableView.setPrefWidth(750);
+        VBox.setVgrow(activityTableView, Priority.ALWAYS);
 
         // === Action Buttons ===
-        Button cancelBtn = createRoundedGreenButton("Cancel");
-        Button saveBtn = createRoundedGreenButton("Save Changes");
+        cancelBtn.setOnAction(e -> {
+            activityTableView.getItems().clear();
+            activityTableView.getItems().addAll(activityController.getAllActivitiesByAppointment(appointment));
+            activityTableView.refresh();
+            saveBtn.setDisable(true);
+            cancelBtn.setDisable(true);
+            activityTableView.setEditable(false);
+            // Reset the "Edit" button text for all rows
+            actionsColumn.setCellFactory(param -> new TableCell<Activity, Void>() {
+                private final Button editBtn = createRoundedGreenButton("Edit");
+                private final Button removeBtn = createRoundedGreenButton("Remove");
+
+                { // Initialization block (similar to constructor)
+                    HBox actionsBox = new HBox(10, editBtn, removeBtn);
+                    actionsBox.setAlignment(Pos.CENTER);
+                    setGraphic(actionsBox);
+
+                    removeBtn.setOnAction(event -> {
+                        Activity activity = getTableRow().getItem();
+                        if (activity != null) {
+                            activityController.deleteActivity(activity);
+                            activityList.remove(activity);
+                            activityTableView.refresh();
+                        }
+                    });
+                }
+
+                @Override // Override the updateItem method
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty); // Call superclass implementation
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(new HBox(10, editBtn, removeBtn));
+                    }
+                }
+            });
+        });
+
+        saveBtn.setOnAction(e -> {
+            saveBtn.setDisable(true);
+            cancelBtn.setDisable(true);
+            activityTableView.setEditable(false);
+            // The updates are handled directly in the Edit button's commit action
+        });
 
         HBox actionBox = new HBox(20, cancelBtn, saveBtn);
         actionBox.setAlignment(Pos.CENTER_LEFT);
 
-        VBox leftPane = new VBox(20, titleLabel, table, actionBox);
+        VBox leftPane = new VBox(20, titleLabel, activityTableView, actionBox);
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(800);
-        VBox.setVgrow(table, Priority.ALWAYS);
 
         // === Right Sidebar ===
         Button addActivityBtn = createSidebarButton("Add Activity");
         Button goBackBtn = createSidebarButton("Go Back");
+
+        addActivityBtn.setOnAction(e -> {
+            Dialog<Activity> dialog = new Dialog<>();
+            dialog.setTitle("Add New Activity");
+            dialog.setHeaderText("Enter details for the new activity:");
+
+            // Set the button types
+            ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+
+            // Create the labels and fields
+            GridPane grid = new GridPane();
+            grid.setHgap(10);
+            grid.setVgap(10);
+            grid.setPadding(new Insets(20, 150, 10, 10));
+
+            TextField titleInput = new TextField();
+            titleInput.setPromptText("Activity Title");
+            TextArea descriptionInput = new TextArea();
+            descriptionInput.setPromptText("Activity Details");
+            descriptionInput.setPrefRowCount(3);
+
+            grid.add(new Label("Title:"), 0, 0);
+            grid.add(titleInput, 1, 0);
+            grid.add(new Label("Details:"), 0, 1);
+            grid.add(descriptionInput, 1, 1);
+
+            dialog.getDialogPane().setContent(grid);
+
+            // Convert the result to an activity when the add button is clicked.
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == addButtonType) {
+                    return new Activity(titleInput.getText(), descriptionInput.getText(), appointment.getAppointmentID());
+                }
+                return null;
+            });
+
+            dialog.showAndWait().ifPresent(newActivity -> {
+                activityController.addActivity(newActivity);
+                activityList.add(newActivity);
+                activityTableView.getItems().add(newActivity);
+            });
+        });
+
+        goBackBtn.setOnAction(e -> {
+            try {
+                CaregiverAppointmentView caregiverAppointmentView = new CaregiverAppointmentView(stage, conn, caregiver);
+                stage.setScene(caregiverAppointmentView.getScene());
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
 
         addActivityBtn.setPrefWidth(200);
         goBackBtn.setPrefWidth(200);
@@ -95,6 +270,69 @@ public class ActivityView {
         stage.setTitle("Activity Details");
         stage.setScene(scene);
         stage.show();
+    }
+
+    // Custom Editing Cell
+    private static class EditingCell extends TableCell<Activity, String> {
+
+        private TextField textField;
+
+        public EditingCell() {
+        }
+
+        @Override
+        public void startEdit() {
+            if (!isEmpty()) {
+                super.startEdit();
+                createTextField();
+                setText(null);
+                setGraphic(textField);
+                textField.selectAll();
+            }
+        }
+
+        @Override
+        public void cancelEdit() {
+            super.cancelEdit();
+            setText(getItem());
+            setGraphic(null);
+        }
+
+        @Override
+        public void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty) {
+                setText(null);
+                setGraphic(null);
+            } else {
+                if (isEditing()) {
+                    if (textField != null) {
+                        textField.setText(getString());
+                    }
+                    setText(null);
+                    setGraphic(textField);
+                } else {
+                    setText(getString());
+                    setGraphic(null);
+                }
+            }
+        }
+
+        private void createTextField() {
+            textField = new TextField(getString());
+            textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+            textField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) {
+                    commitEdit(textField.getText());
+                }
+            });
+            textField.setOnAction(event -> commitEdit(textField.getText()));
+        }
+
+        private String getString() {
+            return getItem() == null ? "" : getItem();
+        }
     }
 
     private Button createRoundedGreenButton(String text) {

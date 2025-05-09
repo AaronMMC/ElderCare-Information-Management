@@ -28,6 +28,10 @@ public class MedicalRecordController {
         return medicalRecordDAO.getAllMedicalRecords();
     }
 
+    public MedicalRecord getMedicalRecordByElderId(int elderId) {
+        return medicalRecordDAO.getMedicalRecordById(elderId);
+    }
+
     public void updateMedicalRecord(MedicalRecord medicalRecord) {
         medicalRecordDAO.updateMedicalRecord(medicalRecord);
     }

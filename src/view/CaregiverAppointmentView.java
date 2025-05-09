@@ -186,7 +186,7 @@ public class CaregiverAppointmentView {
 
             Button activityButton = createBigGreenButton("Activity Log");
             activityButton.setOnAction(e -> {
-                ActivityView activityView = new ActivityView(stage, conn, appointment);
+                ActivityView activityView = new ActivityView(stage, conn, appointment, caregiver);
                 stage.setScene(activityView.getScene());
             });
 
