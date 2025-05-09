@@ -23,6 +23,9 @@ import java.util.List;
 public class CaregiverAppointmentView {
 
     private final Scene scene;
+    private final Stage stage;
+    private final Connection conn;
+    private final Caregiver caregiver;
     private final FilteredList<Appointment> filteredAppointments;
     private final AppointmentController appointmentController;
     private final GuardianController guardianController;
@@ -31,6 +34,9 @@ public class CaregiverAppointmentView {
 
     public CaregiverAppointmentView(Stage stage, Connection conn, Caregiver caregiver) throws SQLException {
 
+        this.stage = stage;
+        this.conn = conn;
+        this.caregiver = caregiver;
         this.appointmentController = new AppointmentController(conn);
         this.guardianController = new GuardianController(conn);
         this.elderController = new ElderController(conn);
@@ -178,7 +184,13 @@ public class CaregiverAppointmentView {
                 detailsLabel.setText(updatedDetails);
             });
 
-            HBox buttonBox = new HBox(approveBtn);
+            Button activityButton = createBigGreenButton("Activity Log");
+            activityButton.setOnAction(e -> {
+                ActivityView activityView = new ActivityView(stage, conn, appointment);
+                stage.setScene(activityView.getScene());
+            });
+
+            HBox buttonBox = new HBox(approveBtn, activityButton);
             buttonBox.setAlignment(Pos.CENTER_RIGHT);
             buttonBox.setPrefWidth(150);
 

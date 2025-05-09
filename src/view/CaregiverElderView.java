@@ -163,14 +163,13 @@ public class CaregiverElderView {
                     populateTable(); // Refresh after marking done
                 });
 
-                //TODO: Medical Record portal
                 Button seeRecordBtn = createBigGreenButton("See Medical Record");
                 seeRecordBtn.setOnAction(e -> {
                    MedicalRecordView medicalRecordView = new MedicalRecordView(stage, conn, elder);
                    stage.setScene(medicalRecordView.getScene());
                 });
 
-                HBox buttonBox = new HBox(markDoneBtn);
+                HBox buttonBox = new HBox(markDoneBtn, seeRecordBtn);
                 buttonBox.setAlignment(Pos.CENTER_RIGHT);
                 buttonBox.setPrefWidth(150);
 
