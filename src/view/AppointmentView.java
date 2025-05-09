@@ -23,9 +23,7 @@ import java.util.stream.Collectors;
 public class AppointmentView {
 
     private final Scene scene;
-    // Track selected services globally (make sure this list is shared with populateServiceCheckboxes)
     private final List<Service> selectedServices = new ArrayList<>();
-    // Track selected elders globally
     private final List<Elder> selectedElders = new ArrayList<>();
     private final ComboBox<Caregiver> caregiverDropdown = new ComboBox<>();
 
@@ -51,28 +49,22 @@ public class AppointmentView {
         this.serviceController = new ServiceController(conn);
         this.paymentController = new PaymentController(conn);
 
-        // === Title ===
         Label titleLabel = new Label("Submit an Appointment");
         titleLabel.setFont(Font.font("Arial", 24));
         titleLabel.setStyle("-fx-font-weight: bold;");
 
-        // === Left Section: Elders Selection ===
         VBox elderBox = createElderCheckboxSection(guardian);
         Label selectEldersLabel = new Label("Select Elders:");
         selectEldersLabel.setStyle("-fx-font-weight: bold;");
         VBox elderSelection = new VBox(10, selectEldersLabel, elderBox);
 
-        // === Right Sidebar ===
-        // Caregiver Checkbox
         Label caregiverLabel = new Label("Select a Caregiver:");
         caregiverLabel.setStyle("-fx-font-weight: bold;");
         caregiverDropdown.setPromptText("Select a caregiver");
         caregiverDropdown.setStyle(getInputFieldStyle());
 
-        // Load caregivers into dropdown
         caregiverController.getAllCaregivers().forEach(caregiver -> caregiverDropdown.getItems().add(caregiver));
 
-        // Display their full name
         caregiverDropdown.setCellFactory(cb -> new ListCell<>() {
             @Override
             protected void updateItem(model.Caregiver caregiver, boolean empty) {
@@ -88,10 +80,9 @@ public class AppointmentView {
             }
         });
 
-        // Certification box
         Label certsLabel = new Label("Certifications:");
         certsLabel.setStyle("-fx-font-weight: bold;");
-        VBox certBox = new VBox(); // initially empty
+        VBox certBox = new VBox();
         certBox.setStyle("-fx-background-color: #D9D9D9; -fx-background-radius: 20;");
         certBox.setPadding(new Insets(10));
         certBox.setPrefHeight(150);
@@ -99,7 +90,6 @@ public class AppointmentView {
         certScrollPane.setFitToWidth(true);
         certScrollPane.setPrefHeight(150);
 
-        // === Middle Section: Services & Time ===
         VBox serviceBox = createRoundedSection("(Checkbox)");
         Label serviceLabel = new Label("Service to avail:");
         Label filterLabel = new Label("Filter by:");
@@ -107,9 +97,16 @@ public class AppointmentView {
         HBox filterBox = new HBox(10, filterLabel, filterDropdown);
         filterBox.setAlignment(Pos.CENTER_LEFT);
 
-        // Caregiver displays
+        Label infoLabel = new Label("More info:");
+        infoLabel.setStyle("-fx-font-weight: bold;");
+        VBox infoBox = new VBox();
+        infoBox.setStyle("-fx-background-color: #D9D9D9; -fx-background-radius: 20;");
+        infoBox.setPadding(new Insets(10));
+        infoBox.setPrefHeight(100);
+
         caregiverDropdown.setOnAction(e -> {
             certBox.getChildren().clear();
+            infoBox.getChildren().clear();
             model.Caregiver selected = caregiverDropdown.getValue();
             if (selected != null) {
                 int count = 0;
@@ -119,45 +116,8 @@ public class AppointmentView {
                     certBox.getChildren().add(certLabel);
                     count++;
                 }
-            }
-            // === Load Services for selected caregiver ===
-            assert selected != null;
-            List<Service> allServices = serviceController.getAllServicesByCaregiverId(selected.getCaregiverID());
-
-            // Extract categories
-            Set<String> categories = allServices.stream()
-                    .map(Service::getCategory)
-                    .collect(Collectors.toCollection(TreeSet::new)); // TreeSet for sorted order
-            categories.add("All Categories");
-
-            filterDropdown.getItems().setAll(categories);
-            filterDropdown.setValue("All Categories");
-
-            // Populate checkboxes
-            populateServiceCheckboxes(serviceBox, allServices, "All Categories", new ArrayList<>());
-
-            // Filtering logic
-            filterDropdown.setOnAction(f -> {
-                String selectedCategory = filterDropdown.getValue();
-                populateServiceCheckboxes(serviceBox, allServices, selectedCategory, new ArrayList<>());
-            });
-        });
-
-        // More information box
-        Label infoLabel = new Label("More info:");
-        infoLabel.setStyle("-fx-font-weight: bold;");
-        VBox infoBox = new VBox();
-        infoBox.setStyle("-fx-background-color: #D9D9D9; -fx-background-radius: 20;");
-        infoBox.setPadding(new Insets(10));
-        infoBox.setPrefHeight(100);
-
-        caregiverDropdown.setOnAction(e -> {
-            Caregiver selected = caregiverDropdown.getValue();
-            if (selected != null) {
-                infoBox.getChildren().clear();
 
                 int age = getAge(selected.getDateOfBirth().toLocalDate());
-
                 infoBox.getChildren().addAll(
                         new Label("Age: " + age),
                         new Label("Gender: " + selected.getGender()),
@@ -166,19 +126,25 @@ public class AppointmentView {
                         new Label("Email: " + selected.getEmail())
                 );
 
-                // update certs too (replacing what's inside)
-                certBox.getChildren().clear();
-                int count = 0;
-                for (String cert : selected.getCertifications()) {
-                    if (count >= 5) break;
-                    certBox.getChildren().add(new Label("• " + cert));
-                    count++;
-                }
+                List<Service> allServices = serviceController.getAllServicesByCaregiverId(selected.getCaregiverID());
+
+                Set<String> categories = allServices.stream()
+                        .map(Service::getCategory)
+                        .collect(Collectors.toCollection(TreeSet::new));
+                categories.add("All Categories");
+
+                filterDropdown.getItems().setAll(categories);
+                filterDropdown.setValue("All Categories");
+
+                populateServiceCheckboxes(serviceBox, allServices, "All Categories", selectedServices);
+
+                filterDropdown.setOnAction(f -> {
+                    String selectedCategory = filterDropdown.getValue();
+                    populateServiceCheckboxes(serviceBox, allServices, selectedCategory, selectedServices);
+                });
             }
         });
 
-
-        // === Middle Section: Services & Time ===
         VBox serviceSection = new VBox(10, serviceLabel, filterBox, serviceBox);
 
         DatePicker datePicker = new DatePicker();
@@ -187,72 +153,65 @@ public class AppointmentView {
 
         ComboBox<String> durationBox = createRoundedComboBox("Duration (hrs)");
         durationBox.getItems().addAll("1", "2", "3", "4", "5", "6", "8", "12");
-        durationBox.setEditable(true); // Let the user type custom values
+        durationBox.setEditable(true);
 
         HBox dateTimeBox = new HBox(20, datePicker, durationBox);
         dateTimeBox.setAlignment(Pos.CENTER_LEFT);
 
-        LocalDate selectedDate = datePicker.getValue();
-        String durationText = durationBox.getValue();
-
-        int durationInHours = Integer.parseInt(durationText);
-        int durationInSeconds = durationInHours * 3600;
-
-        // Convert LocalDate to LocalDateTime (assuming appointment starts at 9 AM, for example)
-        LocalDateTime appointmentDateTime = selectedDate.atTime(9, 0); // You can make time customizable later
-
-        appointment.setAppointmentDate(appointmentDateTime);
-        appointment.setDuration(durationInSeconds);
-
-        // Set elder IDs to appointment
-        List<Integer> elderIds = selectedElders.stream()
-                .map(Elder::getElderID)
-                .collect(Collectors.toList());
-        appointment.setElderIDs(elderIds);
-
-        // Set caregiver and services
-        Caregiver selectedCaregiver = caregiverDropdown.getValue();
-        List<CaregiverService> caregiverServices = selectedServices.stream()
-                .map(service -> new CaregiverService(service.getServiceID(), selectedCaregiver.getCaregiverID()))
-                .toList();
-
-        payment = paymentController.getPaymentByAllServices(appointment, caregiverServices, selectedServices);
-        Label amountLabel = new Label("Amount To Be Paid: " + payment.getTotalAmount());
+        Label amountLabel = new Label("Amount To Be Paid: 0.00");
         VBox centerBox = new VBox(15, serviceSection, new Label("Choose a date & time:"), dateTimeBox, amountLabel);
 
-        // === Buttons ===
         Button cancelBtn = createMainButton("Cancel");
-
         cancelBtn.setOnAction(e -> {
             GuardianAppointmentView guardianAppointmentView = new GuardianAppointmentView(stage,conn,guardian);
             stage.setScene(guardianAppointmentView.getScene());
         });
 
         Button submitBtn = createMainButton("Submit");
-
         submitBtn.setOnAction(e -> {
-            if (durationText.isBlank()) {
-                // Show warning or error
-                showAlert("Please fill in both date and duration.");
+            LocalDate selectedDate = datePicker.getValue();
+            String durationText = durationBox.getValue();
+            Caregiver selectedCaregiver = caregiverDropdown.getValue();
+
+            if (selectedDate == null || durationText == null || durationText.trim().isEmpty() || selectedCaregiver == null || selectedElders.isEmpty() || selectedServices.isEmpty()) {
+                showAlert("Please fill in all fields: select elder(s), caregiver, service(s), date, and duration.");
                 return;
             }
 
             try {
+                int durationInHours = Integer.parseInt(durationText);
+                int durationInSeconds = durationInHours * 3600;
+                LocalDateTime appointmentDateTime = selectedDate.atTime(9, 0);
+
+                List<Integer> elderIds = selectedElders.stream()
+                        .map(Elder::getElderID)
+                        .collect(Collectors.toList());
+
+                List<CaregiverService> caregiverServices = selectedServices.stream()
+                        .map(service -> new CaregiverService(service.getServiceID(), selectedCaregiver.getCaregiverID()))
+                        .toList();
+
+                payment = paymentController.getPaymentByAllServices(appointment, caregiverServices, selectedServices);
+                amountLabel.setText("Amount To Be Paid: " + String.format("%.2f", payment.getTotalAmount()));
+
+
                 appointment.setAppointmentDate(appointmentDateTime);
                 appointment.setStatus(Appointment.AppointmentStatus.UNPAID);
                 appointment.setDuration(durationInSeconds);
                 appointment.setCreatedDate(LocalDateTime.now());
-                appointment.setCaregiverID(caregiverDropdown.getValue().getCaregiverID());
+                appointment.setCaregiverID(selectedCaregiver.getCaregiverID());
                 appointment.setGuardianID(guardian.getGuardianID());
                 appointment.setElderIDs(elderIds);
                 appointment.setPaymentID(payment.getPaymentID());
 
                 appointmentController.addAppointment(appointment);
+                showAlert("Appointment submitted successfully!");
+
+
             } catch (NumberFormatException ex) {
                 showAlert("Duration must be a number.");
             }
         });
-
 
         HBox actionButtons = new HBox(20, cancelBtn, submitBtn);
         actionButtons.setAlignment(Pos.CENTER_LEFT);
@@ -266,7 +225,6 @@ public class AppointmentView {
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setPrefWidth(300);
 
-        // === Root Layout ===
         HBox root = new HBox(30, leftPane, rightPane);
         root.setPadding(new Insets(20));
 
@@ -276,20 +234,21 @@ public class AppointmentView {
         stage.show();
     }
 
-    private void populateServiceCheckboxes(VBox container, List<Service> services, String categoryFilter, List<Service> selectedServices) {
+    private void populateServiceCheckboxes(VBox container, List<Service> services, String categoryFilter, List<Service> localSelectedServices) {
         container.getChildren().clear();
+        localSelectedServices.clear();
         for (Service service : services) {
             if (!"All Categories".equals(categoryFilter) && !service.getCategory().equals(categoryFilter)) {
                 continue;
             }
 
-            CheckBox cb = new CheckBox(service.getServiceName() + " - " + service.getPrice());
+            CheckBox cb = new CheckBox(service.getServiceName() + " - " + String.format("%.2f",service.getPrice()));
             cb.setWrapText(true);
             cb.setOnAction(e -> {
                 if (cb.isSelected()) {
-                    selectedServices.add(service);
+                    localSelectedServices.add(service);
                 } else {
-                    selectedServices.remove(service);
+                    localSelectedServices.remove(service);
                 }
             });
             container.getChildren().add(cb);
@@ -302,7 +261,7 @@ public class AppointmentView {
 
         guardianElderController.getAllEldersByGuardianId(guardian.getGuardianID()).forEach(elder -> {
             CheckBox cb = new CheckBox(elder.getFirstName() + " " + elder.getLastName());
-            cb.setUserData(elder); // Store elder
+            cb.setUserData(elder);
             cb.setOnAction(e -> {
                 if (cb.isSelected()) selectedElders.add(elder);
                 else selectedElders.remove(elder);
@@ -327,7 +286,7 @@ public class AppointmentView {
     }
 
     private void showAlert(String s) {
-        Alert alert = new Alert(Alert.AlertType.WARNING, s, ButtonType.OK);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, s, ButtonType.OK);
         alert.showAndWait();
     }
 

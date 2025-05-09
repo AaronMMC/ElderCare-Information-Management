@@ -15,7 +15,7 @@ public class ElderDAO {
     }
 
     public void insertElder(Elder elder) {
-        String sql = "{CALL InsertElder(?, ?, ?, ?, ?, ?)}";
+        String sql = "{CALL InsertElder(?, ?, ?, ?, ?, ?,?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, elder.getFirstName());
             stmt.setString(2, elder.getLastName());
@@ -23,6 +23,7 @@ public class ElderDAO {
             stmt.setString(4, elder.getContactNumber());
             stmt.setString(5, elder.getEmail());
             stmt.setString(6, elder.getAddress());
+            stmt.setString(7, elder.getAddress());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
