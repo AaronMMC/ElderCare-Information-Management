@@ -308,6 +308,8 @@ public class CaregiverRegisterView {
             mainStage.show();
         });
 
+
+
         stage.setScene(scene);
     }
 

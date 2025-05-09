@@ -2,7 +2,6 @@ package view;
 
 import controller.GuardianController;
 import controller.LoginController;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -27,32 +26,46 @@ public class GuardianView {
         titleLabel.setFont(Font.font("Arial", 28));
         titleLabel.setStyle("-fx-font-weight: bold;");
 
-        // Form Fields
+
         TextField firstNameField = new TextField(guardian.getFirstName());
         TextField lastNameField = new TextField(guardian.getLastName());
         TextField contactField = new TextField(guardian.getContactNumber());
         TextField emailField = new TextField(guardian.getEmail());
         TextField addressField = new TextField(guardian.getAddress());
 
-        // Style fields
+
         for (TextField field : new TextField[]{firstNameField, lastNameField, contactField, emailField, addressField}) {
             field.setStyle("-fx-background-color: #d9d9d9; -fx-background-radius: 20;");
-            field.setPrefWidth(200);
+            field.setMaxWidth(Double.MAX_VALUE);
         }
 
-        // Form Grid
+
         GridPane formGrid = new GridPane();
-        formGrid.setHgap(20);
         formGrid.setVgap(15);
         formGrid.setPadding(new Insets(20));
 
-        formGrid.add(new VBox(5, new Label("First Name:"), firstNameField), 0, 0);
-        formGrid.add(new VBox(5, new Label("Last Name:"), lastNameField), 1, 0);
-        formGrid.add(new VBox(5, new Label("Contact Number:"), contactField), 1, 1);
-        formGrid.add(new VBox(5, new Label("Email:"), emailField), 2, 1);
-        formGrid.add(new VBox(5, new Label("Address:"), addressField), 0, 2);
 
-        // Buttons
+        Label firstNameLabel = new Label("First Name:");
+        Label lastNameLabel = new Label("Last Name:");
+        Label contactLabel = new Label("Contact Number:");
+        Label emailLabel = new Label("Email:");
+        Label addressLabel = new Label("Address:");
+
+
+        formGrid.add(new VBox(5, firstNameLabel, firstNameField), 0, 0);
+        formGrid.add(new VBox(5, lastNameLabel, lastNameField), 0, 1);
+        formGrid.add(new VBox(5, contactLabel, contactField), 0, 2);
+        formGrid.add(new VBox(5, emailLabel, emailField), 0, 3);
+        formGrid.add(new VBox(5, addressLabel, addressField), 0, 4);
+
+
+        ColumnConstraints column1 = new ColumnConstraints();
+
+
+        column1.setPrefWidth(360);
+        formGrid.getColumnConstraints().add(column1);
+
+
         Button cancelBtn = createTealButton("Cancel");
         Button saveBtn = createTealButton("Save Changes");
 
@@ -64,53 +77,63 @@ public class GuardianView {
             addressField.setText(guardian.getAddress());
         });
 
+
         saveBtn.setOnAction(e -> {
             guardian.setFirstName(firstNameField.getText());
             guardian.setLastName(lastNameField.getText());
             guardian.setContactNumber(contactField.getText());
             guardian.setEmail(emailField.getText());
             guardian.setAddress(addressField.getText());
-            guardianController.updateGuardian(guardian);
+            try {
+                guardianController.updateGuardian(guardian);
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Guardian details update attempt finished.");
+
+            } catch (Exception ex) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to update guardian details: " + ex.getMessage());
+            }
         });
 
         HBox actionButtons = new HBox(20, cancelBtn, saveBtn);
         actionButtons.setAlignment(Pos.CENTER_LEFT);
-        actionButtons.setPadding(new Insets(30, 0, 0, 0));
+
+
+        actionButtons.setPadding(new Insets(30, 0, 0, 20));
+
 
         VBox leftContent = new VBox(20, titleLabel, formGrid, actionButtons);
         leftContent.setPadding(new Insets(40));
         leftContent.setPrefWidth(800);
         leftContent.setStyle("-fx-background-color: white;");
 
+        leftContent.setAlignment(Pos.TOP_CENTER);
+
+
         Button appointmentBtn = createMenuButton("Your Appointments");
         Button elderBtn = createMenuButton("Elder");
 
         appointmentBtn.setOnAction(e -> {
             System.out.println("Switching to GuardianAppointmentView...");
-            Platform.runLater(() -> {
-               GuardianAppointmentView guardianAppointmentView = new GuardianAppointmentView(stage, conn, guardian);
-               stage.setScene(guardianAppointmentView.getScene());
-            });
+                GuardianAppointmentView guardianAppointmentView = new GuardianAppointmentView(stage, conn, guardian);
+                stage.setScene(guardianAppointmentView.getScene());
+
         });
 
         elderBtn.setOnAction(e -> {
             System.out.println("Switching to GuardianElderView...");
-            Platform.runLater(() -> {
-               GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian);
-               stage.setScene(guardianElderView.getScene());
-            });
+                GuardianElderView guardianElderView = new GuardianElderView(stage, conn, guardian);
+                stage.setScene(guardianElderView.getScene());
         });
 
         VBox rightPane = new VBox(40, appointmentBtn, elderBtn);
 
         Button logOutButton = createMenuButton("Log Out");
         logOutButton.setOnAction(e -> {
-            System.out.println("Logging out...");
-            Platform.runLater(() -> {
-                LoginController loginController = new LoginController(stage, conn);
-                Scene loginScene = loginController.getLoginScene();
-                stage.setScene(loginScene);
-            });
+            LoginController loginController = new LoginController(stage, conn);
+            Scene loginScene = loginController.getLoginScene();
+            stage.setTitle("ElderCare");
+            stage.setScene(loginScene);
+            stage.show();
+
         });
 
         VBox spacer = new VBox();
@@ -123,6 +146,7 @@ public class GuardianView {
         rightPane.setPrefWidth(300);
 
         HBox root = new HBox(leftContent, rightPane);
+
         this.scene = new Scene(root, 1100, 600);
         stage.setTitle("Guardian Homepage");
         stage.setScene(scene);
@@ -132,11 +156,11 @@ public class GuardianView {
     private Button createTealButton(String text) {
         Button btn = new Button(text);
         btn.setStyle("""
-            -fx-background-color: #3BB49C;
-            -fx-text-fill: white;
-            -fx-font-size: 14px;
-            -fx-background-radius: 20;
-        """);
+                    -fx-background-color: #3BB49C;
+                    -fx-text-fill: white;
+                    -fx-font-size: 14px;
+                    -fx-background-radius: 20;
+                """);
         btn.setPrefHeight(40);
         btn.setPrefWidth(150);
         return btn;
@@ -145,14 +169,22 @@ public class GuardianView {
     private Button createMenuButton(String text) {
         Button btn = new Button(text);
         btn.setStyle("""
-            -fx-background-color: white;
-            -fx-text-fill: black;
-            -fx-font-size: 16px;
-            -fx-background-radius: 20;
-        """);
+                    -fx-background-color: white;
+                    -fx-text-fill: black;
+                    -fx-font-size: 16px;
+                    -fx-background-radius: 20;
+                """);
         btn.setPrefWidth(240);
         btn.setPrefHeight(60);
         return btn;
+    }
+
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     public Scene getScene() {
