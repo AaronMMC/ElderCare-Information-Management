@@ -69,14 +69,9 @@ public class CaregiverServiceView {
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(800);
 
-        Button scheduleBtn = createSidebarButton("Your Schedule");
         Button goBackBtn = createSidebarButton("Go Back");
         Button addService = createBigGreenButton("Add Service");
 
-        scheduleBtn.setOnAction(e -> {
-            CaregiverScheduleView caregiverScheduleView = new CaregiverScheduleView(stage, conn, caregiver);
-            stage.setScene(caregiverScheduleView.getScene());
-        });
 
         goBackBtn.setOnAction(e -> {
             CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
@@ -87,7 +82,7 @@ public class CaregiverServiceView {
             showAddServicePanel();
         });
 
-        VBox rightPane = new VBox(30, scheduleBtn, addService);
+        VBox rightPane = new VBox(30, addService);
         rightPane.setPadding(new Insets(30));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setAlignment(Pos.TOP_CENTER);

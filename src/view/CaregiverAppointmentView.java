@@ -102,20 +102,21 @@ public class CaregiverAppointmentView {
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(800);
 
-        Button scheduleBtn = createSidebarButton("Your Schedule");
+//        Button scheduleBtn = createSidebarButton("Your Schedule");
         Button goBackBtn = createSidebarButton("Go Back");
 
-        scheduleBtn.setOnAction(e -> {
+        /*scheduleBtn.setOnAction(e -> {
             CaregiverScheduleView scheduleView = new CaregiverScheduleView(stage, conn, caregiver);
             stage.setScene(scheduleView.getScene());
-        });
+        });*/
 
         goBackBtn.setOnAction(e -> {
             CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
             stage.setScene(caregiverView.getScene());
         });
 
-        VBox rightPane = new VBox(30, scheduleBtn);
+//        VBox rightPane = new VBox(30, scheduleBtn);
+        VBox rightPane = new VBox(30);
         rightPane.setPadding(new Insets(30));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setAlignment(Pos.TOP_CENTER);
