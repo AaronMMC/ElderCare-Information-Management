@@ -26,7 +26,7 @@ public class LoginView {
         titleLabel.setStyle("-fx-font-weight: bold;");
 
         VBox formBox = new VBox(15,
-                new VBox(new Label("Email:"), usernameField),
+                new VBox(new Label("Username:"), usernameField),
                 new VBox(new Label("Password:"), passwordField),
                 signInButton
         );
