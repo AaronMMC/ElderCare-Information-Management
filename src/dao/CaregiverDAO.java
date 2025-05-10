@@ -69,6 +69,18 @@ public class CaregiverDAO {
         return caregivers;
     }
 
+    public int countAllCaregivers() {
+        String sql = "{CALL CountAllCaregivers()}";
+        try (CallableStatement stmt = conn.prepareCall(sql)){
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public Caregiver getCaregiverById(int id) {
         String sql = "{CALL GetCaregiverById(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {

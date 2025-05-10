@@ -112,7 +112,9 @@ public class AdminView {
         });
         viewDetailsButton.disableProperty().bind(caregiverTable.getSelectionModel().selectedItemProperty().isNull());
 
-        HBox buttonBox = new HBox(10, refreshButton, viewDetailsButton);
+        Label caregiverAmount = new Label("Caregiver Amount" + caregiverDAO.countAllCaregivers());
+
+        HBox buttonBox = new HBox(10, refreshButton, viewDetailsButton, caregiverAmount);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.setPadding(new Insets(10, 0, 0, 0));
         caregiverManagementLayout.setBottom(buttonBox);
