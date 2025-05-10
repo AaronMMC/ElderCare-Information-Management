@@ -83,8 +83,9 @@ public class AppointmentDAO {
     }
 
     public List<Appointment> getAllAppointmentsByGuardian(int guardianID) {
+        String sql = "SELECT a.* FROM appointment a INNER JOIN elder e ON a.edler_id = e.edler_id \n" +
+                "    WHERE guardian_id = ?";
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "{CALL GetAllAppointmentsByGuardianId(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)){
             stmt.setInt(1, guardianID);
             try (ResultSet rs = stmt.executeQuery()){
