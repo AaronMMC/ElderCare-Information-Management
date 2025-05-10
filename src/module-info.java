@@ -6,4 +6,6 @@ module elder.care.system.information.management.finals {
 
     exports main to javafx.graphics;
     opens model to javafx.base;
+
+
 }
