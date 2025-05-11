@@ -123,8 +123,8 @@ public class CaregiverServiceView {
 
     private void showAddServicePanel() {
         //TODO: Make this gui better
-        Stage serviceStage = new Stage();
-        serviceStage.setTitle("Add a Service");
+            Stage serviceStage = new Stage();
+            serviceStage.setTitle("Add a Service");
 
         Label serviceNameLabel = new Label("Service name: ");
         TextField serviceNameInput = new TextField();
@@ -166,9 +166,9 @@ public class CaregiverServiceView {
             service.setCategory(serviceCategory);
             service.setPrice(servicePrice);
 
-            serviceController.addService(service);
+            serviceController.addService(service); // we should somehow get the id of this service, cause in the constructor it is not yet set because the
 
-            CaregiverService updatedCaregiverService = new CaregiverService(service.getServiceID(), caregiver.getCaregiverID(),experienceYears, hourlyRate);
+            CaregiverService updatedCaregiverService = new CaregiverService(caregiver.getCaregiverID(), service.getServiceID(),experienceYears, hourlyRate);
             caregiverServiceController.addCaregiverService(updatedCaregiverService);
 
             refreshServiceList(conn, caregiver, caregiverServiceController);

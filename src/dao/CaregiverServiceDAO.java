@@ -19,6 +19,8 @@ public class CaregiverServiceDAO {
 
     public void insertCaregiverService(CaregiverService caregiverService) {
         String sql = "{CALL InsertCaregiverService(?, ?, ?, ?)}";
+
+        System.out.println("caregiver id: " + caregiverService.getCaregiverId()); // for debugging purposes
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, caregiverService.getCaregiverId());
             stmt.setInt(2, caregiverService.getServiceId());
