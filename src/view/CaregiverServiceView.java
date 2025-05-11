@@ -70,6 +70,7 @@ public class CaregiverServiceView {
         leftPane.setPrefWidth(800);
 
         Button goBackBtn = createSidebarButton("Go Back");
+        Button addService = createSidebarButton("Add Service");
 
 
         goBackBtn.setOnAction(e -> {
@@ -77,6 +78,9 @@ public class CaregiverServiceView {
             stage.setScene(caregiverView.getScene());
         });
 
+        addService.setOnAction(e -> {
+
+        });
 
         VBox rightPane = new VBox(30);
         rightPane.setPadding(new Insets(30));
@@ -90,7 +94,6 @@ public class CaregiverServiceView {
 
         Button cancelButton = createBigGreenButton("Cancel");
         Button saveButton = createBigGreenButton("Save Changes");
-    
 
         cancelButton.setOnAction(e -> {
             CaregiverView caregiverView = new CaregiverView(stage,conn,caregiver);
@@ -98,9 +101,8 @@ public class CaregiverServiceView {
         });
 
         saveButton.setOnAction(e -> {
-
+            showAddServicePanel();
         });
-
 
         HBox bottomButtons = new HBox(30, cancelButton, saveButton);
         bottomButtons.setAlignment(Pos.CENTER);
@@ -115,6 +117,89 @@ public class CaregiverServiceView {
         stage.setTitle("Services");
         stage.setScene(scene);
         stage.show();
+    }
+
+    private void showAddServicePanel() {
+        List<Service> availableServices = serviceController.getAllServices();
+
+        Stage serviceStage = new Stage();
+        serviceStage.setTitle("Add a Service");
+
+        // Service dropdown
+        ComboBox<Service> serviceDropdown = new ComboBox<>();
+        serviceDropdown.getItems().addAll(availableServices);
+        serviceDropdown.setPromptText("Select a service");
+
+        // Labels to display selected service details
+        Label serviceNameLabel = new Label("Service name: ");
+        Label serviceCategoryLabel = new Label("Category: ");
+        Label servicePriceLabel = new Label("Price: ");
+
+        // Update labels when a service is selected
+        serviceDropdown.setOnAction(e -> {
+            Service selectedService = serviceDropdown.getValue();
+            if (selectedService != null) {
+                serviceNameLabel.setText("Service name: " + selectedService.getServiceName());
+                serviceCategoryLabel.setText("Category: " + selectedService.getCategory());
+                servicePriceLabel.setText("Price: Php " + selectedService.getPrice());
+            }
+        });
+
+        // Experience and hourly rate input
+        Label experienceYearsLabel = new Label("Experience in years: ");
+        TextField experienceYearsField = new TextField();
+        experienceYearsField.setPromptText("e.g., 2");
+
+        Label hourlyRateLabel = new Label("Rate per hour (Php): ");
+        TextField hourlyRateField = new TextField();
+        hourlyRateField.setPromptText("e.g., 300");
+
+        Button add = new Button("Add");
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: red;");
+
+        VBox layout = new VBox(10,
+                serviceDropdown,
+                serviceNameLabel,
+                serviceCategoryLabel,
+                servicePriceLabel,
+                experienceYearsLabel,
+                experienceYearsField,
+                hourlyRateLabel,
+                hourlyRateField,
+                errorLabel,
+                add
+        );
+
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(20));
+
+        Scene scene = new Scene(layout, 350, 400);
+        serviceStage.setScene(scene);
+        serviceStage.show();
+
+        add.setOnAction(e -> {
+            Service selectedService = serviceDropdown.getValue();
+            if (selectedService == null) {
+                errorLabel.setText("Please select a service.");
+                return;
+            }
+
+            try {
+                int experienceYears = Integer.parseInt(experienceYearsField.getText());
+                double hourlyRate = Double.parseDouble(hourlyRateField.getText());
+
+                CaregiverService caregiverService = new CaregiverService(experienceYears, hourlyRate, selectedService.getServiceID());
+                caregiverServiceController.addCaregiverService(caregiverService);
+
+                refreshServiceList(conn, caregiver, caregiverServiceController);
+                serviceStage.close();
+
+            } catch (NumberFormatException ex) {
+                errorLabel.setText("Please enter valid numeric values.");
+            }
+        });
     }
 
     private void refreshServiceList(Connection conn, Caregiver caregiver, CaregiverServiceController caregiverServiceController) {
