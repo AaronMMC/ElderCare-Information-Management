@@ -14,8 +14,8 @@ public class ServiceController {
         serviceDAO = new ServiceDAO(conn);
     }
 
-    public void addService(Service service) {
-        serviceDAO.insertService(service);
+    public int addService(Service service) {
+        return serviceDAO.insertService(service);
     }
 
     public Service getServiceById(int serviceID) {

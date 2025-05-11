@@ -166,7 +166,7 @@ public class CaregiverServiceView {
             service.setCategory(serviceCategory);
             service.setPrice(servicePrice);
 
-            serviceController.addService(service); // we should somehow get the id of this service, cause in the constructor it is not yet set because the
+            service.setServiceID(serviceController.addService(service)); // we should somehow get the id of this service, cause in the constructor it is not yet set because the
 
             CaregiverService updatedCaregiverService = new CaregiverService(caregiver.getCaregiverID(), service.getServiceID(),experienceYears, hourlyRate);
             caregiverServiceController.addCaregiverService(updatedCaregiverService);

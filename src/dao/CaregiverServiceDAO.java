@@ -34,6 +34,7 @@ public class CaregiverServiceDAO {
 
     public CaregiverService getCaregiverService(int caregiverId, int serviceId) {
         String sql = "{CALL GetCaregiverService(?, ?)}";
+        System.out.println("caregiver and service ids in the getCaregiverService: " + caregiverId + " " + serviceId);
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, caregiverId);
             stmt.setInt(2, serviceId);
