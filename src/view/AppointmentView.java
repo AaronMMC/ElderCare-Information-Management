@@ -61,7 +61,9 @@ public class AppointmentView {
         caregiverDropdown.setPromptText("Select a caregiver");
         caregiverDropdown.setStyle(getInputFieldStyle());
 
-        caregiverController.getAllCaregivers().forEach(caregiver -> caregiverDropdown.getItems().add(caregiver));
+        selectedServices.stream()
+                .flatMap(service -> caregiverController.getAllCaregiversByService(service).stream())
+                .forEach(caregiver -> caregiverDropdown.getItems().add(caregiver));
 
         caregiverDropdown.setCellFactory(cb -> new ListCell<>() {
             @Override
@@ -124,7 +126,7 @@ public class AppointmentView {
                         new Label("Email: " + selected.getEmail())
                 );
 
-                List<Service> allServices = serviceController.getAllServicesByCaregiverId(selected.getCaregiverID());
+                List<Service> allServices = serviceController.getAllServices();
 
                 Set<String> categories = allServices.stream()
                         .map(Service::getCategory)

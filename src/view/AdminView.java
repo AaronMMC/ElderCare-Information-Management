@@ -1,6 +1,8 @@
 package view;
 
+import controller.CaregiverServiceController;
 import controller.LoginController;
+import controller.ServiceController;
 import dao.CaregiverDAO;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -19,6 +21,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.Admin;
 import model.Caregiver;
+import model.CaregiverService;
+import model.Service;
 
 import java.awt.Desktop;
 import java.io.ByteArrayInputStream;
@@ -72,6 +76,11 @@ public class AdminView {
         Button logoutButton = new Button("Logout");
         logoutButton.setOnAction(e -> logout());
 
+        Button addService = new Button("Add Service");
+        addService.setOnAction(e -> {
+           showAddServicePanel();
+        });
+
         topBar.getChildren().addAll(titleApp, new Label(" :: "), showCaregiversButton, spacer, logoutButton);
         mainLayout.setTop(topBar);
 
@@ -79,6 +88,63 @@ public class AdminView {
         mainLayout.setCenter(getManageCaregiversNode()); // Default to caregiver management
 
         return new Scene(mainLayout, 950, 700); // Adjusted size
+    }
+
+    private void showAddServicePanel() {
+        ServiceController serviceController = new ServiceController(conn);
+        CaregiverServiceController caregiverServiceController = new CaregiverServiceController(conn);
+
+        //TODO: Make this gui better
+        Stage serviceStage = new Stage();
+        serviceStage.setTitle("Add a Service");
+
+        Label serviceNameLabel = new Label("Service name: ");
+        TextField serviceNameInput = new TextField();
+
+        Label serviceCategoryLabel = new Label("Category: ");
+        TextField serviceCategoryInput = new TextField();
+
+        Label servicePriceLabel = new Label("Price: ");
+        TextField servicePriceInput = new TextField();
+
+        Label experienceYearsLabel = new Label("Experience in years: ");
+        TextField experienceYearsInput = new TextField();
+
+        Label hourlyRateLabel = new Label("Rate per hour: ");
+        TextField hourlyRateInput = new TextField();
+
+        Button add = new Button("Add");
+
+        VBox layout = new VBox(20, serviceNameLabel, serviceNameInput, serviceCategoryLabel,
+                serviceCategoryInput, servicePriceLabel, servicePriceInput,
+                experienceYearsLabel, experienceYearsInput, hourlyRateLabel,
+                hourlyRateInput, add);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(30));
+
+        Scene scene = new Scene(layout, 300, 150);
+        serviceStage.setScene(scene);
+        serviceStage.show();
+
+        add.setOnAction(e -> {
+            String serviceName = serviceNameInput.getText();
+            String serviceCategory = serviceCategoryInput.getText();
+            double servicePrice = Double.parseDouble(servicePriceInput.getText());
+            int experienceYears = Integer.parseInt(experienceYearsInput.getText());
+            double hourlyRate = Double.parseDouble(hourlyRateInput.getText());
+
+            Service service = new Service();
+            service.setServiceName(serviceName);
+            service.setCategory(serviceCategory);
+            service.setPrice(servicePrice);
+
+            serviceController.addService(service);
+
+            CaregiverService updatedCaregiverService = new CaregiverService(experienceYears, hourlyRate, service.getServiceID());
+            caregiverServiceController.addCaregiverService(updatedCaregiverService);
+
+            serviceStage.close();
+        });
     }
 
     // --- Node creation for Manage Caregivers View ---

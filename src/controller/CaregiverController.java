@@ -4,6 +4,7 @@ import dao.AdminDAO;
 import dao.CaregiverDAO;
 import dao.GuardianDAO;
 import model.Caregiver;
+import model.Service;
 
 import java.sql.Connection;
 import java.util.List;
@@ -51,5 +52,9 @@ public class CaregiverController {
 
     public List<Caregiver> getAllCaregivers() {
         return caregiverDAO.getAllCaregivers();
+    }
+
+    public List<Caregiver> getAllCaregiversByService(Service service) {
+        return caregiverDAO.getAllCaregiversByServiceId(service.getServiceID());
     }
 }

@@ -70,7 +70,6 @@ public class CaregiverServiceView {
         leftPane.setPrefWidth(800);
 
         Button goBackBtn = createSidebarButton("Go Back");
-        Button addService = createBigGreenButton("Add Service");
 
 
         goBackBtn.setOnAction(e -> {
@@ -78,11 +77,8 @@ public class CaregiverServiceView {
             stage.setScene(caregiverView.getScene());
         });
 
-        addService.setOnAction(e -> {
-            showAddServicePanel();
-        });
 
-        VBox rightPane = new VBox(30, addService);
+        VBox rightPane = new VBox(30);
         rightPane.setPadding(new Insets(30));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setAlignment(Pos.TOP_CENTER);
@@ -119,61 +115,6 @@ public class CaregiverServiceView {
         stage.setTitle("Services");
         stage.setScene(scene);
         stage.show();
-    }
-
-    private void showAddServicePanel() {
-        //TODO: Make this gui better
-        Stage serviceStage = new Stage();
-        serviceStage.setTitle("Add a Service");
-
-        Label serviceNameLabel = new Label("Service name: ");
-        TextField serviceNameInput = new TextField();
-
-        Label serviceCategoryLabel = new Label("Category: ");
-        TextField serviceCategoryInput = new TextField();
-
-        Label servicePriceLabel = new Label("Price: ");
-        TextField servicePriceInput = new TextField();
-
-        Label experienceYearsLabel = new Label("Experience in years: ");
-        TextField experienceYearsInput = new TextField();
-
-        Label hourlyRateLabel = new Label("Rate per hour: ");
-        TextField hourlyRateInput = new TextField();
-
-        Button add = new Button("Add");
-
-        VBox layout = new VBox(20, serviceNameLabel, serviceNameInput, serviceCategoryLabel,
-                serviceCategoryInput, servicePriceLabel, servicePriceInput,
-                experienceYearsLabel, experienceYearsInput, hourlyRateLabel,
-                hourlyRateInput, add);
-        layout.setAlignment(Pos.CENTER);
-        layout.setPadding(new Insets(30));
-
-        Scene scene = new Scene(layout, 300, 150);
-        serviceStage.setScene(scene);
-        serviceStage.show();
-
-        add.setOnAction(e -> {
-            String serviceName = serviceNameInput.getText();
-            String serviceCategory = serviceCategoryInput.getText();
-            double servicePrice = Double.parseDouble(servicePriceInput.getText());
-            int experienceYears = Integer.parseInt(experienceYearsInput.getText());
-            double hourlyRate = Double.parseDouble(hourlyRateInput.getText());
-
-            Service service = new Service();
-            service.setServiceName(serviceName);
-            service.setCategory(serviceCategory);
-            service.setPrice(servicePrice);
-
-            serviceController.addService(service);
-
-            CaregiverService updatedCaregiverService = new CaregiverService(service.getServiceID(), caregiver.getCaregiverID(),experienceYears, hourlyRate);
-            caregiverServiceController.addCaregiverService(updatedCaregiverService);
-
-            refreshServiceList(conn, caregiver, caregiverServiceController);
-            serviceStage.close();
-        });
     }
 
     private void refreshServiceList(Connection conn, Caregiver caregiver, CaregiverServiceController caregiverServiceController) {
