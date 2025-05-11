@@ -12,17 +12,23 @@ public class ServiceDAO {
         this.conn = conn;
     }
 
-    public void insertService(Service service) {
+    public int insertService(Service service) {
+        int newId = 0;
         try {
-            CallableStatement stmt = conn.prepareCall("{call insert_service(?, ?, ?)}");
+            CallableStatement stmt = conn.prepareCall("{call insert_service(?, ?, ?, ?)}");
             stmt.setString(1, service.getCategory());
             stmt.setString(2, service.getServiceName());
             stmt.setDouble(3, service.getPrice());
-            stmt.executeUpdate();
+            stmt.registerOutParameter(4, java.sql.Types.INTEGER);
+            stmt.execute();
+            newId = stmt.getInt(4);
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return newId;
     }
+
+
 
     public Service getServiceByID(int serviceID) {
         String sql = "SELECT * FROM service WHERE service_id = ?";
