@@ -96,9 +96,8 @@ public class GuardianElderView {
         switch (sortComboBox.getValue()) {
             case "Age Ascending" -> comparator = Comparator.comparing(e -> getAge(e.getDateOfBirth().toLocalDate()));
             case "Age Descending" -> comparator = Comparator.comparing((Elder e) -> getAge(e.getDateOfBirth().toLocalDate())).reversed();
-            case "Name Descending" -> comparator = Comparator.comparing(Elder::getFirstName)
-                    .thenComparing(Elder::getLastName)
-                    .reversed();
+            case "Name Descending" -> comparator = Comparator.comparing(Elder::getFirstName, Comparator.reverseOrder())
+                    .thenComparing(Elder::getLastName, Comparator.reverseOrder());
             default -> comparator = Comparator.comparing(Elder::getFirstName)
                     .thenComparing(Elder::getLastName);
         }

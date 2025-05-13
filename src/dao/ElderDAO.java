@@ -15,7 +15,7 @@ public class ElderDAO {
     }
 
     public void insertElder(Elder elder) throws SQLException {
-        String sql = "{CALL InsertElder(?, ?, ?, ?, ?, ?, ?, ?)}";
+        String sql = "{CALL InsertElder(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, elder.getFirstName());
             stmt.setString(2, elder.getLastName());
@@ -144,17 +144,17 @@ public class ElderDAO {
 
     public String getRelationshipByGuardianId(int guardianID) {
         String relationship = null; //
-        String sql = "SELECT relationship FROM elder WHERE guardian_id = ? LIMIT 1"; // Assuming only one relationship per guardian for now.
+        String sql = "SELECT relationshipToGuardian FROM elder WHERE guardian_id = ? LIMIT 1"; // Assuming only one relationship per guardian for now.
         // this is not a stored procedure but rather, a straight query from the code
         try (PreparedStatement statement = conn.prepareStatement(sql)) {
             statement.setInt(1, guardianID);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next())
-                    relationship = resultSet.getString("relationship");
+                    relationship = resultSet.getString("relationshipToGuardian");
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error retrieving relationship by guardianId: " + guardianID, e);
+            e.printStackTrace();
         }
 
         return relationship; // Will return null if no relationship found for the given guardianID.

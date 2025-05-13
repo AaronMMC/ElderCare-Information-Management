@@ -16,19 +16,22 @@ public class MedicalRecordDAO {
 
     public void insertMedicalRecord(MedicalRecord record) {
         String sql =  "INSERT INTO medicalrecord (\n" +
+                "    elder_id,\n" +
                 "    diagnosis,\n" +
                 "    medications,\n" +
                 "    treatmentPlan,\n" +
                 "    medicationStatus,\n" +
                 "    treatmentStatus\n" +
                 ") \n" +
-                "VALUES (?, ?, ?, ?, ?);";
+                "VALUES (?, ?, ?, ?, ?, ?);";
+
         try (CallableStatement stmt = conn.prepareCall(sql)) {
-            stmt.setString(1, record.getDiagnosis());
-            stmt.setString(2, record.getMedications());
-            stmt.setString(3, record.getTreatmentPlan());
-            stmt.setString(4, record.getMedicationStatus().name());;
-            stmt.setString(5, record.getTreatmentStatus().name());
+            stmt.setInt(1, record.getElderID());
+            stmt.setString(2, record.getDiagnosis());
+            stmt.setString(3, record.getMedications());
+            stmt.setString(4, record.getTreatmentPlan());
+            stmt.setString(5, record.getMedicationStatus().name());;
+            stmt.setString(6, record.getTreatmentStatus().name());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
