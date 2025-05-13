@@ -3,6 +3,7 @@ package view;
 import controller.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -25,30 +26,33 @@ import java.util.stream.Collectors;
 public class AppointmentView {
 
     private final Scene scene;
-    private final List<Service> selectedServices = new ArrayList<>();
-    private final List<Elder> selectedElders = new ArrayList<>();
+    private Service selectedService;
+    private Elder selectedElder;
     private final ComboBox<Caregiver> caregiverDropdown = new ComboBox<>();
     private final VBox certBox = new VBox(5);
 
     private final Label amountLabel = new Label("Amount To Be Paid: 0.00");
     private final VBox serviceCheckboxContainer = new VBox(10);
     private final ComboBox<String> filterDropdown = new ComboBox<>();
+    private double totalAmount;
 
     private final Connection conn;
     private final AppointmentController appointmentController;
     private final CaregiverController caregiverController;
-    private final GuardianController guardianController;
+    private final CaregiverServiceController caregiverServiceController;
     private final ElderController elderController;
     private final ServiceController serviceController;
     private final PaymentController paymentController;
     private final Appointment appointment = new Appointment();
-    private Payment payment = new Payment();
+    private Payment payment;
+    private ComboBox<String> durationBox;
+
 
     public AppointmentView(Stage stage, Connection conn, Guardian guardian) {
         this.conn = conn;
         this.appointmentController = new AppointmentController(conn);
         this.caregiverController = new CaregiverController(conn);
-        this.guardianController = new GuardianController(conn);
+        this.caregiverServiceController = new CaregiverServiceController(conn);
         this.elderController = new ElderController(conn);
         this.serviceController = new ServiceController(conn);
         this.paymentController = new PaymentController(conn);
@@ -221,78 +225,77 @@ public class AppointmentView {
 
     private void populateServiceCheckboxes(List<Service> services, String categoryFilter) {
         serviceCheckboxContainer.getChildren().clear();
-        List<Service> currentSelected = new ArrayList<>(selectedServices);
-        selectedServices.clear();
+        selectedService = null; // Reset the selected service
 
         for (Service service : services) {
             if (!"All Categories".equals(categoryFilter) && !service.getCategory().equals(categoryFilter)) {
                 continue;
             }
 
-            CheckBox cb = new CheckBox(service.getServiceName() + " - Php " + String.format("%.2f", service.getPrice()));
+            CheckBox cb = new CheckBox(service.getServiceName());
             cb.setWrapText(true);
-            cb.setFont(Font.font("Arial", 13));
-
-            if (currentSelected.stream().anyMatch(s -> s.getServiceID() == service.getServiceID())) {
-                cb.setSelected(true);
-                selectedServices.add(service);
-            }
 
             cb.setOnAction(e -> {
                 if (cb.isSelected()) {
-                    selectedServices.add(service);
+                    if (selectedService != null) {
+                        // Deselect the previously selected checkbox if it's not the current one
+                        for (Node node : serviceCheckboxContainer.getChildren()) {
+                            if (node instanceof CheckBox && node != cb) {
+                                ((CheckBox) node).setSelected(false); // Cast node to CheckBox
+                            }
+                        }
+                    }
+                    selectedService = service; // Set the selected service
                 } else {
-                    selectedServices.removeIf(s -> s.getServiceID() == service.getServiceID());
+                    selectedService = null; // Unselect the service
                 }
                 updateAvailableCaregivers();
                 updateTotalAmount();
             });
+
             serviceCheckboxContainer.getChildren().add(cb);
         }
-        if (selectedServices.isEmpty()) {
-            updateAvailableCaregivers();
-        }
-        updateTotalAmount();
+
+        updateAvailableCaregivers(); // Update the caregivers after the service checkboxes are populated.
+        updateTotalAmount();  // Update the total amount
     }
 
     private void updateAvailableCaregivers() {
-        Caregiver currentlySelectedCaregiver = caregiverDropdown.getValue();
         caregiverDropdown.getItems().clear();
-        if (!selectedServices.isEmpty()) {
-            Set<Caregiver> availableCaregivers = selectedServices.stream().flatMap(service -> caregiverController.getAllCaregiversByService(service).stream()).filter(cg -> cg.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Passed && cg.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Cleared).collect(Collectors.toSet());
+        if (selectedService != null) {
+            List<Caregiver> availableCaregivers = caregiverController.getAllCaregiversByService(selectedService);
             caregiverDropdown.getItems().addAll(availableCaregivers);
-
-            if (currentlySelectedCaregiver != null && availableCaregivers.contains(currentlySelectedCaregiver)) {
-                caregiverDropdown.setValue(currentlySelectedCaregiver);
-            } else {
-                caregiverDropdown.setValue(null);
-                clearCaregiverDetails();
-            }
-        } else {
-            caregiverDropdown.setValue(null);
-            clearCaregiverDetails();
         }
-        if (caregiverDropdown.getValue() == null) {
-            clearCaregiverDetails();
-        }
-    }
 
-    private void clearCaregiverDetails() {
         certBox.getChildren().clear();
-
-        Label noCertsLabel = new Label("No certifications to display.");
-        noCertsLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;");
-        certBox.getChildren().add(noCertsLabel);
-
-
     }
-
 
     private void updateTotalAmount() {
-        if (!selectedServices.isEmpty()) {
-            List<CaregiverService> caregiverServices = selectedServices.stream().map(service -> new CaregiverService(service.getServiceID(), (caregiverDropdown.getValue() != null) ? caregiverDropdown.getValue().getCaregiverID() : -1)).toList();
-            payment = paymentController.getPaymentByAllServices(appointment, caregiverServices, selectedServices);
-            amountLabel.setText("Amount To Be Paid: Php " + String.format("%.2f", payment.getTotalAmount()));
+        int duration;
+        if (selectedService != null) {
+
+            String selected = durationBox.getValue();
+
+            if (selected != null)
+                try {
+                    duration = Integer.parseInt(selected);
+                    if (duration < 1) {
+                        amountLabel.setText("Duration must be at least 1 hour");
+                        return;
+                        }
+                } catch (NumberFormatException e) {
+                    amountLabel.setText("Please enter a valid duration");
+                    return;
+                }
+            else {
+                amountLabel.setText("No duration selected");
+                return;
+            }
+
+            CaregiverService caregiverService =  new CaregiverService(selectedService.getServiceID(), (caregiverDropdown.getValue() != null) ? caregiverDropdown.getValue().getCaregiverID() : -1);
+            caregiverService = caregiverServiceController.getCaregiverService(caregiverService.getCaregiverId(), caregiverService.getServiceId());
+            totalAmount = caregiverService.getHourlyRate() * duration;
+            amountLabel.setText("Amount To Be Paid: " + String.format("%.2f", totalAmount));
         } else {
             amountLabel.setText("Amount To Be Paid: Php 0.00");
         }
@@ -315,9 +318,7 @@ public class AppointmentView {
 
     private void updateCaregiverInfo() {
         certBox.getChildren().clear();
-
         Caregiver selected = caregiverDropdown.getValue();
-
         if (selected != null) {
             List<String> base64CertStrings = selected.getCertifications();
             if (base64CertStrings != null && !base64CertStrings.isEmpty()) {
@@ -349,13 +350,20 @@ public class AppointmentView {
                 noCertsLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;");
                 certBox.getChildren().add(noCertsLabel);
             }
-
-
         } else {
             clearCaregiverDetails();
         }
         updateTotalAmount();
     }
+
+    private void clearCaregiverDetails() {
+        certBox.getChildren().clear();
+
+        Label noCertsLabel = new Label("No certifications to display.");
+        noCertsLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;");
+        certBox.getChildren().add(noCertsLabel);
+    }
+
 
     private VBox createElderCheckboxSection(Guardian guardian) {
         VBox elderListBox = new VBox(8);
@@ -372,8 +380,8 @@ public class AppointmentView {
                 cb.setUserData(elder);
                 cb.setFont(Font.font("Arial", 13));
                 cb.setOnAction(e -> {
-                    if (cb.isSelected()) selectedElders.add(elder);
-                    else selectedElders.remove(elder);
+                    if (cb.isSelected()) selectedElder = elder;
+                    else selectedElder = null;
                 });
                 elderListBox.getChildren().add(cb);
             });
@@ -395,11 +403,11 @@ public class AppointmentView {
         String durationText = durationBox.getValue();
         Caregiver selectedCaregiver = caregiverDropdown.getValue();
 
-        if (selectedElders.isEmpty()) {
+        if (selectedElder == null) {
             showAlert(Alert.AlertType.WARNING, "Input Error", "Please select at least one elder.");
             return;
         }
-        if (selectedServices.isEmpty()) {
+        if (selectedService == null) {
             showAlert(Alert.AlertType.WARNING, "Input Error", "Please select at least one service.");
             return;
         }
@@ -418,41 +426,25 @@ public class AppointmentView {
 
 
         try {
-            int durationInHours = Integer.parseInt(durationText.replaceAll("[^0-9]", ""));
-            if (durationInHours <= 0) {
-                showAlert(Alert.AlertType.WARNING, "Input Error", "Duration must be a positive number of hours.");
+            int durationInHours = Integer.parseInt(durationText);
+
+            if (durationInHours < selectedService.getMinimumHourDuration()) {
+                showAlert(Alert.AlertType.WARNING, "Invalid Duration", "Duration must be at least " + selectedService.getMinimumHourDuration() + " hours.");
                 return;
             }
-            int durationInSeconds = durationInHours * 3600;
+
             LocalDateTime appointmentDateTime = selectedDate.atTime(9, 0);
 
-            List<Integer> elderIds = selectedElders.stream().map(Elder::getElderID).collect(Collectors.toList());
+            CaregiverService caregiverService =  new CaregiverService(selectedService.getServiceID(), (caregiverDropdown.getValue() != null) ? caregiverDropdown.getValue().getCaregiverID() : -1);
+            caregiverService = caregiverServiceController.getCaregiverService(caregiverService.getCaregiverId(), caregiverService.getServiceId());
 
-            List<CaregiverService> caregiverServices = selectedServices.stream().map(service -> new CaregiverService(service.getServiceID(), selectedCaregiver.getCaregiverID())).toList();
+            double totalAmount = caregiverService.getHourlyRate() * durationInHours;
 
-            payment = paymentController.getPaymentByAllServices(appointment, caregiverServices, selectedServices);
-
-            appointment.setAppointmentDate(appointmentDateTime);
-            appointment.setStatus(Appointment.AppointmentStatus.UNPAID);
-            appointment.setDuration(durationInSeconds);
-            appointment.setCreatedDate(LocalDateTime.now());
-            appointment.setCaregiverID(selectedCaregiver.getCaregiverID());
-            appointment.setGuardianID(guardian.getGuardianID());
-            appointment.setElderIDs(elderIds);
-
-            if (payment.getPaymentID() == 0) {
-                paymentController.addPayment(payment);
-            }
-            appointment.setPaymentID(payment.getPaymentID());
-
-
+            Appointment appointment = new Appointment(appointmentDateTime, Appointment.AppointmentStatus.PENDING, durationInHours, selectedCaregiver.getCaregiverID(), selectedElder.getElderID(), selectedService.getServiceID());
             appointmentController.addAppointment(appointment);
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Appointment submitted successfully!");
-
-            Stage stage = (Stage) scene.getWindow();
-            GuardianAppointmentView guardianAppointmentView = new GuardianAppointmentView(stage, conn, guardian);
-            stage.setScene(guardianAppointmentView.getScene());
-
+            payment = new Payment(appointment.getAppointmentID(), Payment.PaymentStatus.PENDING, totalAmount, Payment.PaymentMethod.CASH);
+            paymentController.addPayment(payment);
+            showAlert(Alert.AlertType.CONFIRMATION, "Success", "Appointment submitted successfully!");
 
         } catch (NumberFormatException ex) {
             showAlert(Alert.AlertType.ERROR, "Input Error", "Duration must be a valid number.");

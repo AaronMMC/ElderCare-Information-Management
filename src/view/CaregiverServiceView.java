@@ -141,7 +141,6 @@ public class CaregiverServiceView {
             if (selectedService != null) {
                 serviceNameLabel.setText("Service name: " + selectedService.getServiceName());
                 serviceCategoryLabel.setText("Category: " + selectedService.getCategory());
-                servicePriceLabel.setText("Price: Php " + selectedService.getPrice());
             }
         });
 
@@ -234,7 +233,6 @@ public class CaregiverServiceView {
         nameLabel.setPrefWidth(150);
 
         TextField nameField = new TextField(service.getServiceName());
-        TextField descriptionField = new TextField(String.valueOf(service.getPrice()));
         TextField categoryField = new TextField(service.getCategory());
         TextField experienceYearsField = new TextField(String.valueOf(experienceYears));
         TextField hourlyRateField = new TextField(String.valueOf(hourlyRate));
@@ -251,7 +249,7 @@ public class CaregiverServiceView {
         cancelBtn.setDisable(true);
 
         editBtn.setOnAction(e -> {
-            setEditable(true, nameField, descriptionField, categoryField, experienceYearsField, hourlyRateField);
+            setEditable(true, nameField, categoryField, experienceYearsField, hourlyRateField);
             saveBtn.setDisable(false);
             cancelBtn.setDisable(false);
         });
@@ -259,7 +257,6 @@ public class CaregiverServiceView {
         saveBtn.setOnAction(e -> {
             service.setServiceName(nameField.getText());
             service.setCategory(categoryField.getText());
-            service.setPrice(Double.parseDouble(descriptionField.getText()));
             serviceController.updateService(service);
 
             CaregiverService updatedCaregiverService = new CaregiverService(caregiver.getCaregiverID(), service.getServiceID(), experienceYearsField.getLength(), hourlyRateField.getLength());
@@ -270,11 +267,10 @@ public class CaregiverServiceView {
 
         cancelBtn.setOnAction(e -> {
             nameField.setText(service.getServiceName());
-            descriptionField.setText(String.valueOf(service.getPrice()));
             categoryField.setText(service.getCategory());
             experienceYearsField.setText(String.valueOf(experienceYears));
             hourlyRateField.setText(String.valueOf(hourlyRate));
-            setEditable(false, nameField, descriptionField, categoryField, experienceYearsField, hourlyRateField);
+            setEditable(false, nameField, categoryField, experienceYearsField, hourlyRateField);
             saveBtn.setDisable(true);
             cancelBtn.setDisable(true);
         });
