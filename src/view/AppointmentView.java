@@ -5,7 +5,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
@@ -16,11 +19,7 @@ import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AppointmentView {
@@ -30,7 +29,7 @@ public class AppointmentView {
     private final List<Elder> selectedElders = new ArrayList<>();
     private final ComboBox<Caregiver> caregiverDropdown = new ComboBox<>();
     private final VBox certBox = new VBox(5);
-    // private final VBox infoBox = new VBox(5); // Removed as per request
+
     private final Label amountLabel = new Label("Amount To Be Paid: 0.00");
     private final VBox serviceCheckboxContainer = new VBox(10);
     private final ComboBox<String> filterDropdown = new ComboBox<>();
@@ -42,9 +41,8 @@ public class AppointmentView {
     private final ElderController elderController;
     private final ServiceController serviceController;
     private final PaymentController paymentController;
-
-    private Payment payment = new Payment();
     private final Appointment appointment = new Appointment();
+    private Payment payment = new Payment();
 
     public AppointmentView(Stage stage, Connection conn, Guardian guardian) {
         this.conn = conn;
@@ -110,22 +108,21 @@ public class AppointmentView {
         datePicker.setStyle(getInputFieldStyle());
         datePicker.setPrefWidth(180);
 
-        final Callback<DatePicker, DateCell> dayCellFactory =
-                new Callback<DatePicker, DateCell>() {
+        final Callback<DatePicker, DateCell> dayCellFactory = new Callback<DatePicker, DateCell>() {
+            @Override
+            public DateCell call(final DatePicker datePicker) {
+                return new DateCell() {
                     @Override
-                    public DateCell call(final DatePicker datePicker) {
-                        return new DateCell() {
-                            @Override
-                            public void updateItem(LocalDate item, boolean empty) {
-                                super.updateItem(item, empty);
-                                if (item.isBefore(LocalDate.now())) {
-                                    setDisable(true);
-                                    setStyle("-fx-background-color: #ffc0cb;");
-                                }
-                            }
-                        };
+                    public void updateItem(LocalDate item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item.isBefore(LocalDate.now())) {
+                            setDisable(true);
+                            setStyle("-fx-background-color: #ffc0cb;");
+                        }
                     }
                 };
+            }
+        };
         datePicker.setDayCellFactory(dayCellFactory);
         datePicker.setValue(LocalDate.now());
 
@@ -165,7 +162,7 @@ public class AppointmentView {
     private VBox createRightPane() {
         Label caregiverLabel = new Label("Select a Caregiver:");
         caregiverLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        caregiverLabel.setStyle("-fx-text-fill: white;"); // Ensure text is visible on new background
+        caregiverLabel.setStyle("-fx-text-fill: white;");
         caregiverDropdown.setPromptText("Select a caregiver");
         caregiverDropdown.setStyle(getInputFieldStyle() + "-fx-pref-width: 280px;");
         caregiverDropdown.setCellFactory(cb -> new ListCell<>() {
@@ -186,7 +183,7 @@ public class AppointmentView {
 
         Label certsLabel = new Label("Caregiver Certifications:");
         certsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        certsLabel.setStyle("-fx-text-fill: white;"); // Ensure text is visible
+        certsLabel.setStyle("-fx-text-fill: white;");
         certBox.setStyle("-fx-background-color: #ffffff; -fx-background-radius: 10; -fx-border-color: #bdc3c7; -fx-border-radius: 10;");
         certBox.setPadding(new Insets(12));
         certBox.setPrefHeight(180);
@@ -197,7 +194,7 @@ public class AppointmentView {
 
         VBox rightPane = new VBox(15, caregiverLabel, caregiverDropdown, certsLabel, certScrollPane);
         rightPane.setPadding(new Insets(30));
-        rightPane.setStyle("-fx-background-color: #3BB49C; -fx-background-radius: 15;"); // Reverted color
+        rightPane.setStyle("-fx-background-color: #3BB49C; -fx-background-radius: 15;");
         rightPane.setPrefWidth(380);
         rightPane.setAlignment(Pos.TOP_CENTER);
 
@@ -207,9 +204,7 @@ public class AppointmentView {
 
     private void loadInitialData(Guardian guardian) {
         List<Service> allServices = serviceController.getAllServices();
-        Set<String> categories = allServices.stream()
-                .map(Service::getCategory)
-                .collect(Collectors.toCollection(TreeSet::new));
+        Set<String> categories = allServices.stream().map(Service::getCategory).collect(Collectors.toCollection(TreeSet::new));
         categories.add("All Categories");
         filterDropdown.getItems().setAll(categories);
         filterDropdown.setValue("All Categories");
@@ -264,11 +259,7 @@ public class AppointmentView {
         Caregiver currentlySelectedCaregiver = caregiverDropdown.getValue();
         caregiverDropdown.getItems().clear();
         if (!selectedServices.isEmpty()) {
-            Set<Caregiver> availableCaregivers = selectedServices.stream()
-                    .flatMap(service -> caregiverController.getAllCaregiversByService(service).stream())
-                    .filter(cg -> cg.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Passed &&
-                            cg.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Cleared)
-                    .collect(Collectors.toSet());
+            Set<Caregiver> availableCaregivers = selectedServices.stream().flatMap(service -> caregiverController.getAllCaregiversByService(service).stream()).filter(cg -> cg.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Passed && cg.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Cleared).collect(Collectors.toSet());
             caregiverDropdown.getItems().addAll(availableCaregivers);
 
             if (currentlySelectedCaregiver != null && availableCaregivers.contains(currentlySelectedCaregiver)) {
@@ -281,28 +272,25 @@ public class AppointmentView {
             caregiverDropdown.setValue(null);
             clearCaregiverDetails();
         }
-        if(caregiverDropdown.getValue() == null) {
+        if (caregiverDropdown.getValue() == null) {
             clearCaregiverDetails();
         }
     }
 
     private void clearCaregiverDetails() {
         certBox.getChildren().clear();
-        // infoBox.getChildren().clear(); // Removed as per request
+
         Label noCertsLabel = new Label("No certifications to display.");
         noCertsLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;");
         certBox.getChildren().add(noCertsLabel);
-        // Label noInfoLabel = new Label("No caregiver details to display."); // Removed
-        // noInfoLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;"); // Removed
-        // infoBox.getChildren().add(noInfoLabel); // Removed
+
+
     }
 
 
     private void updateTotalAmount() {
         if (!selectedServices.isEmpty()) {
-            List<CaregiverService> caregiverServices = selectedServices.stream()
-                    .map(service -> new CaregiverService(service.getServiceID(), (caregiverDropdown.getValue() != null) ? caregiverDropdown.getValue().getCaregiverID() : -1))
-                    .toList();
+            List<CaregiverService> caregiverServices = selectedServices.stream().map(service -> new CaregiverService(service.getServiceID(), (caregiverDropdown.getValue() != null) ? caregiverDropdown.getValue().getCaregiverID() : -1)).toList();
             payment = paymentController.getPaymentByAllServices(appointment, caregiverServices, selectedServices);
             amountLabel.setText("Amount To Be Paid: Php " + String.format("%.2f", payment.getTotalAmount()));
         } else {
@@ -312,17 +300,22 @@ public class AppointmentView {
 
     private String determineFileExtension(byte[] data) {
         if (data == null || data.length < 4) return "dat";
-        if (data[0] == (byte)0x89 && data[1] == (byte)0x50 && data[2] == (byte)0x4E && data[3] == (byte)0x47) return "png";
-        if (data.length >= 3 && data[0] == (byte)0xFF && data[1] == (byte)0xD8 && data[2] == (byte)0xFF) return "jpg";
-        if (data[0] == (byte)0x25 && data[1] == (byte)0x50 && data[2] == (byte)0x44 && data[3] == (byte)0x46) return "pdf";
-        if (data[0] == (byte)'G' && data[1] == (byte)'I' && data[2] == (byte)'F' && data[3] == (byte)'8') return "gif";
-        if (data[0] == (byte)0x50 && data[1] == (byte)0x4B && data[2] == (byte)0x03 && data[3] == (byte)0x04) return "zip";
+        if (data[0] == (byte) 0x89 && data[1] == (byte) 0x50 && data[2] == (byte) 0x4E && data[3] == (byte) 0x47)
+            return "png";
+        if (data.length >= 3 && data[0] == (byte) 0xFF && data[1] == (byte) 0xD8 && data[2] == (byte) 0xFF)
+            return "jpg";
+        if (data[0] == (byte) 0x25 && data[1] == (byte) 0x50 && data[2] == (byte) 0x44 && data[3] == (byte) 0x46)
+            return "pdf";
+        if (data[0] == (byte) 'G' && data[1] == (byte) 'I' && data[2] == (byte) 'F' && data[3] == (byte) '8')
+            return "gif";
+        if (data[0] == (byte) 0x50 && data[1] == (byte) 0x4B && data[2] == (byte) 0x03 && data[3] == (byte) 0x04)
+            return "zip";
         return "dat";
     }
 
     private void updateCaregiverInfo() {
         certBox.getChildren().clear();
-        // infoBox.getChildren().clear(); // Removed as per request
+
         Caregiver selected = caregiverDropdown.getValue();
 
         if (selected != null) {
@@ -346,7 +339,7 @@ public class AppointmentView {
                         }
                     }
                 }
-                if (certBox.getChildren().isEmpty()){
+                if (certBox.getChildren().isEmpty()) {
                     Label noCertsLabel = new Label("No valid certifications found.");
                     noCertsLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;");
                     certBox.getChildren().add(noCertsLabel);
@@ -357,15 +350,6 @@ public class AppointmentView {
                 certBox.getChildren().add(noCertsLabel);
             }
 
-            // Caregiver details section removed from display
-            // int age = (selected.getDateOfBirth() != null) ? getAge(selected.getDateOfBirth().toLocalDate()) : 0;
-            // infoBox.getChildren().addAll(
-            //         new Label("Age: " + (age > 0 ? age : "N/A")),
-            //         new Label("Gender: " + (selected.getGender() != null ? selected.getGender() : "N/A")),
-            //         new Label("Employment: " + (selected.getEmploymentType() != null ? selected.getEmploymentType() : "N/A")),
-            //         new Label("Contact: " + (selected.getContactNumber() != null ? selected.getContactNumber() : "N/A")),
-            //         new Label("Email: " + (selected.getEmail() != null ? selected.getEmail() : "N/A"))
-            // );
 
         } else {
             clearCaregiverDetails();
@@ -388,10 +372,8 @@ public class AppointmentView {
                 cb.setUserData(elder);
                 cb.setFont(Font.font("Arial", 13));
                 cb.setOnAction(e -> {
-                    if (cb.isSelected())
-                        selectedElders.add(elder);
-                    else
-                        selectedElders.remove(elder);
+                    if (cb.isSelected()) selectedElders.add(elder);
+                    else selectedElders.remove(elder);
                 });
                 elderListBox.getChildren().add(cb);
             });
@@ -437,20 +419,16 @@ public class AppointmentView {
 
         try {
             int durationInHours = Integer.parseInt(durationText.replaceAll("[^0-9]", ""));
-            if (durationInHours <=0) {
+            if (durationInHours <= 0) {
                 showAlert(Alert.AlertType.WARNING, "Input Error", "Duration must be a positive number of hours.");
                 return;
             }
             int durationInSeconds = durationInHours * 3600;
             LocalDateTime appointmentDateTime = selectedDate.atTime(9, 0);
 
-            List<Integer> elderIds = selectedElders.stream()
-                    .map(Elder::getElderID)
-                    .collect(Collectors.toList());
+            List<Integer> elderIds = selectedElders.stream().map(Elder::getElderID).collect(Collectors.toList());
 
-            List<CaregiverService> caregiverServices = selectedServices.stream()
-                    .map(service -> new CaregiverService(service.getServiceID(), selectedCaregiver.getCaregiverID()))
-                    .toList();
+            List<CaregiverService> caregiverServices = selectedServices.stream().map(service -> new CaregiverService(service.getServiceID(), selectedCaregiver.getCaregiverID())).toList();
 
             payment = paymentController.getPaymentByAllServices(appointment, caregiverServices, selectedServices);
 
