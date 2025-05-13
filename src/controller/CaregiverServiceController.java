@@ -28,9 +28,6 @@ public class CaregiverServiceController {
         return caregiverServiceDAO.getAllCaregiverServices();
     }
 
-    public List<Service> getAllServicesByCaregiverId(int caregiverId) {
-        return caregiverServiceDAO.getAllServicesByCaregiverId(caregiverId);
-    }
 
     public Caregiver getCaregiverByServiceId(int serviceId) {
         return caregiverServiceDAO.getCaregiverByServiceId(serviceId);

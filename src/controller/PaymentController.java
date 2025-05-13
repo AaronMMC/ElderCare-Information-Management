@@ -25,10 +25,6 @@ public class PaymentController {
         return paymentDAO.getPaymentByID(paymentID);
     }
 
-    public Payment getPaymentByAllServices(Appointment appointment, List<CaregiverService> caregiverService, List<Service> services) {
-        return paymentDAO.getPaymentByAllServices(appointment, caregiverService, services);
-    }
-
     public List<Payment> getAllPayments() {
         return paymentDAO.getAllPayments();
     }
@@ -41,7 +37,7 @@ public class PaymentController {
         paymentDAO.deletePayment(paymentID);
     }
 
-    public Payment getPaymentByAppointmentId(int paymentID) {
-        return paymentDAO.getPaymentByAppointmentId(paymentID);
+    public Payment getPaymentByAppointmentId(int appointmentID) {
+        return paymentDAO.getPaymentByAppointmentId(appointmentID);
     }
 }
