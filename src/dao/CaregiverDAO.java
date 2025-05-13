@@ -71,6 +71,7 @@ public class CaregiverDAO {
 
     public List<Caregiver> getAllCaregiversByServiceId(int serviceId) {
         List<Caregiver> caregivers = new ArrayList<>();
+        System.out.println("The service id is : " + serviceId);
         String sql = "{CALL GetAllCaregiversByServiceId(?)}";
         try (CallableStatement stmt =conn.prepareCall(sql)){
             stmt.setInt(1, serviceId);
@@ -311,8 +312,6 @@ public class CaregiverDAO {
                 rs.getString("availabilitySchedule"),
                 employmentType
         );
-
-
     }
 
     public Caregiver findByUsernameAndPassword(String username, String password) {

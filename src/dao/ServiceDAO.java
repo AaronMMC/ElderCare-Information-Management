@@ -18,7 +18,7 @@ public class ServiceDAO {
             CallableStatement stmt = conn.prepareCall("{call insert_service(?, ?, ?, ?)}");
             stmt.setString(1, service.getCategory());
             stmt.setString(2, service.getServiceName());
-            stmt.setDouble(3, service.getPrice());
+            stmt.setInt(3, service.getMinimumHourDuration());
             stmt.registerOutParameter(4, java.sql.Types.INTEGER);
             stmt.execute();
             newId = stmt.getInt(4);
@@ -105,7 +105,7 @@ public class ServiceDAO {
             stmt.setInt(1, service.getServiceID());
             stmt.setString(2, service.getCategory());
             stmt.setString(3, service.getServiceName());
-            stmt.setDouble(4, service.getPrice());
+            stmt.setInt(4, service.getMinimumHourDuration());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -129,6 +129,6 @@ public class ServiceDAO {
                 rs.getInt("service_id"),
                 rs.getString("category"),
                 rs.getString("service_name"),
-                rs.getDouble("price"));
+                rs.getInt("minimumHourDuration"));
     }
 }
