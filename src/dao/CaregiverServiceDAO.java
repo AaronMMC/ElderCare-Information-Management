@@ -94,19 +94,6 @@ public class CaregiverServiceDAO {
         return services;
     }
 
-    public List<Service> getAllServicesByCaregiverId(int caregiverId) {
-        List<Service> services = new ArrayList<>();
-        String sql = "{CALL GetAllServicesByCaregiverId(?)}";
-        try (CallableStatement stmt = conn.prepareCall(sql)){
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                services.add(mapResultSetToService(rs));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return services;
-    }
 
     public Caregiver getCaregiverByServiceId(int serviceID) {
         String sql = "{CALL GetCaregiverByServiceId(?)}";
@@ -187,11 +174,4 @@ public class CaregiverServiceDAO {
         );
     }
 
-    private Service mapResultSetToService(ResultSet rs) throws SQLException {
-        return new Service(
-                rs.getInt("service_id"),
-                rs.getString("category"),
-                rs.getString("service_name"),
-                rs.getDouble("price"));
-    }
 }

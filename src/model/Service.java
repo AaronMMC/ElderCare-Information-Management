@@ -4,21 +4,22 @@ public class Service {
     private int serviceID;
     private String category;
     private String serviceName;
-    private double price;
+    private int minimumHourDuration;
 
-    public Service(int serviceID, String category, String serviceName, double price) {
+    public Service(int serviceID, String category, String serviceName, int minimumHourDuration) {
         this.serviceID = serviceID;
         this.category = category;
         this.serviceName = serviceName;
-        this.price = price;
+        this.minimumHourDuration = minimumHourDuration;
     }
 
-    public Service() {
-        this.serviceID = -1;
-        this.category = "";
-        this.serviceName = "";
-        this.price = 0;
+
+    public Service(String category, String serviceName, int minimumHourDuration) {
+        this.category = category;
+        this.serviceName = serviceName;
+        this.minimumHourDuration = minimumHourDuration;
     }
+
 
     public int getServiceID() {
         return serviceID;
@@ -44,11 +45,11 @@ public class Service {
         this.serviceName = serviceName;
     }
 
-    public double getPrice() {
-        return price;
+    public int getMinimumHourDuration() {
+        return minimumHourDuration;
     }
 
-    public void setPrice(double price) {
-        this.price = price;
+    public void setMinimumHourDuration(int minimumHourDuration) {
+        this.minimumHourDuration = minimumHourDuration;
     }
 }

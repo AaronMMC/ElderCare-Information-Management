@@ -2,9 +2,7 @@ package view;
 
 import controller.AppointmentController;
 import controller.CaregiverController;
-import controller.MedicalRecordController;
 import controller.PaymentController;
-import model.Appointment.AppointmentStatus;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -22,11 +20,13 @@ public class GuardianAppointmentView {
     private final Stage stage;
     private final Connection conn;
     private final Guardian guardian;
+    private final PaymentController paymentController;
 
     public GuardianAppointmentView(Stage stage, Connection conn, Guardian guardian) {
         this.stage = stage;
         this.conn = conn;
         this.guardian = guardian;
+        this.paymentController = new PaymentController(conn);
 
         Label titleLabel = new Label("Your Appointments");
         titleLabel.setFont(Font.font("Arial", 28));
@@ -91,19 +91,19 @@ public class GuardianAppointmentView {
         stage.setScene(scene);
         stage.show();
 
-        sortBox.getItems().addAll("UNPAID", "PAID", "ONGOING", "FINISHED", "CANCELLED");
-        sortBox.setValue("UNPAID");
+        sortBox.getItems().addAll("PENDING", "ONGOING", "FINISHED", "CANCELLED");
+        sortBox.setValue("PENDING");
 
         searchField.textProperty().addListener((obs, oldVal, newVal) ->
-                populateAppointments(table, newVal, AppointmentStatus.valueOf(sortBox.getValue())));
+                populateAppointments(table, newVal));
 
         sortBox.setOnAction(e ->
-                populateAppointments(table, searchField.getText(), AppointmentStatus.valueOf(sortBox.getValue())));
+                populateAppointments(table, searchField.getText()));
 
-        populateAppointments(table, "", AppointmentStatus.UNPAID);
+        populateAppointments(table, "");
     }
 
-    private void populateAppointments(GridPane table, String searchTerm, AppointmentStatus filterStatus) {
+    private void populateAppointments(GridPane table, String searchTerm) {
         table.getChildren().clear();
         addHeaderRow(table);
 
@@ -115,12 +115,10 @@ public class GuardianAppointmentView {
         int row = 1;
 
         for (Appointment appt : appointments) {
-            if (appt.getStatus() != filterStatus) continue;
-
             Caregiver caregiver = caregiverController.getCaregiverById(appt.getCaregiverID());
             if (caregiver == null || !caregiver.getFirstName().toLowerCase().contains(searchTerm.toLowerCase())) continue;
 
-            Payment payment = paymentController.getPaymentByAppointmentId(appt.getPaymentID());
+            Payment payment = paymentController.getPaymentByAppointmentId(appt.getAppointmentID());
             String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
 
             String details = String.format("""
@@ -173,15 +171,16 @@ public class GuardianAppointmentView {
         HBox btnBox = new HBox();
         btnBox.setAlignment(Pos.CENTER_RIGHT);
         btnBox.setPrefWidth(150);
+        Payment payment = paymentController.getPaymentByAppointmentId(appointment.getAppointmentID());
 
-        if (appointment.getStatus() == AppointmentStatus.UNPAID) {
+        if (payment.getPaymentStatus() == Payment.PaymentStatus.PENDING) {
             Button payBtn = createPayButton("Pay");
             payBtn.setOnAction(e -> {
                 PaymentView paymentView = new PaymentView(stage, conn, guardian, appointment);
                 stage.setScene(paymentView.getScene());
-                appointment.setStatus(AppointmentStatus.PAID);
-                appointmentController.updateAppointment(appointment);
-                populateAppointments(table, "", AppointmentStatus.UNPAID);
+                payment.setPaymentStatus(Payment.PaymentStatus.PAID);
+                paymentController.updatePayment(payment);
+                populateAppointments(table, "");
             });
             btnBox.getChildren().add(payBtn);
         }

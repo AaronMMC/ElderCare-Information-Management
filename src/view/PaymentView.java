@@ -1,9 +1,6 @@
 package view;
 
-import controller.AppointmentController;
-import controller.CaregiverController;
-import controller.CaregiverServiceController;
-import controller.PaymentController;
+import controller.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -18,10 +15,10 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
-public class PaymentView{
+public class PaymentView {
 
     private final Scene scene;
-    private Payment payment = new Payment();
+    private Payment payment;
     private final PaymentController paymentController;
     private final Appointment appointment;
     private final Connection conn;
@@ -36,7 +33,7 @@ public class PaymentView{
     public PaymentView(Stage stage, Connection conn, Guardian guardian, Appointment appointment) {
         this.conn = conn;
         CaregiverController caregiverController = new CaregiverController(conn);
-        CaregiverServiceController caregiverServiceController = new CaregiverServiceController(conn);
+        ServiceController serviceController = new ServiceController(conn);
         this.paymentController = new PaymentController(conn);
         this.appointmentController = new AppointmentController(conn);
         this.appointment = appointment;
@@ -45,13 +42,11 @@ public class PaymentView{
 
         int caregiverID = appointment.getCaregiverID();
         Caregiver caregiver = caregiverController.getCaregiverById(caregiverID);
-        this.services = caregiverServiceController.getAllServicesByCaregiverId(caregiverID);
+        this.services = serviceController.getAllServicesByCaregiverId(caregiverID);
 
         List<CaregiverService> caregiverServices = services.stream()
                 .map(service -> new CaregiverService(service.getServiceID(), caregiver.getCaregiverID()))
                 .toList();
-
-        payment = paymentController.getPaymentByAllServices(appointment, caregiverServices, services);
 
         // === Title ===
         Label titleLabel = new Label("Payment Details");
@@ -61,30 +56,26 @@ public class PaymentView{
         // === Balance Breakdown ===
         Label breakdownLabel = new Label("Balance breakdown:");
         StringBuilder initialBreakdownText = new StringBuilder();
-        double totalServiceCost = 0.0;
         double totalAdditionalCharges = 0.0;
-        int durationInSeconds = appointment.getDuration();
-        double durationInHours = durationInSeconds / 3600.0; // Convert to hours
+        double durationInHours = appointment.getDuration();
+        double totalAmount = 0;
 
         for (Service service : services) {
-            totalServiceCost += service.getPrice();
             CaregiverService correspondingCaregiverService = findCaregiverServiceForService(service, caregiverServices);
-            double additionalCharge = 0.0;
-            double hourlyRate = 0.0;
+            double hourlyRate;
 
             if (correspondingCaregiverService != null) {
                 hourlyRate = correspondingCaregiverService.getHourlyRate();
-                additionalCharge = hourlyRate * durationInHours;
-                totalAdditionalCharges += additionalCharge;
-                initialBreakdownText.append(String.format("- Service: %s (%s), Price: %s, Caregiver Rate: %s/hour, Additional Charge: %s%n",
-                        service.getServiceName(), service.getCategory(), pesoFormat.format(service.getPrice()), pesoFormat.format(hourlyRate), pesoFormat.format(additionalCharge)));
+                totalAmount = hourlyRate * durationInHours;
+                initialBreakdownText.append(String.format("- Service: %s (%s), Caregiver Rate: %s/hour, Total Amount: %f%n",
+                        service.getServiceName(), service.getCategory(), pesoFormat.format(hourlyRate), totalAmount));
             } else {
-                initialBreakdownText.append(String.format("- Service: %s (%s), Price: %s, Caregiver Rate: N/A, Additional Charge: N/A (No matching caregiver service)%n",
-                        service.getServiceName(), service.getCategory(), pesoFormat.format(service.getPrice())));
+                initialBreakdownText.append(String.format("- Service: %s (%s)%n",
+                        service.getServiceName(), service.getCategory()));
             }
         }
 
-        initialBreakdownText.append(String.format("%nTotal Service Cost: %s%n", pesoFormat.format(totalServiceCost)));
+        initialBreakdownText.append(String.format("%nTotal Service Cost: %s%n", pesoFormat.format(totalAmount)));
         initialBreakdownText.append(String.format("Total Additional Charges: %s%n", pesoFormat.format(totalAdditionalCharges)));
         initialBreakdownText.append(String.format("-----------------------------%n"));
         initialBreakdownText.append(String.format("Total Amount: %s%n", pesoFormat.format(payment.getTotalAmount())));
@@ -199,8 +190,8 @@ public class PaymentView{
                     breakdownArea.appendText(String.format("%nPayment of %s via %s recorded.", formatPeso(amountPaid), paymentMethod));
 
                     if (payment.getTotalAmount() <= 0) {
-                        appointment.setStatus(Appointment.AppointmentStatus.PAID);
-                        appointmentController.updateAppointment(appointment);
+                        payment.setPaymentStatus(Payment.PaymentStatus.PAID);
+                        paymentController.updatePayment(payment);
                         showAlert("Payment Successful", "Appointment has been fully paid.");
                     } else {
                         showAlert("Payment Received", "Amount paid: " + formatPeso(amountPaid) + ". Remaining balance: " + formatPeso(payment.getTotalAmount()));

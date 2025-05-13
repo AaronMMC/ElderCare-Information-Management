@@ -104,8 +104,8 @@ public class AdminView {
         Label serviceCategoryLabel = new Label("Category: ");
         TextField serviceCategoryInput = new TextField();
 
-        Label servicePriceLabel = new Label("Price: ");
-        TextField servicePriceInput = new TextField();
+        Label minimumHourDurationLabel = new Label("Minimum Hour Duration: ");
+        TextField minimumHourDurationInput = new TextField();
 
         Label experienceYearsLabel = new Label("Experience in years: ");
         TextField experienceYearsInput = new TextField();
@@ -116,7 +116,7 @@ public class AdminView {
         Button add = new Button("Add");
 
         VBox layout = new VBox(20, serviceNameLabel, serviceNameInput, serviceCategoryLabel,
-                serviceCategoryInput, servicePriceLabel, servicePriceInput,
+                serviceCategoryInput, minimumHourDurationLabel, minimumHourDurationInput,
                 experienceYearsLabel, experienceYearsInput, hourlyRateLabel,
                 hourlyRateInput, add);
         layout.setAlignment(Pos.CENTER);
@@ -129,14 +129,11 @@ public class AdminView {
         add.setOnAction(e -> {
             String serviceName = serviceNameInput.getText();
             String serviceCategory = serviceCategoryInput.getText();
-            double servicePrice = Double.parseDouble(servicePriceInput.getText());
+            int minimumHourDuration = Integer.parseInt(minimumHourDurationInput.getText());
             int experienceYears = Integer.parseInt(experienceYearsInput.getText());
             double hourlyRate = Double.parseDouble(hourlyRateInput.getText());
 
-            Service service = new Service();
-            service.setServiceName(serviceName);
-            service.setCategory(serviceCategory);
-            service.setPrice(servicePrice);
+            Service service = new Service(serviceName, serviceCategory, minimumHourDuration);
 
             serviceController.addService(service);
 

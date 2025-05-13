@@ -15,10 +15,12 @@ public class PaymentDAO {
 
     public void insertPayment(Payment payment) {
         try {
-            CallableStatement stmt = conn.prepareCall("{call insert_payment(?, ?, ?)}");
-            stmt.setDouble(1, payment.getTotalAmount());
-            stmt.setString(2, payment.getPaymentMethod().name());
-            stmt.setDouble(3, payment.getAdditionalCharges());
+            CallableStatement stmt = conn.prepareCall("{call insert_payment(?, ?, ?, ?, ?)}");
+            stmt.setDouble(1, payment.getAppointmentID());
+            stmt.setString(2, payment.getPaymentStatus().toString());
+            stmt.setDouble(3, payment.getTotalAmount());
+            stmt.setString(4, payment.getPaymentMethod().toString());
+            stmt.setTimestamp(5, Timestamp.valueOf(payment.getTransactionDate()));
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -41,8 +43,7 @@ public class PaymentDAO {
     }
 
     public Payment getPaymentByAppointmentId(int appointmentID)  {
-        String sql = "SELECT p.* FROM payment p INNER JOIN appointment a ON a.payment_id = p.payment_id \n" +
-                "    WHERE a.appointment_id = ?";
+        String sql = "SELECT * FROM Payments WHERE appointmentID = ?";
         try (CallableStatement stmt = conn.prepareCall(sql)){
             stmt.setInt(1,appointmentID);
             ResultSet rs = stmt.executeQuery();
@@ -55,47 +56,6 @@ public class PaymentDAO {
         return null;
     }
 
-    public Payment getPaymentByAllServices(Appointment appointment, List<CaregiverService> caregiverServices, List<Service> services) {
-        double totalServiceCost = 0.0;
-        double additionalCharges = 0.0;
-        int durationInSeconds = appointment.getDuration();
-        double durationInHours = durationInSeconds / 3600.0; // Convert to hours
-
-        // Sum up the prices of all selected services and calculate corresponding additional charges
-        for (Service service : services) {
-            totalServiceCost += service.getPrice();
-
-            // Find the corresponding CaregiverService for the current Service
-            CaregiverService correspondingCaregiverService = findCaregiverServiceForService(service, caregiverServices);
-
-            if (correspondingCaregiverService != null) {
-                double hourlyRate = correspondingCaregiverService.getHourlyRate();
-                additionalCharges += hourlyRate * durationInHours;
-            } else {
-                // This case should ideally not happen based on your clarification,
-                // but it's good practice to handle potential unexpected scenarios.
-                System.err.println("Error: No CaregiverService found for service: " + service.getServiceName());
-                // You might want to throw an exception or handle this differently.
-            }
-        }
-
-        // Create new Payment object and set values
-        Payment payment = new Payment();
-        payment.setTotalAmount(totalServiceCost);
-        payment.setAdditionalCharges(additionalCharges);
-
-        return payment;
-    }
-
-    // You'll still need this method to link a Service to its CaregiverService
-    private CaregiverService findCaregiverServiceForService(Service service, List<CaregiverService> caregiverServices) {
-        for (CaregiverService caregiverService : caregiverServices) {
-            if (caregiverService.getServiceId() == service.getServiceID()) {
-                return caregiverService;
-            }
-        }
-        return null;
-    }
 
     public List<Payment> getAllPayments() {
         String sql = "Select * FROM payment";
@@ -114,11 +74,11 @@ public class PaymentDAO {
 
     public void updatePayment(Payment payment) {
         try {
-            CallableStatement stmt = conn.prepareCall("{call update_payment(?, ?, ?, ?, ?)}");
+            CallableStatement stmt = conn.prepareCall("{call update_payment(?, ?, ?, ?)}");
             stmt.setInt(1, payment.getPaymentID());
-            stmt.setDouble(2, payment.getTotalAmount());
-            stmt.setString(3, payment.getPaymentMethod().name());
-            stmt.setDouble(4, payment.getAdditionalCharges());
+            stmt.setString(2, payment.getPaymentStatus().toString());
+            stmt.setDouble(3, payment.getTotalAmount());
+            stmt.setString(4, payment.getPaymentMethod().toString());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -140,9 +100,10 @@ public class PaymentDAO {
     private Payment mapResultSetToPayment(ResultSet rs) throws SQLException {
         return new Payment(
                 rs.getInt("payment_id"),
-                rs.getDouble("total_amount"),
-                Payment.PaymentMethod.valueOf(rs.getString("payment_method")),
-                rs.getDouble("additional_charges"),
-                rs.getTimestamp("transaction_date").toLocalDateTime());
+                rs.getInt("appointment_id"),
+                Payment.PaymentStatus.valueOf(rs.getString("paymentStatus")),
+                rs.getDouble("totalAmount"),
+                Payment.PaymentMethod.valueOf(rs.getString("paymentMethod")),
+                rs.getTimestamp("transactionDate").toLocalDateTime());
     }
 }

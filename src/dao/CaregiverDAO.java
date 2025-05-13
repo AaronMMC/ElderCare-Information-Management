@@ -71,6 +71,7 @@ public class CaregiverDAO {
 
     public List<Caregiver> getAllCaregiversByServiceId(int serviceId) {
         List<Caregiver> caregivers = new ArrayList<>();
+        System.out.println("The service id is : " + serviceId);
         String sql = "{CALL GetAllCaregiversByServiceId(?)}";
         try (CallableStatement stmt =conn.prepareCall(sql)){
             stmt.setInt(1, serviceId);
@@ -125,41 +126,63 @@ public class CaregiverDAO {
     }
 
     public void updateCaregiver(Caregiver caregiver) {
-        String sql = "{CALL UpdateCaregiver(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
-        try (CallableStatement stmt = conn.prepareCall(sql)) {
-            stmt.setInt(1, caregiver.getCaregiverID());
-            stmt.setString(2, caregiver.getUsername());
-            stmt.setString(3, caregiver.getPassword());
-            stmt.setString(4, caregiver.getFirstName());
-            stmt.setString(5, caregiver.getLastName());
+        String sql = " UPDATE caregiver\n" +
+                "    SET\n" +
+                "        username = ?,\n" +
+                "        password = ?,\n" +
+                "        firstName = ?,\n" +
+                "        lastName = ?,\n" +
+                "        dateOfBirth = ?,\n" +
+                "        gender = ?,\n" +
+                "        contactNumber = ?,\n" +
+                "        email = ?,\n" +
+                "        address = ?,\n" +
+                "        certifications = ?,\n" +
+                "        employmentType = ?\n" +
+                "    WHERE caregiver_Id = ?;";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {  // Use PreparedStatement instead of CallableStatement
+            stmt.setString(1, caregiver.getUsername());
+            stmt.setString(2, caregiver.getPassword());
+            stmt.setString(3, caregiver.getFirstName());
+            stmt.setString(4, caregiver.getLastName());
+
             if (caregiver.getDateOfBirth() != null) {
-                stmt.setTimestamp(6, Timestamp.valueOf(caregiver.getDateOfBirth()));
+                stmt.setTimestamp(5, Timestamp.valueOf(caregiver.getDateOfBirth()));
             } else {
-                stmt.setNull(6, Types.TIMESTAMP);
+                stmt.setNull(5, Types.TIMESTAMP);
             }
+
             if (caregiver.getGender() != null) {
-                stmt.setString(7, caregiver.getGender().name());
+                stmt.setString(6, caregiver.getGender().name());
             } else {
-                stmt.setNull(7, Types.VARCHAR);
+                stmt.setNull(6, Types.VARCHAR);
             }
-            stmt.setString(8, caregiver.getContactNumber());
-            stmt.setString(9, caregiver.getEmail());
-            stmt.setString(10, caregiver.getAddress());
+
+            stmt.setString(7, caregiver.getContactNumber());
+            stmt.setString(8, caregiver.getEmail());
+            stmt.setString(9, caregiver.getAddress());
+
             if (caregiver.getCertifications() != null && !caregiver.getCertifications().isEmpty()) {
-                stmt.setString(11, String.join(",", caregiver.getCertifications()));
+                stmt.setString(10, String.join(",", caregiver.getCertifications()));
+            } else {
+                stmt.setNull(10, Types.VARCHAR);
+            }
+
+            if (caregiver.getEmploymentType() != null) {
+                stmt.setString(11, caregiver.getEmploymentType().name());
             } else {
                 stmt.setNull(11, Types.VARCHAR);
             }
-            if (caregiver.getEmploymentType() != null) {
-                stmt.setString(12, caregiver.getEmploymentType().name());
-            } else {
-                stmt.setNull(12, Types.VARCHAR);
-            }
+
+            stmt.setInt(12, caregiver.getCaregiverID());  // Correct position for the WHERE clause
+
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     public void updateCaregiverSchedule(Caregiver caregiver) {
         String sql = "{CALL UpdateCaregiverSchedule(?,?)}";
@@ -289,8 +312,6 @@ public class CaregiverDAO {
                 rs.getString("availabilitySchedule"),
                 employmentType
         );
-
-
     }
 
     public Caregiver findByUsernameAndPassword(String username, String password) {

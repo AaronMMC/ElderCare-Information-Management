@@ -35,7 +35,6 @@ public class ElderDAO {
     }
 
 
-    // TODO : Update the methods below in according to the new datafields of the Elder
     public Elder getElderById(int id) {
         String sql = "{CALL GetElderById(?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
@@ -72,15 +71,7 @@ public class ElderDAO {
             stmt.setInt(1, appointmentId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Elder elder = new Elder(
-                            rs.getInt("elder_id"),
-                            rs.getString("first_name"),
-                            rs.getString("last_name"),
-                            rs.getTimestamp("date_of_birth").toLocalDateTime(),
-                            rs.getString("contact_number"),
-                            rs.getString("email"),
-                            rs.getString("address")
-                    );
+                    Elder elder = mapResultSetToElder(rs);
                     elders.add(elder);
                 }
             }
@@ -91,7 +82,7 @@ public class ElderDAO {
     }
 
     public void updateElder(Elder elder) {
-        String sql = "{CALL UpdateElder(?, ?, ?, ?, ?, ?, ?)}";
+        String sql = "{CALL UpdateElder(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, elder.getElderID());
             stmt.setString(2, elder.getFirstName());
@@ -100,6 +91,8 @@ public class ElderDAO {
             stmt.setString(5, elder.getContactNumber());
             stmt.setString(6, elder.getEmail());
             stmt.setString(7, elder.getAddress());
+            stmt.setInt(8, elder.getGuardianId());
+            stmt.setString(9, elder.getRelationship());
             stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -119,38 +112,31 @@ public class ElderDAO {
     private Elder mapResultSetToElder(ResultSet rs) throws SQLException {
         return new Elder(
                 rs.getInt("elder_id"),
-                rs.getString("first_name"),
-                rs.getString("last_name"),
-                rs.getTimestamp("date_of_birth").toLocalDateTime(),
-                rs.getString("contact_number"),
+                rs.getString("firstName"),
+                rs.getString("lastName"),
+                rs.getTimestamp("dateOfBirth").toLocalDateTime(),
+                rs.getString("contactNumber"),
                 rs.getString("email"),
-                rs.getString("address")
+                rs.getString("address"),
+                rs.getInt("guardian_id"),
+                rs.getString("relationshipToGuardian")
         );
     }
 
     public List<Elder> retrieveEldersWithGuardianId(int guardianId) {
         List<Elder> elders = new ArrayList<>();
-        String sql = "{CALL RetrieveAllEldersWithGuardianId(?)}"; // TODO : review the stored procedure of this one. (Jim Made)
+        String sql = "{CALL RetrieveAllEldersWithGuardianId(?)}";
         try (CallableStatement statement = conn.prepareCall(sql)) {
             statement.setInt(1, guardianId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
-                    Elder elder = new Elder();
-                    elder.setElderID(resultSet.getInt("elder_id"));
-                    elder.setFirstName(resultSet.getString("firstName"));
-                    elder.setLastName(resultSet.getString("lastName"));
-                    elder.setDateOfBirth(resultSet.getTimestamp("dateOfBirth").toLocalDateTime());
-                    elder.setContactNumber(resultSet.getString("contactNumber"));
-                    elder.setEmail(resultSet.getString("email"));
-                    elder.setAddress(resultSet.getString("address"));
-                    elder.setGuardianId(resultSet.getInt("guardian_id"));
-                    elder.setRelationship(resultSet.getString("relationship"));
-
+                    Elder elder = mapResultSetToElder(resultSet);
                     elders.add(elder);
                 }
             }
         } catch (SQLException e) {
+            e.printStackTrace();
             throw new RuntimeException("Error retrieving elders with guardianId: " + guardianId, e);
         }
         return elders;

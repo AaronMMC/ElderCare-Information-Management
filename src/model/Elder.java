@@ -11,10 +11,10 @@ public class Elder {
     private String email;
     private String address;
     private int guardianId;
-    private String relationship;
+    private String relationshipToGuardian;
 
 
-    public Elder(int elderID, String firstName, String lastName, LocalDateTime dateOfBirth, String contactNumber, String email, String address, int guardianId, String relationship) {
+    public Elder(int elderID, String firstName, String lastName, LocalDateTime dateOfBirth, String contactNumber, String email, String address, int guardianId, String relationshipToGuardian) {
         this.elderID = elderID;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -23,11 +23,11 @@ public class Elder {
         this.email = email;
         this.address = address;
         this.guardianId = guardianId;
-        this.relationship = relationship;
+        this.relationshipToGuardian = relationshipToGuardian;
     }
 
 
-    public Elder(String firstName, String lastName, LocalDateTime dateOfBirth, String contactNumber, String email, String address, int guardianId, String relationship) {
+    public Elder(String firstName, String lastName, LocalDateTime dateOfBirth, String contactNumber, String email, String address, int guardianId, String relationshipToGuardian) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.dateOfBirth = dateOfBirth;
@@ -35,7 +35,7 @@ public class Elder {
         this.email = email;
         this.address = address;
         this.guardianId = guardianId;
-        this.relationship = relationship;
+        this.relationshipToGuardian = relationshipToGuardian;
     }
 
 
@@ -143,10 +143,10 @@ public class Elder {
     }
 
     public String getRelationship() {
-        return relationship;
+        return relationshipToGuardian;
     }
 
-    public void setRelationship(String relationship) {
-        this.relationship = relationship;
+    public void setRelationship(String relationshipToGuardian) {
+        this.relationshipToGuardian = relationshipToGuardian;
     }
 }
