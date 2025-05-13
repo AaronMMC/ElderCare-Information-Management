@@ -10,7 +10,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-// import javafx.scene.paint.Color; // Not directly used in this version
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -31,10 +30,10 @@ import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.HashMap;
 
-
 public class CaregiverView {
 
     private final CaregiverController caregiverController;
+    private final Caregiver caregiver;
     private final Scene scene;
     private final ObservableList<String> certificationFileNames = FXCollections.observableArrayList();
     private final List<String> currentCertificationsBase64 = new ArrayList<>();
@@ -61,9 +60,28 @@ public class CaregiverView {
     private final Map<String, Caregiver.EmploymentType> employmentDisplayToEnum = new HashMap<>();
     private final Map<Caregiver.EmploymentType, String> employmentEnumToDisplay = new HashMap<>();
 
+    // UI elements
+    private TextField firstNameField;
+    private TextField lastNameField;
+    private DatePicker birthdayPicker;
+    private ComboBox<String> genderBox;
+    private TextField contactField;
+    private TextField emailField;
+    private TextField addressField;
+    private ComboBox<String> employmentBox;
+    private ListView<String> certificationsListView;
+    private Button uploadCertificationButton;
+    private Button removeCertificationButton;
+    private Button cancelBtn;
+    private Button saveBtn;
+
+    private Stage stage; // Store the stage
+
 
     public CaregiverView(Stage stage, Connection conn, Caregiver caregiver) {
+        this.stage = stage; // Store the stage
         this.caregiverController = new CaregiverController(conn);
+        this.caregiver = caregiver;
 
         // Initialize employment type mappings
         // Assuming Enum names are Full_Time, Part_Time, Retired
@@ -80,13 +98,13 @@ public class CaregiverView {
         titleLabel.setFont(Font.font("Arial", 24));
         titleLabel.setStyle("-fx-font-weight: bold;");
 
-        TextField firstNameField = createRoundedTextField("First Name");
+        firstNameField = createRoundedTextField("First Name");
         addTextValidationListener(firstNameField, NAME_PATTERN, "First name contains invalid characters or is empty.");
 
-        TextField lastNameField = createRoundedTextField("Last Name");
+        lastNameField = createRoundedTextField("Last Name");
         addTextValidationListener(lastNameField, NAME_PATTERN, "Last name contains invalid characters or is empty.");
 
-        DatePicker birthdayPicker = new DatePicker();
+        birthdayPicker = new DatePicker();
         birthdayPicker.setPromptText("Select Birthday");
         styleDatePicker(birthdayPicker, false);
         final LocalDate today = LocalDate.of(2025, 5, 8);
@@ -100,31 +118,33 @@ public class CaregiverView {
         addDatePickerValidationListener(birthdayPicker);
 
 
-        ComboBox<String> genderBox = createRoundedComboBox("Gender");
+        genderBox = createRoundedComboBox("Gender");
+        genderBox.getItems().addAll("Male", "Female", "Other"); // Consistent with Enum
         addComboBoxValidationListener(genderBox);
 
-        TextField contactField = createRoundedTextField("Contact Number");
+        contactField = createRoundedTextField("Contact Number");
         addTextValidationListener(contactField, CONTACT_NUMBER_PATTERN, "Invalid contact number format (e.g., +639xxxxxxxxx or 09xxxxxxxxx).");
 
-        TextField emailField = createRoundedTextField("Email");
+        emailField = createRoundedTextField("Email");
         addTextValidationListener(emailField, EMAIL_PATTERN, "Invalid email address format.");
 
-        TextField addressField = createRoundedTextField("Address");
+        addressField = createRoundedTextField("Address");
         addTextValidationListener(addressField, s -> !s.trim().isEmpty(), "Address cannot be empty.");
 
-        ComboBox<String> employmentBox = createRoundedComboBox("Employment Type");
+        employmentBox = createRoundedComboBox("Employment Type");
+        employmentBox.getItems().addAll(employmentDisplayToEnum.keySet());
         addComboBoxValidationListener(employmentBox);
 
 
         Label certificationsTitleLabel = new Label("Certifications (PDF only):");
         certificationsTitleLabel.setFont(Font.font("Arial", Font.getDefault().getSize()));
 
-        ListView<String> certificationsListView = new ListView<>(certificationFileNames);
+        certificationsListView = new ListView<>(certificationFileNames);
         certificationsListView.setPrefHeight(100);
         styleListView(certificationsListView, false);
 
-        Button uploadCertificationButton = createSmallGreenButton("Upload PDF");
-        Button removeCertificationButton = createSmallRedButton("Remove Selected");
+        uploadCertificationButton = createSmallGreenButton("Upload PDF");
+        removeCertificationButton = createSmallRedButton("Remove Selected");
 
         HBox certificationButtonsBox = new HBox(10, uploadCertificationButton, removeCertificationButton);
         certificationButtonsBox.setAlignment(Pos.CENTER_LEFT);
@@ -135,17 +155,14 @@ public class CaregiverView {
         if (caregiver.getDateOfBirth() != null) {
             birthdayPicker.setValue(caregiver.getDateOfBirth().toLocalDate());
         }
-        // Assuming Gender enum constants are MALE, FEMALE, OTHER
-        genderBox.getItems().addAll("Male", "Female", "Other");
+
         if (caregiver.getGender() != null) {
-            // This assumes caregiver.getGender().toString() returns "MALE", "FEMALE", or "OTHER"
             genderBox.setValue(caregiver.getGender().toString());
         }
         contactField.setText(caregiver.getContactNumber());
         emailField.setText(caregiver.getEmail());
         addressField.setText(caregiver.getAddress());
 
-        employmentBox.getItems().addAll(employmentDisplayToEnum.keySet());
         if (caregiver.getEmploymentType() != null) {
             employmentBox.setValue(employmentEnumToDisplay.get(caregiver.getEmploymentType()));
         }
@@ -178,164 +195,38 @@ public class CaregiverView {
         GridPane formGrid = new GridPane();
         formGrid.setHgap(15);
         formGrid.setVgap(15);
-        formGrid.add(new Label("First Name:"), 0, 0); formGrid.add(firstNameField, 1, 0);
-        formGrid.add(new Label("Last Name:"), 2, 0); formGrid.add(lastNameField, 3, 0);
-        formGrid.add(new Label("Birthday:"), 0, 1); formGrid.add(birthdayPicker, 1, 1);
-        formGrid.add(new Label("Gender:"), 0, 2); formGrid.add(genderBox, 1, 2);
-        formGrid.add(new Label("Contact Number:"), 2, 2); formGrid.add(contactField, 3, 2);
-        formGrid.add(new Label("Email:"), 0, 3); formGrid.add(emailField, 1, 3);
-        formGrid.add(new Label("Address:"), 0, 4); formGrid.add(addressField, 1, 4, 3, 1);
-        formGrid.add(new Label("Employment Type:"), 0, 5); formGrid.add(employmentBox, 1, 5);
+        formGrid.add(new Label("First Name:"), 0, 0);
+        formGrid.add(firstNameField, 1, 0);
+        formGrid.add(new Label("Last Name:"), 2, 0);
+        formGrid.add(lastNameField, 3, 0);
+        formGrid.add(new Label("Birthday:"), 0, 1);
+        formGrid.add(birthdayPicker, 1, 1);
+        formGrid.add(new Label("Gender:"), 0, 2);
+        formGrid.add(genderBox, 1, 2);
+        formGrid.add(new Label("Contact Number:"), 2, 2);
+        formGrid.add(contactField, 3, 2);
+        formGrid.add(new Label("Email:"), 0, 3);
+        formGrid.add(emailField, 1, 3);
+        formGrid.add(new Label("Address:"), 0, 4);
+        formGrid.add(addressField, 1, 4, 3, 1);
+        formGrid.add(new Label("Employment Type:"), 0, 5);
+        formGrid.add(employmentBox, 1, 5);
 
         VBox certificationsLayout = new VBox(5, certificationsTitleLabel, certificationsListView, certificationButtonsBox);
         VBox leftPane = new VBox(20, titleLabel, formGrid, certificationsLayout);
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(650);
 
-        Button cancelBtn = createMainActionButton("Cancel");
-        Button saveBtn = createMainActionButton("Save Changes");
+        cancelBtn = createMainActionButton("Cancel");
+        saveBtn = createMainActionButton("Save Changes");
 
-        uploadCertificationButton.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Upload PDF Certification");
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
-            File selectedFile = fileChooser.showOpenDialog(stage);
-            if (selectedFile != null) {
-                try {
-                    byte[] fileContent = Files.readAllBytes(selectedFile.toPath());
-                    String base64EncodedString = Base64.getEncoder().encodeToString(fileContent);
-                    if (certificationFileNames.stream().anyMatch(name -> name.equalsIgnoreCase(selectedFile.getName()))) {
-                        showAlert(Alert.AlertType.WARNING, "Duplicate File", "A file named '" + selectedFile.getName() + "' already exists in the list.");
-                        return;
-                    }
-                    currentCertificationsBase64.add(base64EncodedString);
-                    certificationFileNames.add(selectedFile.getName());
-                    styleListView(certificationsListView, false);
-                } catch (IOException ex) {
-                    showAlert(Alert.AlertType.ERROR, "File Read Error", "Could not read the selected file: " + ex.getMessage());
-                }
-            }
-        });
+        uploadCertificationButton.setOnAction(e -> handleFileUpload(stage, certificationsListView));
 
-        removeCertificationButton.setOnAction(e -> {
-            int selectedIndex = certificationsListView.getSelectionModel().getSelectedIndex();
-            if (selectedIndex != -1) {
-                currentCertificationsBase64.remove(selectedIndex);
-                certificationFileNames.remove(selectedIndex);
-            } else {
-                showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a certification to remove.");
-            }
-        });
+        removeCertificationButton.setOnAction(e -> handleRemoveCertification(certificationsListView));
 
-        cancelBtn.setOnAction(e -> {
-            firstNameField.setText(originalFirstName); styleTextField(firstNameField, false);
-            lastNameField.setText(originalLastName); styleTextField(lastNameField, false);
-            birthdayPicker.setValue(originalDOB); styleDatePicker(birthdayPicker, false);
-            genderBox.setValue(originalGender); styleComboBox(genderBox, originalGender == null);
-            contactField.setText(originalContact); styleTextField(contactField, false);
-            emailField.setText(originalEmail); styleTextField(emailField, false);
-            addressField.setText(originalAddress); styleTextField(addressField, false);
-            employmentBox.setValue(originalEmploymentDisplay); styleComboBox(employmentBox, originalEmploymentDisplay == null);
+        cancelBtn.setOnAction(e -> handleCancel(originalFirstName, originalLastName, originalDOB, originalGender, originalContact, originalEmail, originalAddress, originalEmploymentDisplay, originalCertificationsBase64, originalCertificationFileNames, certificationsListView));
 
-            currentCertificationsBase64.clear();
-            currentCertificationsBase64.addAll(originalCertificationsBase64);
-            certificationFileNames.setAll(originalCertificationFileNames);
-            styleListView(certificationsListView, false);
-        });
-
-        saveBtn.setOnAction(e -> {
-            boolean isValid = true;
-            StringBuilder errors = new StringBuilder("Please correct the following issues:\n");
-            Caregiver.Gender validatedGender = null; // Temp variable for validated gender
-
-            if (!NAME_PATTERN.matcher(firstNameField.getText().trim()).matches() || firstNameField.getText().trim().isEmpty()) {
-                errors.append("- First name is invalid or empty.\n"); styleTextField(firstNameField, true); isValid = false;
-            } else { styleTextField(firstNameField, false); }
-
-            if (!NAME_PATTERN.matcher(lastNameField.getText().trim()).matches() || lastNameField.getText().trim().isEmpty()) {
-                errors.append("- Last name is invalid or empty.\n"); styleTextField(lastNameField, true); isValid = false;
-            } else { styleTextField(lastNameField, false); }
-
-            LocalDate parsedDob = birthdayPicker.getValue();
-            if (parsedDob == null) {
-                errors.append("- Birthday is required.\n"); styleDatePicker(birthdayPicker, true); isValid = false;
-            } else if (parsedDob.isAfter(today)) {
-                errors.append("- Birthday cannot be in the future.\n"); styleDatePicker(birthdayPicker, true); isValid = false;
-            } else { styleDatePicker(birthdayPicker, false); }
-
-            String genderStringFromBox = genderBox.getValue();
-            if (genderStringFromBox == null || genderStringFromBox.trim().isEmpty()) {
-                errors.append("- Gender is required.\n"); styleComboBox(genderBox, true); isValid = false;
-            } else {
-                try {
-                    // Assuming ComboBox stores "MALE", "FEMALE", "OTHER" and enum is defined with these exact uppercase names
-                    validatedGender = Caregiver.Gender.valueOf(genderStringFromBox.trim());
-                    styleComboBox(genderBox, false);
-                } catch (IllegalArgumentException ex) {
-                    errors.append("- Invalid gender value. Check ComboBox items and Gender enum definitions (expected MALE, FEMALE, or OTHER).\n");
-                    styleComboBox(genderBox, true);
-                    isValid = false;
-                }
-            }
-
-            if (!CONTACT_NUMBER_PATTERN.matcher(contactField.getText().trim()).matches()) {
-                errors.append("- Contact number is invalid.\n"); styleTextField(contactField, true); isValid = false;
-            } else { styleTextField(contactField, false); }
-
-            if (!EMAIL_PATTERN.matcher(emailField.getText().trim()).matches()) {
-                errors.append("- Email is invalid.\n"); styleTextField(emailField, true); isValid = false;
-            } else { styleTextField(emailField, false); }
-
-            if (addressField.getText().trim().isEmpty()) {
-                errors.append("- Address is required.\n"); styleTextField(addressField, true); isValid = false;
-            } else { styleTextField(addressField, false); }
-
-            String selectedEmploymentDisplay = employmentBox.getValue();
-            Caregiver.EmploymentType employmentEnumValue = null;
-            if (selectedEmploymentDisplay == null || selectedEmploymentDisplay.trim().isEmpty()) {
-                errors.append("- Employment type is required.\n"); styleComboBox(employmentBox, true); isValid = false;
-            } else {
-                employmentEnumValue = employmentDisplayToEnum.get(selectedEmploymentDisplay);
-                if(employmentEnumValue == null){
-                    errors.append("- Invalid employment type selection.\n"); styleComboBox(employmentBox, true); isValid = false;
-                } else {
-                    styleComboBox(employmentBox, false);
-                }
-            }
-
-            if (!isValid) {
-                showAlert(Alert.AlertType.ERROR, "Validation Error", errors.toString());
-                return;
-            }
-
-            try {
-                caregiver.setFirstName(firstNameField.getText().trim());
-                caregiver.setLastName(lastNameField.getText().trim());
-                if (parsedDob != null) {
-                    caregiver.setDateOfBirth(parsedDob.atStartOfDay());
-                }
-                if(validatedGender != null) { // Set gender if it was validated successfully
-                    caregiver.setGender(validatedGender);
-                }
-                caregiver.setContactNumber(contactField.getText().trim());
-                caregiver.setEmail(emailField.getText().trim());
-                caregiver.setAddress(addressField.getText().trim());
-
-                if (employmentEnumValue != null) { // Ensure employmentEnumValue is not null before setting
-                    caregiver.setEmploymentType(employmentEnumValue);
-                }
-                caregiver.setCertifications(new ArrayList<>(currentCertificationsBase64));
-
-                caregiverController.updateCaregiver(caregiver);
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Profile updated successfully.");
-
-            } catch (IllegalArgumentException ex) {
-                showAlert(Alert.AlertType.ERROR, "Update Error", "Invalid data provided: " + ex.getMessage());
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                showAlert(Alert.AlertType.ERROR, "Update Error", "An unexpected error occurred: " + ex.getMessage());
-            }
-        });
+        saveBtn.setOnAction(e -> handleSave(certificationsListView));
 
         HBox mainButtonBox = new HBox(20, cancelBtn, saveBtn);
         mainButtonBox.setAlignment(Pos.CENTER_LEFT);
@@ -369,6 +260,187 @@ public class CaregiverView {
         HBox root = new HBox(leftPane, rightPane);
         HBox.setHgrow(leftPane, Priority.ALWAYS);
         this.scene = new Scene(root, 950, 700);
+        stage.setScene(this.scene); // set scene
+        stage.show();
+    }
+
+    private void handleFileUpload(Stage stage, ListView<String> certificationsListView) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Upload PDF Certification");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        if (selectedFile != null) {
+            try {
+                byte[] fileContent = Files.readAllBytes(selectedFile.toPath());
+                String base64EncodedString = Base64.getEncoder().encodeToString(fileContent);
+                if (certificationFileNames.stream().anyMatch(name -> name.equalsIgnoreCase(selectedFile.getName()))) {
+                    showAlert(Alert.AlertType.WARNING, "Duplicate File", "A file named '" + selectedFile.getName() + "' already exists in the list.");
+                    return;
+                }
+                currentCertificationsBase64.add(base64EncodedString);
+                certificationFileNames.add(selectedFile.getName());
+                styleListView(certificationsListView, false);
+            } catch (IOException ex) {
+                showAlert(Alert.AlertType.ERROR, "File Read Error", "Could not read the selected file: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void handleRemoveCertification(ListView<String> certificationsListView) {
+        int selectedIndex = certificationsListView.getSelectionModel().getSelectedIndex();
+        if (selectedIndex != -1) {
+            currentCertificationsBase64.remove(selectedIndex);
+            certificationFileNames.remove(selectedIndex);
+        } else {
+            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a certification to remove.");
+        }
+    }
+
+    private void handleCancel(String originalFirstName, String originalLastName, LocalDate originalDOB, String originalGender, String originalContact, String originalEmail, String originalAddress, String originalEmploymentDisplay, List<String> originalCertificationsBase64, List<String> originalCertificationFileNames, ListView<String> certificationsListView) {
+        firstNameField.setText(originalFirstName);
+        styleTextField(firstNameField, false);
+        lastNameField.setText(originalLastName);
+        styleTextField(lastNameField, false);
+        birthdayPicker.setValue(originalDOB);
+        styleDatePicker(birthdayPicker, false);
+        genderBox.setValue(originalGender);
+        styleComboBox(genderBox, originalGender == null);
+        contactField.setText(originalContact);
+        styleTextField(contactField, false);
+        emailField.setText(originalEmail);
+        styleTextField(emailField, false);
+        addressField.setText(originalAddress);
+        styleTextField(addressField, false);
+        employmentBox.setValue(originalEmploymentDisplay);
+        styleComboBox(employmentBox, originalEmploymentDisplay == null);
+
+        currentCertificationsBase64.clear();
+        currentCertificationsBase64.addAll(originalCertificationsBase64);
+        certificationFileNames.setAll(originalCertificationFileNames);
+        styleListView(certificationsListView, false);
+    }
+
+    private void handleSave(ListView<String> certificationsListView) {
+        boolean isValid = true;
+        StringBuilder errors = new StringBuilder("Please correct the following issues:\n");
+        Caregiver.Gender validatedGender = null; // Temp variable for validated gender
+        Caregiver.EmploymentType employmentEnumValue = null;
+
+        if (!NAME_PATTERN.matcher(firstNameField.getText().trim()).matches() || firstNameField.getText().trim().isEmpty()) {
+            errors.append("- First name is invalid or empty.\n");
+            styleTextField(firstNameField, true);
+            isValid = false;
+        } else {
+            styleTextField(firstNameField, false);
+        }
+
+        if (!NAME_PATTERN.matcher(lastNameField.getText().trim()).matches() || lastNameField.getText().trim().isEmpty()) {
+            errors.append("- Last name is invalid or empty.\n");
+            styleTextField(lastNameField, true);
+            isValid = false;
+        } else {
+            styleTextField(lastNameField, false);
+        }
+
+        LocalDate parsedDob = birthdayPicker.getValue();
+        if (parsedDob == null) {
+            errors.append("- Birthday is required.\n");
+            styleDatePicker(birthdayPicker, true);
+            isValid = false;
+        } else if (parsedDob.isAfter(LocalDate.of(2025,5,8))) {
+            errors.append("- Birthday cannot be in the future.\n");
+            styleDatePicker(birthdayPicker, true);
+            isValid = false;
+        } else {
+            styleDatePicker(birthdayPicker, false);
+        }
+
+        String genderStringFromBox = genderBox.getValue();
+        if (genderStringFromBox == null || genderStringFromBox.trim().isEmpty()) {
+            errors.append("- Gender is required.\n");
+            styleComboBox(genderBox, true);
+            isValid = false;
+        } else {
+            try {
+                validatedGender = Caregiver.Gender.valueOf(genderStringFromBox.trim().toUpperCase()); // toUpperCase()
+                styleComboBox(genderBox, false);
+            } catch (IllegalArgumentException ex) {
+                errors.append("- Invalid gender value.  It must be 'Male', 'Female', or 'Other'.\n");
+                styleComboBox(genderBox, true);
+                isValid = false;
+            }
+        }
+
+        if (!CONTACT_NUMBER_PATTERN.matcher(contactField.getText().trim()).matches()) {
+            errors.append("- Contact number is invalid.\n");
+            styleTextField(contactField, true);
+            isValid = false;
+        } else {
+            styleTextField(contactField, false);
+        }
+
+        if (!EMAIL_PATTERN.matcher(emailField.getText().trim()).matches()) {
+            errors.append("- Email is invalid.\n");
+            styleTextField(emailField, true);
+            isValid = false;
+        } else {
+            styleTextField(emailField, false);
+        }
+
+        if (addressField.getText().trim().isEmpty()) {
+            errors.append("- Address is required.\n");
+            styleTextField(addressField, true);
+            isValid = false;
+        } else {
+            styleTextField(addressField, false);
+        }
+
+        String selectedEmploymentDisplay = employmentBox.getValue();
+
+        if (selectedEmploymentDisplay == null || selectedEmploymentDisplay.trim().isEmpty()) {
+            errors.append("- Employment type is required.\n");
+            styleComboBox(employmentBox, true);
+            isValid = false;
+        } else {
+            employmentEnumValue = employmentDisplayToEnum.get(selectedEmploymentDisplay);
+            if (employmentEnumValue == null) {
+                errors.append("- Invalid employment type selection.\n");
+                styleComboBox(employmentBox, true);
+                isValid = false;
+            } else {
+                styleComboBox(employmentBox, false);
+            }
+        }
+
+
+        if (!isValid) {
+            showAlert(Alert.AlertType.ERROR, "Validation Error", errors.toString());
+            return;
+        }
+
+        try {
+            caregiver.setFirstName(firstNameField.getText().trim());
+            caregiver.setLastName(lastNameField.getText().trim());
+            caregiver.setDateOfBirth(parsedDob.atStartOfDay());
+            // Set gender if it was validated successfully
+            caregiver.setGender(validatedGender);
+            caregiver.setContactNumber(contactField.getText().trim());
+            caregiver.setEmail(emailField.getText().trim());
+            caregiver.setAddress(addressField.getText().trim());
+
+            // Ensure employmentEnumValue is not null before setting
+            caregiver.setEmploymentType(employmentEnumValue);
+            caregiver.setCertifications(new ArrayList<>(currentCertificationsBase64));
+
+            caregiverController.updateCaregiver(caregiver);
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Profile updated successfully.");
+
+        } catch (IllegalArgumentException ex) {
+            showAlert(Alert.AlertType.ERROR, "Update Error", "Invalid data provided: " + ex.getMessage());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Update Error", "An unexpected error occurred: " + ex.getMessage());
+        }
     }
 
     private void navigateToView(Stage stage, Connection conn, Caregiver caregiver, String viewType) {
@@ -444,7 +516,7 @@ public class CaregiverView {
                 boolean isValid = field.getText() != null && pattern.matcher(field.getText().trim()).matches();
                 boolean isEmptyAndNotRequired = field.getText().trim().isEmpty() && pattern.matcher("").matches();
 
-                if(field.getText().trim().isEmpty() && !pattern.matcher("").matches() && (pattern.toString().contains("+") || (pattern.toString().contains("*") && !pattern.toString().contains("?")) ) ){
+                if (field.getText().trim().isEmpty() && !pattern.matcher("").matches() && (pattern.toString().contains("+") || (pattern.toString().contains("*") && !pattern.toString().contains("?")))) {
                     styleTextField(field, true);
                 } else {
                     styleTextField(field, !isValid && !isEmptyAndNotRequired);
@@ -473,7 +545,7 @@ public class CaregiverView {
         });
     }
 
-    private void validateDatePicker(DatePicker datePicker){
+    private void validateDatePicker(DatePicker datePicker) {
         LocalDate value = datePicker.getValue();
         final LocalDate today = LocalDate.of(2025, 5, 8);
         boolean isError = (value == null || value.isAfter(today)); // Error if null or future date

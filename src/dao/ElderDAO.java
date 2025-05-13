@@ -26,6 +26,9 @@ public class ElderDAO {
             stmt.setInt(7, elder.getGuardianId());
             stmt.setString(8, elder.getRelationship());
             stmt.execute();
+
+            int generatedId = stmt.getInt(9); // Retrieve the generated ID
+            elder.setElderID(generatedId); // Set the elderID in the Elder object
         } catch (SQLException e) {
             throw e;
         }
