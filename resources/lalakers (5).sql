@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: May 13, 2025 at 05:39 PM
+-- Generation Time: May 13, 2025 at 06:06 PM
 -- Server version: 8.0.36
 -- PHP Version: 8.3.14
 
@@ -415,7 +415,7 @@ hours
 END$$
 
 DROP PROCEDURE IF EXISTS `InsertElder`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertElder` (IN `first` VARCHAR(255), IN `last` VARCHAR(255), IN `birth` DATE, IN `contact` VARCHAR(255), IN `em` VARCHAR(255), IN `addr` VARCHAR(255), IN `guardianId` INT, IN `rel` VARCHAR(255))   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertElder` (IN `first` VARCHAR(255), IN `last` VARCHAR(255), IN `birth` DATE, IN `contact` VARCHAR(255), IN `em` VARCHAR(255), IN `addr` VARCHAR(255), IN `guardianId` INT, IN `rel` VARCHAR(255), OUT `newElderId` INT)   BEGIN
     INSERT INTO elder (
         firstName,
         lastName,
@@ -424,7 +424,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertElder` (IN `first` VARCHAR(25
         email,
         address,
         guardian_id,
-        relationship
+        relationshipToGuardian
     )
     VALUES (
         first, 
@@ -436,6 +436,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertElder` (IN `first` VARCHAR(25
         guardianId,
         rel
     );
+
+    SET newElderId = LAST_INSERT_ID();
 END$$
 
 DROP PROCEDURE IF EXISTS `InsertGuardian`$$
@@ -587,16 +589,19 @@ hourlyRate = hours;
 END$$
 
 DROP PROCEDURE IF EXISTS `UpdateElder`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateElder` (IN `id` INT, IN `first` VARCHAR(255), IN `last` VARCHAR(255), IN `birth` DATE, IN `contact` VARCHAR(255), IN `em` VARCHAR(255), IN `addr` VARCHAR(255))   BEGIN
-	UPDATE Elder
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateElder` (IN `p_elder_id` INT, IN `p_first_name` VARCHAR(100), IN `p_last_name` VARCHAR(100), IN `p_date_of_birth` TIMESTAMP, IN `p_contact_number` VARCHAR(20), IN `p_email` VARCHAR(100), IN `p_address` TEXT, IN `p_guardian_id` INT, IN `p_relationship` VARCHAR(50))   BEGIN
+    UPDATE Elder
     SET 
-    firstName = first,
-    lastName = last,
-    dateOfBirth = birth,
-    contactNumber = contact,
-    email = em,
-    address = addr
-    WHERE elder_id = id;
+        firstName = p_first_name,
+        lastName = p_last_name,
+        dateOfBirth = p_date_of_birth,
+        contactNumber = p_contact_number,
+        email = p_email,
+        address = p_address,
+        guardian_id = p_guardian_id,
+        relationshipToGuardian = p_relationship
+    WHERE 
+        elder_id = p_elder_id;
 END$$
 
 DROP PROCEDURE IF EXISTS `UpdateGuardian`$$
@@ -791,20 +796,21 @@ CREATE TABLE IF NOT EXISTS `elder` (
   UNIQUE KEY `contactNumber` (`contactNumber`),
   UNIQUE KEY `email` (`email`),
   KEY `fk_elder_guardian` (`guardian_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `elder`
 --
 
 INSERT INTO `elder` (`elder_id`, `firstName`, `lastName`, `dateOfBirth`, `contactNumber`, `email`, `address`, `guardian_id`, `relationshipToGuardian`) VALUES
-(1, 'a', 'a', '2025-05-02 00:00:00', '1', 'a', 'a', 1, 'father'),
+(1, 'Michael', 'Myers', '2004-05-07 00:00:00', '1', 'a', 'a', 1, 'father'),
 (2, 'jack', 'reacherusssssssssss', '2025-05-01 00:00:00', '133', 'aa', 'AAAA', 1, 'mother'),
 (4, 'john', 'shi', '2025-05-01 00:00:00', '1111', 'aaaaaaaaa', 'ccccccccccccc', 1, 'cousin'),
 (5, 'jason', 'statham', '2025-05-08 00:00:00', '11111', 'bokal', 'kalbokalbokalbo', 1, 'couz'),
 (7, 'jason', 'ta', '2025-05-08 00:00:00', 'aaa', 'wwww', 'vvv', 1, 'father'),
-(10, 'q', 'q', '2025-05-02 00:00:00', '1234', '3', '2', 1, '4'),
-(11, 'michael', 'jordam', '2025-05-02 00:00:00', '09495924261', 'aaaaaa', 'aaa', 1, 'jorbum');
+(11, 'michael', 'jordam', '2025-05-02 00:00:00', '09495924261', 'aaaaaa', 'aaa', 1, 'jorbum'),
+(13, 'Lebron', 'James', '1984-12-31 00:00:00', '09495924260', 'lebronjames@gmail.com', 'Cleveland, Ohio', 1, 'Brother'),
+(16, 'Stephen', 'Curry', '2025-04-30 00:00:00', '094923818', 'wardellcurry@gmail.com', 'cleveland, ohio', 1, 'brother');
 
 -- --------------------------------------------------------
 
@@ -832,7 +838,7 @@ CREATE TABLE IF NOT EXISTS `guardian` (
 --
 
 INSERT INTO `guardian` (`guardian_id`, `username`, `password`, `firstName`, `lastName`, `contactNumber`, `email`, `address`) VALUES
-(1, 'hendrixzzz', 'aaa', 'jim hendrix', 'bag-eo', '094959', 'jimhendrix@gmail.com', 'bakakeng Baguio');
+(1, 'hendrixzzz', 'aaa', 'jim hendrix', 'bag-eo', '0949592426', 'jimhendrix@gmail.com', 'bakakeng Baguio');
 
 -- --------------------------------------------------------
 
