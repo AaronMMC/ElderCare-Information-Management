@@ -5,6 +5,22 @@ import java.util.List;
 
 public class Caregiver {
 
+    private int caregiverID;
+    private String username;
+    private String password;
+    private String firstName;
+    private String lastName;
+    private LocalDateTime dateOfBirth;
+    private Gender gender;
+    private String contactNumber;
+    private String email;
+    private String address;
+    private List<String> certifications;
+    private BackgroundCheckStatus backgroundCheckStatus;
+    private MedicalClearanceStatus medicalClearanceStatus;
+    private String availabilitySchedule;
+    private EmploymentType employmentType;
+
     public enum Gender {
         Male,
         Female,
@@ -28,23 +44,6 @@ public class Caregiver {
         Part_time,
         Retired
     }
-
- 
-    private int caregiverID;
-    private String username;
-    private String password;
-    private String firstName;
-    private String lastName;
-    private LocalDateTime dateOfBirth;
-    private Gender gender;
-    private String contactNumber;
-    private String email;
-    private String address;
-    private List<String> certifications;
-    private BackgroundCheckStatus backgroundCheckStatus;
-    private MedicalClearanceStatus medicalClearanceStatus;
-    private String availabilitySchedule;
-    private EmploymentType employmentType;
 
 
     public Caregiver(int caregiverID, String username, String password, String firstName, String lastName, LocalDateTime dateOfBirth,

@@ -6,12 +6,15 @@ import java.util.List;
 
 public class Appointment {
 
+    public Appointment() {
+
+    }
+
     public enum AppointmentStatus {
-        PAID,
-        UNPAID,
         FINISHED,
         CANCELLED,
-        ONGOING
+        ONGOING,
+        PENDING
     }
 
     private int appointmentID;
@@ -20,36 +23,39 @@ public class Appointment {
     private int duration;
     private LocalDateTime createdDate;
     private int caregiverID;
-    private int guardianID;
-    private List<Integer> elderIDs;
-    private int paymentID;
+    private int elderID;
+    private int serviceID;
 
-    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int guardianID, List<Integer> elderIDs, int paymentID) {
+    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int elderID, int serviceID) {
         this.appointmentID = appointmentID;
         this.appointmentDate = appointmentDate;
         this.status = status;
         this.duration = duration;
         this.createdDate = createdDate;
         this.caregiverID = caregiverID;
-        this.guardianID = guardianID;
-        this.elderIDs = elderIDs != null ? elderIDs : new ArrayList<>();
-        this.paymentID = paymentID;
+        this.elderID = elderID;
+        this.serviceID = serviceID;
     }
 
-    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate) {
-        this(appointmentID, appointmentDate, status, duration, createdDate, 0, 0, new ArrayList<>(),0);
+
+    public Appointment(LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int paymentID, int elderID, int serviceID) {
+        this.appointmentDate = appointmentDate;
+        this.status = status;
+        this.duration = duration;
+        this.createdDate = createdDate;
+        this.caregiverID = caregiverID;
+        this.elderID = elderID;
+        this.serviceID = serviceID;
     }
 
-    public Appointment() {
-        this(0, null, AppointmentStatus.UNPAID, 0, null, 0, 0, new ArrayList<>(),0);
-    }
 
-    public int getPaymentID() {
-        return paymentID;
-    }
-
-    public void setPaymentID(int paymentID) {
-        this.paymentID = paymentID;
+    public Appointment(LocalDateTime appointmentDate, AppointmentStatus status, int duration, int caregiverID, int elderID, int serviceID) {
+        this.appointmentDate = appointmentDate;
+        this.status = status;
+        this.duration = duration;
+        this.caregiverID = caregiverID;
+        this.elderID = elderID;
+        this.serviceID = serviceID;
     }
 
     public int getAppointmentID() {
@@ -100,19 +106,19 @@ public class Appointment {
         this.caregiverID = caregiverID;
     }
 
-    public int getGuardianID() {
-        return guardianID;
+    public int getElderID() {
+        return elderID;
     }
 
-    public void setGuardianID(int guardianID) {
-        this.guardianID = guardianID;
+    public void setElderID(int elderID) {
+        this.elderID = elderID;
     }
 
-    public List<Integer> getElderIDs() {
-        return elderIDs;
+    public int getServiceID() {
+        return serviceID;
     }
 
-    public void setElderIDs(List<Integer> elderIDs) {
-        this.elderIDs = elderIDs != null ? elderIDs : new ArrayList<>();
+    public void setServiceID(int serviceID) {
+        this.serviceID = serviceID;
     }
 }
