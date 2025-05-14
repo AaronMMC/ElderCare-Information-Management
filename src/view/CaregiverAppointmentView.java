@@ -83,7 +83,7 @@ public class CaregiverAppointmentView {
             Appointment appointment = cellData.getValue();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
             Payment payment = paymentController.getPaymentByAppointmentId(appointment.getAppointmentID());
-            String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
+            String balance = payment != null ? String.format("Php %.2f", payment.getAmountPaid()) : "Php 0.00";//TODO: Check payment total balance if correct
             String dueDate = formatter.format(appointment.getCreatedDate().plusWeeks(1));
 
             return new SimpleStringProperty(
