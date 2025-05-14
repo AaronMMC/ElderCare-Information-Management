@@ -112,14 +112,19 @@ public class GuardianAppointmentView {
         PaymentController paymentController = new PaymentController(conn);
 
         List<Appointment> appointments = appointmentController.getAllAppointmentsByGuardian(guardian.getGuardianID());
+        System.out.println("The guardian id is : " + guardian.getGuardianID());
         int row = 1;
+
+        System.out.println("there are " + appointments.size() + " appointments retrieved in the view");
 
         for (Appointment appt : appointments) {
             Caregiver caregiver = caregiverController.getCaregiverById(appt.getCaregiverID());
             if (caregiver == null || !caregiver.getFirstName().toLowerCase().contains(searchTerm.toLowerCase())) continue;
 
+            System.out.println("The appointment id in the for loop is " + appt.getAppointmentID());
+
             Payment payment = paymentController.getPaymentByAppointmentId(appt.getAppointmentID());
-            String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
+            String balance = String.format("Php %.2f", payment.getTotalAmount());
 
             String details = String.format("""
     Date posted: %s
@@ -130,13 +135,11 @@ public class GuardianAppointmentView {
     """,
                     appt.getCreatedDate().toLocalDate(),
                     appt.getStatus(),
-                    appt.getAppointmentDate().toLocalDate(),
-                    balance,
+                    appt.getAppointmentDate().toLocalDate(),balance,
                     appt.getCreatedDate().toLocalDate().plusWeeks(1)
             );
 
-
-            addAppointmentRow(table, row++, caregiver.getFirstName(), details, appt);
+            addAppointmentRow(table, row++, caregiver.getFirstName(), details, appt, payment);
         }
     }
 
@@ -158,7 +161,7 @@ public class GuardianAppointmentView {
         table.add(payHeader, 2, 0);
     }
 
-    private void addAppointmentRow(GridPane table, int rowIndex, String caregiver, String details, Appointment appointment) {
+    private void addAppointmentRow(GridPane table, int rowIndex, String caregiver, String details, Appointment appointment, Payment payment) {
         AppointmentController appointmentController = new AppointmentController(conn);
 
         Label caregiverLabel = new Label(caregiver);
@@ -171,7 +174,7 @@ public class GuardianAppointmentView {
         HBox btnBox = new HBox();
         btnBox.setAlignment(Pos.CENTER_RIGHT);
         btnBox.setPrefWidth(150);
-        Payment payment = paymentController.getPaymentByAppointmentId(appointment.getAppointmentID());
+        System.out.println("The appointment id in the guardian appointment view is : " + appointment.getAppointmentID());
 
         if (payment.getPaymentStatus() == Payment.PaymentStatus.PENDING) {
             Button payBtn = createPayButton("Pay");

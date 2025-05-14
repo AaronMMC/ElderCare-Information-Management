@@ -69,6 +69,7 @@ public class AppointmentView {
 
         rootLayout.setCenter(mainContent);
 
+
         this.scene = new Scene(rootLayout, 1250, 700);
         stage.setTitle("Submit New Appointment");
         stage.setScene(scene);
@@ -131,7 +132,7 @@ public class AppointmentView {
         datePicker.setValue(LocalDate.now());
 
 
-        ComboBox<String> durationBox = createRoundedComboBox("Duration (hrs)");
+        durationBox = createRoundedComboBox("Duration (hrs)");
         durationBox.getItems().addAll("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
         durationBox.setEditable(true);
         durationBox.setPrefWidth(150);
@@ -159,6 +160,12 @@ public class AppointmentView {
         VBox leftPane = new VBox(25, titleLabel, elderSection, centerContent, actionButtons);
         leftPane.setPadding(new Insets(20, 30, 20, 20));
         leftPane.setAlignment(Pos.TOP_LEFT);
+
+
+        durationBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            System.out.println("duration box action listener is triggered ");
+            updateTotalAmount();
+        });
 
         return leftPane;
     }
@@ -272,31 +279,29 @@ public class AppointmentView {
 
     private void updateTotalAmount() {
         int duration;
-        if (selectedService != null) {
+        if (selectedService != null && durationBox != null && caregiverDropdown.getValue() != null) {
 
             String selected = durationBox.getValue();
+            System.out.println("selected duration is : " + selected);
 
-            if (selected != null)
-                try {
-                    duration = Integer.parseInt(selected);
-                    if (duration < 1) {
-                        amountLabel.setText("Duration must be at least 1 hour");
-                        return;
-                        }
-                } catch (NumberFormatException e) {
-                    amountLabel.setText("Please enter a valid duration");
+            try {
+                duration = Integer.parseInt(selected);
+                int minimumHourDuration = selectedService.getMinimumHourDuration();
+                if (duration < minimumHourDuration) {
+                    amountLabel.setText("Duration must be at least " + minimumHourDuration + (minimumHourDuration > 1 ? "hours": "hour"));
                     return;
                 }
-            else {
-                amountLabel.setText("No duration selected");
+            } catch (NumberFormatException e) {
+                amountLabel.setText("Please enter a valid duration");
                 return;
             }
 
-            CaregiverService caregiverService =  new CaregiverService(selectedService.getServiceID(), (caregiverDropdown.getValue() != null) ? caregiverDropdown.getValue().getCaregiverID() : -1);
+            CaregiverService caregiverService =  new CaregiverService(selectedService.getServiceID(), caregiverDropdown.getValue().getCaregiverID());
             caregiverService = caregiverServiceController.getCaregiverService(caregiverService.getCaregiverId(), caregiverService.getServiceId());
             totalAmount = caregiverService.getHourlyRate() * duration;
             amountLabel.setText("Amount To Be Paid: " + String.format("%.2f", totalAmount));
         } else {
+
             amountLabel.setText("Amount To Be Paid: Php 0.00");
         }
     }
@@ -441,7 +446,7 @@ public class AppointmentView {
             double totalAmount = caregiverService.getHourlyRate() * durationInHours;
 
             Appointment appointment = new Appointment(appointmentDateTime, Appointment.AppointmentStatus.PENDING, durationInHours, selectedCaregiver.getCaregiverID(), selectedElder.getElderID(), selectedService.getServiceID());
-            appointmentController.addAppointment(appointment);
+            appointment.setAppointmentID(appointmentController.addAppointment(appointment));
             payment = new Payment(appointment.getAppointmentID(), Payment.PaymentStatus.PENDING, totalAmount, Payment.PaymentMethod.CASH);
             paymentController.addPayment(payment);
             showAlert(Alert.AlertType.CONFIRMATION, "Success", "Appointment submitted successfully!");

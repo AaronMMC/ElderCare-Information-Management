@@ -4,7 +4,6 @@ import dao.AppointmentDAO;
 import model.Appointment;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class AppointmentController {
@@ -31,8 +30,8 @@ public class AppointmentController {
         return appointmentDAO.getAppointmentById(id);
     }
 
-    public void addAppointment(Appointment appointment) {
-        appointmentDAO.insertAppointment(appointment);
+    public int addAppointment(Appointment appointment) {
+        return appointmentDAO.insertAppointment(appointment);
     }
 
     public void updateAppointment(Appointment appointment) {

@@ -362,7 +362,8 @@ public class CaregiverView {
             isValid = false;
         } else {
             try {
-                validatedGender = Caregiver.Gender.valueOf(genderStringFromBox.trim().toUpperCase()); // toUpperCase()
+                System.out.println("validated name : " + genderStringFromBox.trim().toUpperCase());
+                validatedGender = Caregiver.Gender.valueOf(genderStringFromBox);
                 styleComboBox(genderBox, false);
             } catch (IllegalArgumentException ex) {
                 errors.append("- Invalid gender value.  It must be 'Male', 'Female', or 'Other'.\n");

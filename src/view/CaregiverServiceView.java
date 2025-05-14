@@ -124,6 +124,11 @@ public class CaregiverServiceView {
     private void showAddServicePanel() {
         List<Service> availableServices = serviceController.getAllServices();
 
+        System.out.println("services received in the caregiver service view: ");
+        for (Service service : availableServices) {
+            System.out.println(service);
+        }
+
         Stage serviceStage = new Stage();
         serviceStage.setTitle("Add a Service");
 

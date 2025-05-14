@@ -14,13 +14,13 @@ public class PaymentDAO {
     }
 
     public void insertPayment(Payment payment) {
+        System.out.println("The appointment id is : " + payment.getAppointmentID());
         try {
-            CallableStatement stmt = conn.prepareCall("{call insert_payment(?, ?, ?, ?, ?)}");
+            CallableStatement stmt = conn.prepareCall("{call insert_payment(?, ?, ?, ?)}");
             stmt.setDouble(1, payment.getAppointmentID());
             stmt.setString(2, payment.getPaymentStatus().toString());
             stmt.setDouble(3, payment.getTotalAmount());
             stmt.setString(4, payment.getPaymentMethod().toString());
-            stmt.setTimestamp(5, Timestamp.valueOf(payment.getTransactionDate()));
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -34,7 +34,7 @@ public class PaymentDAO {
             stmt.setInt(1, paymentID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                mapResultSetToPayment(rs);
+                return mapResultSetToPayment(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -43,12 +43,12 @@ public class PaymentDAO {
     }
 
     public Payment getPaymentByAppointmentId(int appointmentID)  {
-        String sql = "SELECT * FROM Payments WHERE appointmentID = ?";
+        String sql = "SELECT * FROM payment WHERE appointment_id = ?";
         try (CallableStatement stmt = conn.prepareCall(sql)){
             stmt.setInt(1,appointmentID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-               mapResultSetToPayment(rs);
+               return mapResultSetToPayment(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -98,12 +98,16 @@ public class PaymentDAO {
     }
 
     private Payment mapResultSetToPayment(ResultSet rs) throws SQLException {
-        return new Payment(
+        Payment payment = new Payment(
                 rs.getInt("payment_id"),
                 rs.getInt("appointment_id"),
                 Payment.PaymentStatus.valueOf(rs.getString("paymentStatus")),
                 rs.getDouble("totalAmount"),
                 Payment.PaymentMethod.valueOf(rs.getString("paymentMethod")),
                 rs.getTimestamp("transactionDate").toLocalDateTime());
+        System.out.print("it's id is " + payment.getPaymentID());
+
+        return payment;
+
     }
 }

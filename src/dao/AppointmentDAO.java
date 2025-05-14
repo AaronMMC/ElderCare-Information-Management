@@ -14,8 +14,10 @@ public class AppointmentDAO {
         this.conn = conn;
     }
 
-    public void insertAppointment(Appointment appointment) {
-        String sql = "{CALL InsertAppointment(?, ?, ?, ?, ?, ?)}";
+    public int insertAppointment(Appointment appointment) {
+        String sql = "{CALL InsertAppointment(?, ?, ?, ?, ?, ?, ?)}";
+        int generatedId = 0;
+
         try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setTimestamp(1, Timestamp.valueOf(appointment.getAppointmentDate()));
             stmt.setString(2, appointment.getStatus().toString());
@@ -23,11 +25,15 @@ public class AppointmentDAO {
             stmt.setInt(4, appointment.getCaregiverID());
             stmt.setInt(5, appointment.getElderID());
             stmt.setInt(6, appointment.getServiceID());
+            stmt.registerOutParameter(7, java.sql.Types.INTEGER);
             stmt.execute();
+            generatedId = stmt.getInt(7);
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return generatedId;
     }
+
 
 
     public Appointment getAppointmentById(int id) {
@@ -81,6 +87,7 @@ public class AppointmentDAO {
         try (CallableStatement stmt = conn.prepareCall(sql)){
             stmt.setInt(1, guardianID);
             try (ResultSet rs = stmt.executeQuery()){
+                System.out.println("there are " + rs.getFetchSize() + " appointments retrieved in the dao");
                 while (rs.next()) {
                     appointments.add(mapResultSetToAppointment(rs));
                 }
@@ -130,10 +137,10 @@ public class AppointmentDAO {
         int appointmentID = rs.getInt("appointment_id");
         Appointment appointment = new Appointment(
                 appointmentID,
-                rs.getTimestamp("appointment_date").toLocalDateTime(),
+                rs.getTimestamp("appointmentDate").toLocalDateTime(),
                 Appointment.AppointmentStatus.valueOf(rs.getString("status")),
                 rs.getInt("duration"),
-                rs.getTimestamp("creation_date").toLocalDateTime(),
+                rs.getTimestamp("createdDate").toLocalDateTime(),
                 rs.getInt("caregiver_id"),
                 rs.getInt("elder_id"),
                 rs.getInt("service_id")

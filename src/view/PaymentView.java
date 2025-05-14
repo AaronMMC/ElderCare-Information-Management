@@ -23,7 +23,7 @@ public class PaymentView {
     private final Appointment appointment;
     private final Connection conn;
     private final AppointmentController appointmentController;
-    private final List<Service> services;
+    private CaregiverServiceController caregiverServiceController;
 
     private Label amountLabel; // Keep a reference
     private TextField amountField; // Keep a reference
@@ -32,6 +32,7 @@ public class PaymentView {
 
     public PaymentView(Stage stage, Connection conn, Guardian guardian, Appointment appointment) {
         this.conn = conn;
+        this.caregiverServiceController = new CaregiverServiceController(conn);
         CaregiverController caregiverController = new CaregiverController(conn);
         ServiceController serviceController = new ServiceController(conn);
         this.paymentController = new PaymentController(conn);
@@ -39,15 +40,11 @@ public class PaymentView {
         this.appointment = appointment;
 
         this.pesoFormat = NumberFormat.getCurrencyInstance(new Locale("en", "PH"));
-
+        payment = paymentController.getPaymentByAppointmentId(appointment.getAppointmentID());
         int caregiverID = appointment.getCaregiverID();
         Caregiver caregiver = caregiverController.getCaregiverById(caregiverID);
-        this.services = serviceController.getAllServicesByCaregiverId(caregiverID);
-
-        List<CaregiverService> caregiverServices = services.stream()
-                .map(service -> new CaregiverService(service.getServiceID(), caregiver.getCaregiverID()))
-                .toList();
-
+        CaregiverService caregiverService = caregiverServiceController.getCaregiverService(caregiverID, appointment.getServiceID());
+        Service service = serviceController.getServiceById(appointment.getServiceID());
         // === Title ===
         Label titleLabel = new Label("Payment Details");
         titleLabel.setFont(Font.font("Arial", 24));
@@ -56,30 +53,15 @@ public class PaymentView {
         // === Balance Breakdown ===
         Label breakdownLabel = new Label("Balance breakdown:");
         StringBuilder initialBreakdownText = new StringBuilder();
-        double totalAdditionalCharges = 0.0;
-        double durationInHours = appointment.getDuration();
-        double totalAmount = 0;
 
-        for (Service service : services) {
-            CaregiverService correspondingCaregiverService = findCaregiverServiceForService(service, caregiverServices);
-            double hourlyRate;
-
-            if (correspondingCaregiverService != null) {
-                hourlyRate = correspondingCaregiverService.getHourlyRate();
-                totalAmount = hourlyRate * durationInHours;
-                initialBreakdownText.append(String.format("- Service: %s (%s), Caregiver Rate: %s/hour, Total Amount: %f%n",
-                        service.getServiceName(), service.getCategory(), pesoFormat.format(hourlyRate), totalAmount));
-            } else {
-                initialBreakdownText.append(String.format("- Service: %s (%s)%n",
-                        service.getServiceName(), service.getCategory()));
-            }
-        }
-
-        initialBreakdownText.append(String.format("%nTotal Service Cost: %s%n", pesoFormat.format(totalAmount)));
-        initialBreakdownText.append(String.format("Total Additional Charges: %s%n", pesoFormat.format(totalAdditionalCharges)));
-        initialBreakdownText.append(String.format("-----------------------------%n"));
-        initialBreakdownText.append(String.format("Total Amount: %s%n", pesoFormat.format(payment.getTotalAmount())));
-
+        initialBreakdownText.append(String.format("Service: %s (%s)%n", service.getServiceName(), service.getCategory()));
+        initialBreakdownText.append(String.format("Caregiver: %s %s%n", caregiver.getFirstName(), caregiver.getLastName()));
+        initialBreakdownText.append(String.format("%nDuration (Hour): %s%n", appointment.getDuration()));
+        initialBreakdownText.append(String.format("Caregiver's Hourly Rate: %s%n",
+                pesoFormat.format(caregiverService.getHourlyRate())));
+        initialBreakdownText.append(String.format("------------------------------------%n"));
+        initialBreakdownText.append(String.format("Total Amount: %s%n",
+                pesoFormat.format(payment.getTotalAmount())));
         this.breakdownArea = new TextArea(initialBreakdownText.toString());
         breakdownArea.setWrapText(true);
         breakdownArea.setEditable(false);
@@ -146,7 +128,10 @@ public class PaymentView {
         // Push goBack button to the bottom
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
-        rightPane.getChildren().addAll(spacer, goBackButton);
+        rightPane.getChildren().add(spacer);
+        rightPane.getChildren().remove(goBackButton); // optional safety if needed
+        rightPane.getChildren().add(goBackButton); // move to bottom
+
 
         // === Root Layout ===
         HBox root = new HBox(20, leftPane, rightPane);

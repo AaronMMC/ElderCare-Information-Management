@@ -123,7 +123,7 @@ public class AdminView {
             String serviceCategory = serviceCategoryInput.getText();
             int minimumHourDuration = Integer.parseInt(minimumHourDurationInput.getText());
 
-            Service service = new Service(serviceName, serviceCategory, minimumHourDuration);
+            Service service = new Service(serviceCategory, serviceName, minimumHourDuration);
             serviceController.addService(service);
             serviceStage.close();
         });
