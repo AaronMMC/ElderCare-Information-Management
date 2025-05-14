@@ -230,8 +230,6 @@ public class AppointmentView {
 
     private void populateServiceCheckboxes(List<Service> services, String categoryFilter) {
         serviceCheckboxContainer.getChildren().clear();
-        Service previouslySelectedService = selectedService;
-        selectedService = null; // Reset the selected service
 
         for (Service service : services) {
             if (!"All Categories".equals(categoryFilter) && !service.getCategory().equals(categoryFilter)) {
@@ -257,16 +255,13 @@ public class AppointmentView {
             cb.setOnAction(e -> {
                 Service newlySelectedService = (Service) cb.getUserData();
                 if (cb.isSelected()) {
-                    if (selectedService != null && !selectedService.equals(newlySelectedService)) {
-                        // Deselect the previously selected checkbox
-                        for (Node node : serviceCheckboxContainer.getChildren()) {
-                            if (node instanceof CheckBox && ((Service) ((CheckBox) node).getUserData()).equals(selectedService)) {
-                                ((CheckBox) node).setSelected(false);
-                                break;
-                            }
+                    // Deselect any other selected service checkbox
+                    for (Node node : serviceCheckboxContainer.getChildren()) {
+                        if (node instanceof CheckBox && node != cb) {
+                            ((CheckBox) node).setSelected(false);
                         }
                     }
-                    selectedService = newlySelectedService; // Set the newly selected service
+                    selectedService = newlySelectedService; // Set the selected service
                 } else {
                     selectedService = null; // Unselect the service
                 }
@@ -274,28 +269,21 @@ public class AppointmentView {
                 updateTotalAmount();
             });
 
-            // Retain selection if the service was previously selected
-            if (previouslySelectedService != null && previouslySelectedService.getServiceID() == service.getServiceID()) {
-                cb.setSelected(true);
-                selectedService = previouslySelectedService;
-            }
-
             serviceCheckboxContainer.getChildren().add(cb);
         }
-
-        // Update caregivers after repopulating based on the current selectedService
-        if (selectedService != null) {
-            updateAvailableCaregivers();
-        }
-        updateTotalAmount(); // Ensure amount is updated after service selection/deselection
+        updateTotalAmount();
     }
 
     private void updateAvailableCaregivers() {
+        System.out.println("updateAvailableCaregivers() called");
         caregiverDropdown.getItems().clear();
         if (selectedService != null) {
+            System.out.println("Selected Service: " + selectedService.getServiceName() + " (ID: " + selectedService.getServiceID() + ")"); // Add this line
             List<Caregiver> availableCaregivers = caregiverController.getAllCaregiversByService(selectedService);
             caregiverDropdown.getItems().addAll(availableCaregivers);
-            System.out.println(""+availableCaregivers.size());
+            System.out.println("Number of available caregivers: " + availableCaregivers.size());
+        } else {
+            System.out.println("No service selected."); // Add this line
         }
 
         certBox.getChildren().clear();
