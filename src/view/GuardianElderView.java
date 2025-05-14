@@ -117,6 +117,15 @@ public class GuardianElderView {
         Label nameLabel = new Label(elder.getFirstName() + " " + elder.getLastName());
         nameLabel.setPrefWidth(150);
 
+        // Labels for the text fields and date picker
+        Label firstNameLabel = new Label("First Name:");
+        Label lastNameLabel = new Label("Last Name:");
+        Label contactLabel = new Label("Contact No:");
+        Label emailLabel = new Label("Email:");
+        Label addressLabel = new Label("Address:");
+        Label dobLabel = new Label("Date of Birth:");
+        Label relationshipLabel = new Label("Relationship:");
+
         TextField firstNameField = new TextField(elder.getFirstName());
         TextField lastNameField = new TextField(elder.getLastName());
         TextField contactField = new TextField(elder.getContactNumber());
@@ -126,7 +135,16 @@ public class GuardianElderView {
         Label ageLabel = new Label("Age: " + getAge(elder.getDateOfBirth().toLocalDate()));
         TextField relationshipField = new TextField(relationshipType); // Editable relationship
 
-        VBox detailBox = new VBox(5, firstNameField, lastNameField, dobPicker, ageLabel, contactField, emailField, addressField, relationshipField);
+        // Arrange labels and fields in HBoxes for better layout
+        HBox firstNameBox = new HBox(5, firstNameLabel, firstNameField);
+        HBox lastNameBox = new HBox(5, lastNameLabel, lastNameField);
+        HBox dobBox = new HBox(5, dobLabel, dobPicker);
+        HBox contactBox = new HBox(5, contactLabel, contactField);
+        HBox emailBox = new HBox(5, emailLabel, emailField);
+        HBox addressBox = new HBox(5, addressLabel, addressField);
+        HBox relationshipBox = new HBox(5, relationshipLabel, relationshipField);
+
+        VBox detailBox = new VBox(5, firstNameBox, lastNameBox, dobBox, ageLabel, contactBox, emailBox, addressBox, relationshipBox);
         detailBox.setPrefWidth(400);
 
         Button editBtn = createBigGreenButton("Edit");
