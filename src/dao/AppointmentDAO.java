@@ -15,7 +15,7 @@ public class AppointmentDAO {
     }
 
     public int insertAppointment(Appointment appointment) {
-        String sql = "{CALL InsertAppointment(?, ?, ?, ?, ?, ?, ?)}";
+        String sql = "{CALL InsertAppointment(?, ?, ?, ?, ?, ?, ?, ?)}";
         int generatedId = 0;
 
         try (CallableStatement stmt = conn.prepareCall(sql)) {
@@ -25,9 +25,10 @@ public class AppointmentDAO {
             stmt.setInt(4, appointment.getCaregiverID());
             stmt.setInt(5, appointment.getElderID());
             stmt.setInt(6, appointment.getServiceID());
-            stmt.registerOutParameter(7, java.sql.Types.INTEGER);
+            stmt.setDouble(7, appointment.getTotalCost());
+            stmt.registerOutParameter(8, java.sql.Types.INTEGER);
             stmt.execute();
-            generatedId = stmt.getInt(7);
+            generatedId = stmt.getInt(8);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -135,7 +136,7 @@ public class AppointmentDAO {
 
     private Appointment mapResultSetToAppointment(ResultSet rs) throws SQLException {
         int appointmentID = rs.getInt("appointment_id");
-        Appointment appointment = new Appointment(
+        return new Appointment(
                 appointmentID,
                 rs.getTimestamp("appointmentDate").toLocalDateTime(),
                 Appointment.AppointmentStatus.valueOf(rs.getString("status")),
@@ -143,9 +144,22 @@ public class AppointmentDAO {
                 rs.getTimestamp("createdDate").toLocalDateTime(),
                 rs.getInt("caregiver_id"),
                 rs.getInt("elder_id"),
-                rs.getInt("service_id")
+                rs.getInt("service_id"),
+                rs.getDouble("totalCost"),
+                Appointment.PaymentStatus.valueOf(rs.getString("paymentStatus"))
         );
-        return appointment;
+    }
+
+    public void updateAppointmentPaymentStatus(int appointmentId, Appointment.PaymentStatus newStatus) {
+        String sql = "{CALL UpdateAppointmentPaymentStatus(?, ?)}";
+
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setInt(1, appointmentId);
+            stmt.setString(2, newStatus.name());
+            stmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }

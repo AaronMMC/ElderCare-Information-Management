@@ -3,8 +3,8 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: May 14, 2025 at 05:05 AM
--- Server version: 8.0.36
+-- Generation Time: May 14, 2025 at 02:45 PM
+-- Server version: 9.1.0
 -- PHP Version: 8.3.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `lalakers`
+-- Database: `lalakerss`
 --
 
 DELIMITER $$
@@ -293,6 +293,11 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `GetMedicalRecordsByGuardianId` (IN 
     WHERE g.guardian_id = id;
 END$$
 
+DROP PROCEDURE IF EXISTS `GetPaymentsByAppointmentId`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetPaymentsByAppointmentId` (IN `appointmentId` INT)   BEGIN
+    SELECT * FROM payment WHERE appointment_id = appointmentId;
+END$$
+
 DROP PROCEDURE IF EXISTS `get_all_payments`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `get_all_payments` ()   BEGIN
 	Select * FROM payment;
@@ -330,14 +335,15 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertActivity` (IN `p_title` VARCH
 END$$
 
 DROP PROCEDURE IF EXISTS `InsertAppointment`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertAppointment` (IN `appointmentDate` TIMESTAMP, IN `status` VARCHAR(50), IN `duration` INT, IN `caregiverID` INT, IN `elderID` INT, IN `serviceID` INT, OUT `newAppointmentID` INT)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertAppointment` (IN `appointmentDate` TIMESTAMP, IN `status` VARCHAR(50), IN `duration` INT, IN `caregiverID` INT, IN `elderID` INT, IN `serviceID` INT, IN `totalCost` DOUBLE, OUT `newAppointmentID` INT)   BEGIN
     INSERT INTO appointment (
         appointmentDate,
         status,
         duration,
         caregiver_id,
         elder_id,
-        service_id
+        service_id,
+        totalCost               
     )
     VALUES (
         appointmentDate,
@@ -345,10 +351,10 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertAppointment` (IN `appointment
         duration,
         caregiverID,
         elderID,
-        serviceID
+        serviceID,
+        totalCost               
     );
     
-    -- Retrieve the generated appointment_id and assign it to the OUT parameter
     SET newAppointmentID = LAST_INSERT_ID();
 END$$
 
@@ -502,16 +508,14 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertMedicalRecord` (IN `diag` TEX
 END$$
 
 DROP PROCEDURE IF EXISTS `insert_payment`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `insert_payment` (IN `p_appointment_id` INT, IN `p_payment_status` VARCHAR(20), IN `p_total_amount` DOUBLE, IN `p_payment_method` VARCHAR(20))   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `insert_payment` (IN `p_appointment_id` INT, IN `p_total_amount` DOUBLE, IN `p_payment_method` VARCHAR(20))   BEGIN
     INSERT INTO payment (
         appointment_id,
-        paymentStatus,
-        totalAmount,
+        amountPaid,
         paymentMethod
     )
     VALUES (
         p_appointment_id,
-        p_payment_status,
         p_total_amount,
         p_payment_method
         
@@ -537,6 +541,13 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateAppointment` (IN `p_appointme
     UPDATE appointment
     SET status = p_status
     WHERE appointment_id = p_appointment_id;
+END$$
+
+DROP PROCEDURE IF EXISTS `UpdateAppointmentPaymentStatus`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateAppointmentPaymentStatus` (IN `appointmentId` INT, IN `newStatus` VARCHAR(50))   BEGIN
+    UPDATE appointment
+    SET paymentStatus = newStatus
+    WHERE appointment_id = appointmentId;
 END$$
 
 DROP PROCEDURE IF EXISTS `UpdateCaregiver`$$
@@ -650,7 +661,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `update_payment` (IN `p_payment_id` 
     UPDATE payment
     SET
         paymentStatus = p_payment_status,
-        totalAmount = p_total_amount,
+        amountPaid = p_total_amount,
         paymentMethod = p_payment_method
     WHERE payment_id = p_payment_id;
 END$$
@@ -695,7 +706,7 @@ DROP TABLE IF EXISTS `admin`;
 CREATE TABLE IF NOT EXISTS `admin` (
   `admin_id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL,
+  `password` varchar(50) NOT NULL,
   PRIMARY KEY (`admin_id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -724,18 +735,19 @@ CREATE TABLE IF NOT EXISTS `appointment` (
   `elder_id` int NOT NULL,
   `service_id` int NOT NULL,
   `totalCost` double NOT NULL,
+  `paymentStatus` enum('PENDING','PAID') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'PENDING',
   PRIMARY KEY (`appointment_id`),
   KEY `elder_id` (`caregiver_id`) USING BTREE,
   KEY `fk_appointment_elder` (`elder_id`),
   KEY `fk_appointment_service` (`service_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `appointment`
 --
 
-INSERT INTO `appointment` (`appointment_id`, `appointmentDate`, `status`, `duration`, `createdDate`, `caregiver_id`, `elder_id`, `service_id`, `totalCost`) VALUES
-(2, '2025-05-14 09:00:00', 'PENDING', 8, '2025-05-14 04:16:30', 1, 1, 17, 0);
+INSERT INTO `appointment` (`appointment_id`, `appointmentDate`, `status`, `duration`, `createdDate`, `caregiver_id`, `elder_id`, `service_id`, `totalCost`, `paymentStatus`) VALUES
+(5, '2025-05-14 09:00:00', 'PENDING', 5, '2025-05-14 04:47:32', 1, 1, 17, 2500, 'PAID');
 
 -- --------------------------------------------------------
 
@@ -747,14 +759,14 @@ DROP TABLE IF EXISTS `caregiver`;
 CREATE TABLE IF NOT EXISTS `caregiver` (
   `caregiver_id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL,
+  `password` varchar(50) NOT NULL,
   `firstName` varchar(50) NOT NULL,
   `lastName` varchar(50) NOT NULL,
   `dateOfBirth` datetime NOT NULL,
   `gender` enum('Male','Female','Other') NOT NULL,
-  `contactNumber` varchar(20) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `address` varchar(255) NOT NULL,
+  `contactNumber` varchar(11) NOT NULL,
+  `email` varchar(50) NOT NULL,
+  `address` varchar(150) NOT NULL,
   `certifications` longblob NOT NULL,
   `backgroundCheckStatus` enum('Passed','Pending','Failed') DEFAULT 'Pending',
   `medicalClearanceStatus` enum('Cleared','Pending','Not_Cleared') DEFAULT 'Pending',
@@ -809,9 +821,9 @@ CREATE TABLE IF NOT EXISTS `elder` (
   `firstName` varchar(50) NOT NULL,
   `lastName` varchar(50) NOT NULL,
   `dateOfBirth` datetime NOT NULL,
-  `contactNumber` varchar(20) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `address` varchar(255) NOT NULL,
+  `contactNumber` varchar(11) NOT NULL,
+  `email` varchar(50) NOT NULL,
+  `address` varchar(150) NOT NULL,
   `guardian_id` int NOT NULL,
   `relationshipToGuardian` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`elder_id`),
@@ -827,9 +839,7 @@ CREATE TABLE IF NOT EXISTS `elder` (
 INSERT INTO `elder` (`elder_id`, `firstName`, `lastName`, `dateOfBirth`, `contactNumber`, `email`, `address`, `guardian_id`, `relationshipToGuardian`) VALUES
 (1, 'Michael', 'Myers', '2004-05-07 00:00:00', '1', 'a', 'a', 1, 'father'),
 (2, 'jack', 'reacherusssssssssss', '2025-05-01 00:00:00', '133', 'aa', 'AAAA', 1, 'mother'),
-(4, 'john', 'shi', '2025-05-01 00:00:00', '1111', 'aaaaaaaaa', 'ccccccccccccc', 1, 'cousin'),
 (5, 'jason', 'statham', '2025-05-08 00:00:00', '11111', 'bokal', 'kalbokalbokalbo', 1, 'couz'),
-(7, 'jason', 'ta', '2025-05-08 00:00:00', 'aaa', 'wwww', 'vvv', 1, 'father'),
 (11, 'michael', 'jordam', '2025-05-02 00:00:00', '09495924261', 'aaaaaa', 'aaa', 1, 'jorbum'),
 (13, 'Lebron', 'James', '1984-12-31 00:00:00', '09495924260', 'lebronjames@gmail.com', 'Cleveland, Ohio', 1, 'Brother'),
 (16, 'Stephen', 'Curry', '2025-04-30 00:00:00', '094923818', 'wardellcurry@gmail.com', 'cleveland, ohio', 1, 'brother');
@@ -844,12 +854,12 @@ DROP TABLE IF EXISTS `guardian`;
 CREATE TABLE IF NOT EXISTS `guardian` (
   `guardian_id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL,
+  `password` varchar(50) NOT NULL,
   `firstName` varchar(50) NOT NULL,
   `lastName` varchar(50) NOT NULL,
-  `contactNumber` varchar(20) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `address` varchar(255) DEFAULT NULL,
+  `contactNumber` varchar(11) NOT NULL,
+  `email` varchar(50) NOT NULL,
+  `address` varchar(150) DEFAULT NULL,
   PRIMARY KEY (`guardian_id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
@@ -894,19 +904,21 @@ CREATE TABLE IF NOT EXISTS `payment` (
   `payment_id` int NOT NULL AUTO_INCREMENT,
   `appointment_id` int NOT NULL,
   `paymentStatus` enum('PENDING','PAID') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `totalAmount` decimal(10,2) NOT NULL,
+  `amountPaid` decimal(10,2) NOT NULL,
   `paymentMethod` enum('E_WALLET','CREDIT','DEBIT','OTHER','CASH') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `transactionDate` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`payment_id`),
   KEY `fk_paymentid_appointmentid` (`appointment_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `payment`
 --
 
-INSERT INTO `payment` (`payment_id`, `appointment_id`, `paymentStatus`, `totalAmount`, `paymentMethod`, `transactionDate`) VALUES
-(4, 2, 'PAID', 1000.00, 'DEBIT', '2025-05-14 12:58:57');
+INSERT INTO `payment` (`payment_id`, `appointment_id`, `paymentStatus`, `amountPaid`, `paymentMethod`, `transactionDate`) VALUES
+(18, 5, 'PENDING', 2300.00, 'DEBIT', '2025-05-14 21:37:05'),
+(19, 5, 'PENDING', 199.00, 'CREDIT', '2025-05-14 21:37:14'),
+(20, 5, 'PENDING', 1.00, 'CREDIT', '2025-05-14 21:37:22');
 
 -- --------------------------------------------------------
 
@@ -917,8 +929,8 @@ INSERT INTO `payment` (`payment_id`, `appointment_id`, `paymentStatus`, `totalAm
 DROP TABLE IF EXISTS `service`;
 CREATE TABLE IF NOT EXISTS `service` (
   `service_id` int NOT NULL AUTO_INCREMENT,
-  `category` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `service_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `category` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `service_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `minimumHourDuration` int NOT NULL,
   PRIMARY KEY (`service_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -928,12 +940,12 @@ CREATE TABLE IF NOT EXISTS `service` (
 --
 
 INSERT INTO `service` (`service_id`, `category`, `service_name`, `minimumHourDuration`) VALUES
-(11, 'Emotional & Social Care', 'Companionship', 1),
-(12, 'Emotional & Social Care', 'Cognitive Activities', 1),
-(13, 'Rehabilitation & Therapy', 'Guided Physical Therapy Exercises', 2),
-(14, 'Rehabilitation & Therapy', 'Occupational Therapy Drills', 2),
-(15, 'Post-Hospitalization Support', 'Medication & Recovery Monitoring', 1),
-(16, 'Post-Hospitalization Support', 'Physical Assistance with Medical Equipment', 1),
+(11, 'Emotional & Social C', 'Companionship', 1),
+(12, 'Emotional & Social C', 'Cognitive Activities', 1),
+(13, 'Rehabilitation & The', 'Guided Physical Therapy Exercises', 2),
+(14, 'Rehabilitation & The', 'Occupational Therapy Drills', 2),
+(15, 'Post-Hospitalization', 'Medication & Recovery Monitoring', 1),
+(16, 'Post-Hospitalization', 'Physical Assistance with Medical Equipment', 1),
 (17, 'Personal Care', 'Activities of Daily Living (ADL) Assistance', 4);
 
 --

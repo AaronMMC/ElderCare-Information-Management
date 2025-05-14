@@ -228,7 +228,6 @@ public class AppointmentView {
         });
     }
 
-
     private void populateServiceCheckboxes(List<Service> services, String categoryFilter) {
         serviceCheckboxContainer.getChildren().clear();
         Service previouslySelectedService = selectedService;
@@ -284,8 +283,11 @@ public class AppointmentView {
             serviceCheckboxContainer.getChildren().add(cb);
         }
 
-        updateAvailableCaregivers(); // Update the caregivers after the service checkboxes are populated.
-        updateTotalAmount();  // Update the total amount
+        // Update caregivers after repopulating based on the current selectedService
+        if (selectedService != null) {
+            updateAvailableCaregivers();
+        }
+        updateTotalAmount(); // Ensure amount is updated after service selection/deselection
     }
 
     private void updateAvailableCaregivers() {
@@ -293,6 +295,7 @@ public class AppointmentView {
         if (selectedService != null) {
             List<Caregiver> availableCaregivers = caregiverController.getAllCaregiversByService(selectedService);
             caregiverDropdown.getItems().addAll(availableCaregivers);
+            System.out.println(""+availableCaregivers.size());
         }
 
         certBox.getChildren().clear();
@@ -466,12 +469,9 @@ public class AppointmentView {
 
             double totalAmount = caregiverService.getHourlyRate() * durationInHours;
 
-            Appointment appointment = new Appointment(appointmentDateTime, Appointment.AppointmentStatus.PENDING, durationInHours, selectedCaregiver.getCaregiverID(), selectedElder.getElderID(), selectedService.getServiceID());
+            Appointment appointment = new Appointment(appointmentDateTime, Appointment.AppointmentStatus.PENDING, durationInHours, selectedCaregiver.getCaregiverID(), selectedElder.getElderID(), selectedService.getServiceID(), totalAmount);
             appointment.setAppointmentID(appointmentController.addAppointment(appointment));
-            Payment payment = new Payment(appointment.getAppointmentID(), Payment.PaymentStatus.PENDING, totalAmount, Payment.PaymentMethod.CASH);
-            paymentController.addPayment(payment);
             showAlert(Alert.AlertType.CONFIRMATION, "Success", "Appointment submitted successfully!");
-
         } catch (NumberFormatException ex) {
             showAlert(Alert.AlertType.ERROR, "Input Error", "Duration must be a valid number.");
         } catch (Exception ex) {

@@ -33,7 +33,7 @@ public class ServiceDAO {
     public Service getServiceByID(int serviceID) {
         String sql = "SELECT * FROM service WHERE service_id = ?";
         try {
-            CallableStatement stmt = conn.prepareCall(sql);
+            PreparedStatement stmt = conn.prepareCall(sql);
             stmt.setInt(1, serviceID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -48,9 +48,8 @@ public class ServiceDAO {
     public List<Service> getAllServices() {
         String sql = "Select * FROM service";
         List<Service> services = new ArrayList<>();
-        try {
-            CallableStatement stmt = conn.prepareCall(sql);
-            ResultSet rs = stmt.executeQuery();
+        try (PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 services.add(mapResultSetToService(rs));
             }
@@ -67,7 +66,7 @@ public class ServiceDAO {
                 "    INNER JOIN appointment a ON cs.caregiver_id = a.caregiver_id\n" +
                 "    WHERE a.appointment_id = ?";
         List<Service> services = new ArrayList<>();
-        try (CallableStatement stmt = conn.prepareCall(sql)){
+        try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,appointmentID);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -86,7 +85,7 @@ public class ServiceDAO {
                 "    INNER JOIN caregiver c ON cs.caregiver_id = c.caregiver_id\n" +
                 "    WHERE c.caregiver_id = ?";
         List<Service> services = new ArrayList<>();
-        try (CallableStatement stmt = conn.prepareCall(sql)){
+        try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1, caregiverId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -116,7 +115,7 @@ public class ServiceDAO {
         String sql = "DELETE FROM service \n" +
                 "    WHERE service_id = ?";
         try {
-            CallableStatement stmt = conn.prepareCall(sql);
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, serviceID);
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -125,14 +124,10 @@ public class ServiceDAO {
     }
 
     private Service mapResultSetToService(ResultSet rs) throws SQLException {
-        System.out.print("service retrieved in dao : " );
-        Service service = new Service(
+        return new Service(
                 rs.getInt("service_id"),
                 rs.getString("category"),
                 rs.getString("service_name"),
                 rs.getInt("minimumHourDuration"));
-
-        System.out.println(service);
-        return service;
     }
 }
