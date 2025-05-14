@@ -3,8 +3,8 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: May 14, 2025 at 02:45 PM
--- Server version: 9.1.0
+-- Generation Time: May 14, 2025 at 03:34 PM
+-- Server version: 8.0.36
 -- PHP Version: 8.3.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `lalakerss`
+-- Database: `lalakers`
 --
 
 DELIMITER $$
@@ -255,9 +255,11 @@ END$$
 
 DROP PROCEDURE IF EXISTS `GetGuardianByAppointmentId`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetGuardianByAppointmentId` (IN `id` INT)   BEGIN
-	SELECT g.* FROM guardian g INNER JOIN appointment a ON a.guardian_id = g.guardian_id
-    WHERE appointment_id = id;
-
+    SELECT g.* 
+    FROM guardian g
+    INNER JOIN elder e ON e.guardian_id = g.guardian_id
+    INNER JOIN appointment a ON a.elder_id = e.elder_id
+    WHERE a.appointment_id = id;
 END$$
 
 DROP PROCEDURE IF EXISTS `getGuardianByElderId`$$
