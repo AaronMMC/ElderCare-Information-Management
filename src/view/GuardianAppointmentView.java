@@ -109,23 +109,36 @@ public class GuardianAppointmentView {
 
         AppointmentController appointmentController = new AppointmentController(conn);
         CaregiverController caregiverController = new CaregiverController(conn);
-        PaymentController paymentController = new PaymentController(conn);
 
         List<Appointment> appointments = appointmentController.getAllAppointmentsByGuardian(guardian.getGuardianID());
         int row = 1;
 
         for (Appointment appt : appointments) {
             Caregiver caregiver = caregiverController.getCaregiverById(appt.getCaregiverID());
-            if (caregiver == null || !caregiver.getFirstName().toLowerCase().contains(searchTerm.toLowerCase())) continue;
 
-            String caregiverFullName = caregiver.getFirstName() + " " + caregiver.getLastName(); // Concatenate full name
+            // Debugging: Check if caregiver is null and log details
+            if (caregiver == null) {
+                System.out.println("DEBUG: Caregiver is null for Appointment ID: " + appt.getAppointmentID() +
+                        ", Caregiver ID: " + appt.getCaregiverID());
+                continue; // Skip to the next appointment
+            }
+
+            String caregiverFullName = caregiver.getFirstName() + " " + caregiver.getLastName();
+
+            // Debugging: Log the queried full name and the search term
+            System.out.println("DEBUG: Queried Full Name: \"" + caregiverFullName + "\", Search Term: \"" + searchTerm + "\"");
+
+            if (!caregiverFullName.toLowerCase().contains(searchTerm.toLowerCase())) {
+                System.out.println("DEBUG: Full name does not contain search term, skipping.");
+                continue; // Skip if the full name doesn't contain the search term
+            }
 
             String details = String.format("""
-                                    Date posted: %s
-                                    Appointment On: %s
-                                    Total Cost: %s
-                                    Payment Status: %s
-                                    """,
+                                Date posted: %s
+                                Appointment On: %s
+                                Total Cost: %s
+                                Payment Status: %s
+                                """,
                     appt.getCreatedDate().toLocalDate(),
                     appt.getAppointmentDate().toLocalDate(),
                     appt.getTotalCost(),
@@ -155,8 +168,12 @@ public class GuardianAppointmentView {
     }
 
     private void addAppointmentRow(GridPane table, int rowIndex, String caregiver, String details, Appointment appointment) {
+        // Debugging: Log the caregiver name received by this method
+        System.out.println("DEBUG: Adding row for Caregiver: \"" + caregiver + "\" (Appointment ID: " + appointment.getAppointmentID() + ")");
+
         Label caregiverLabel = new Label(caregiver);
         caregiverLabel.setPrefWidth(150);
+        caregiverLabel.setStyle("-fx-text-fill: red; -fx-font-size: 16pt; -fx-background-color: yellow;"); // Add these styles
 
         Label detailsLabel = new Label(details);
         detailsLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12pt; -fx-background-color: lightgray;");
