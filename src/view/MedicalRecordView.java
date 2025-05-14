@@ -6,10 +6,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import model.Caregiver;
 import model.Elder;
@@ -47,6 +44,16 @@ public class MedicalRecordView {
         detailsPane.setVgap(10);
         detailsPane.setStyle("-fx-border-color: #d3d3d3; -fx-border-radius: 5; -fx-background-color: white;");
 
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setMinWidth(100);
+        col1.setPrefWidth(150);
+        col1.setHgrow(Priority.SOMETIMES);
+
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setHgrow(Priority.ALWAYS);
+
+        detailsPane.getColumnConstraints().addAll(col1, col2);
+
         Label medicalRecordDetailsLabel = new Label("Medical Record Details:");
         medicalRecordDetailsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
         GridPane.setColumnSpan(medicalRecordDetailsLabel, 2);
@@ -54,22 +61,22 @@ public class MedicalRecordView {
 
         Label diagnosisLabel = new Label("Diagnosis:");
         diagnosisTextArea = new TextArea(currentMedicalRecord != null ? currentMedicalRecord.getDiagnosis() : "");
-        diagnosisTextArea.setPrefRowCount(3);
-        diagnosisTextArea.setPrefColumnCount(30);
+        GridPane.setHgrow(diagnosisTextArea, Priority.ALWAYS);
+        GridPane.setVgrow(diagnosisTextArea, Priority.ALWAYS);
         detailsPane.add(diagnosisLabel, 0, 1);
         detailsPane.add(diagnosisTextArea, 1, 1);
 
         Label medicationLabel = new Label("Medication:");
         medicationTextArea = new TextArea(currentMedicalRecord != null ? currentMedicalRecord.getMedications() : "");
-        medicationTextArea.setPrefRowCount(3);
-        medicationTextArea.setPrefColumnCount(30);
+        GridPane.setHgrow(medicationTextArea, Priority.ALWAYS);
+        GridPane.setVgrow(medicationTextArea, Priority.ALWAYS);
         detailsPane.add(medicationLabel, 0, 2);
         detailsPane.add(medicationTextArea, 1, 2);
 
         Label treatmentLabel = new Label("Treatment Plan:");
         treatmentTextArea = new TextArea(currentMedicalRecord != null ? currentMedicalRecord.getTreatmentPlan() : "");
-        treatmentTextArea.setPrefRowCount(3);
-        treatmentTextArea.setPrefColumnCount(30);
+        GridPane.setHgrow(treatmentTextArea, Priority.ALWAYS);
+        GridPane.setVgrow(treatmentTextArea, Priority.ALWAYS);
         detailsPane.add(treatmentLabel, 0, 3);
         detailsPane.add(treatmentTextArea, 1, 3);
 
@@ -95,6 +102,7 @@ public class MedicalRecordView {
         lastModifiedTitleLabel.setStyle("-fx-font-weight: bold;");
         lastModifiedLabel = new Label(currentMedicalRecord != null && currentMedicalRecord.getLastModified() != null ?
                 currentMedicalRecord.getLastModified().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "N/A");
+        HBox.setHgrow(lastModifiedLabel, Priority.SOMETIMES);
         lastModifiedBox.getChildren().addAll(lastModifiedTitleLabel, lastModifiedLabel);
         root.setCenter(lastModifiedBox);
 
@@ -105,6 +113,7 @@ public class MedicalRecordView {
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setStyle("-fx-background-color: #a9a9a9; -fx-text-fill: white; -fx-padding: 8px 15px; -fx-background-radius: 5;");
+        HBox.setHgrow(cancelButton, Priority.SOMETIMES);
         cancelButton.setOnAction(e -> {
             if (currentMedicalRecord != null) {
                 diagnosisTextArea.setText(currentMedicalRecord.getDiagnosis());
@@ -126,6 +135,7 @@ public class MedicalRecordView {
 
         Button saveButton = new Button("Save Changes");
         saveButton.setStyle("-fx-background-color: #20b2aa; -fx-text-fill: white; -fx-padding: 8px 15px; -fx-background-radius: 5;");
+        HBox.setHgrow(saveButton, Priority.SOMETIMES);
         saveButton.setOnAction(e -> {
             if (currentMedicalRecord != null) {
                 currentMedicalRecord.setDiagnosis(diagnosisTextArea.getText());
@@ -159,6 +169,7 @@ public class MedicalRecordView {
         rightPane.setAlignment(Pos.CENTER_RIGHT);
         rightPane.setPadding(new Insets(20));
         rightPane.setStyle("-fx-background-color: #e0f2f7;");
+        VBox.setVgrow(rightPane, Priority.ALWAYS); // Allow right pane to grow vertically
 
         Button goBackButton = new Button("Go Back");
         goBackButton.setStyle("-fx-background-color: white; -fx-text-fill: #20b2aa; -fx-padding: 8px 15px; -fx-background-radius: 5; -fx-border-color: #20b2aa; -fx-border-radius: 5;");
@@ -170,7 +181,9 @@ public class MedicalRecordView {
         BorderPane.setAlignment(rightPane, Pos.CENTER_RIGHT);
         root.setRight(rightPane);
 
-        this.scene = new Scene(root, 600, 400);
+        this.scene = new Scene(root); // Removed fixed width and height
+        stage.setTitle("Medical Record");
+        stage.setScene(scene);
     }
 
     public Scene getScene() {
