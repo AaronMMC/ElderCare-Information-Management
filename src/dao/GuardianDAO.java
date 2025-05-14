@@ -82,7 +82,7 @@ public class GuardianDAO {
 
     public Guardian getGuardianByAppointmentId(int appointmentId) {
         String sql = "{CALL GetGuardianByAppointmentId(?)}";
-        try (CallableStatement stmt = conn.prepareCall(sql)){
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setInt(1, appointmentId);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
