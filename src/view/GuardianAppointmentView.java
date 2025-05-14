@@ -118,18 +118,17 @@ public class GuardianAppointmentView {
         for (Appointment appt : appointments) {
             Caregiver caregiver = caregiverController.getCaregiverById(appt.getCaregiverID());
             if (caregiver == null || !caregiver.getFirstName().toLowerCase().contains(searchTerm.toLowerCase())) continue;
-            String balance = String.format("Php %.2f", appt.getTotalCost());
 
             String details = String.format("""
     Date posted: %s
-    Status: %s
     Appointment On: %s
-    Balance: %s
+    Total Cost: %s
+    Payment Status: %s
     """,
                     appt.getCreatedDate().toLocalDate(),
-                    appt.getStatus(),
-                    appt.getAppointmentDate().toLocalDate(),balance,
-                    appt.getCreatedDate().toLocalDate().plusWeeks(1)
+                    appt.getAppointmentDate().toLocalDate(),
+                    appt.getTotalCost(),
+                    appt.getPaymentStatus()
             );
 
             addAppointmentRow(table, row++, caregiver.getFirstName(), details, appt);

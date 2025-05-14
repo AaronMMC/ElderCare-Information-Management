@@ -160,9 +160,9 @@ public class CaregiverAppointmentView {
             // === Appointment Details ===
             StringBuilder details = new StringBuilder();
             details.append("Date posted: ").append(formatter.format(appointment.getCreatedDate()))
-                    .append("\nStatus: ").append(appointment.getStatus())
+                    .append("\nPayment Status: ").append(appointment.getPaymentStatus())
                     .append("\nAppointment On: ").append(formatter.format(appointment.getAppointmentDate()))
-                    .append("\nBalance: ").append(balance)
+                    .append("\nTotal Cost: ").append(appointment.getTotalCost())
                     .append("\nDue on: ").append(dueDate);
 
             // === UI Components ===
