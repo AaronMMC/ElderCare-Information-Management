@@ -154,7 +154,7 @@ public class CaregiverAppointmentView {
 
             // === Payment Info ===
             Payment payment = paymentController.getPaymentByAppointmentId(appointment.getAppointmentID());
-            String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
+            String balance = payment != null ? String.format("Php %.2f", appointment.getTotalCost()) : "Php 0.00";
             String dueDate = formatter.format(appointment.getCreatedDate().plusWeeks(1));
 
             // === Appointment Details ===

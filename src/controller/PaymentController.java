@@ -40,4 +40,8 @@ public class PaymentController {
     public Payment getPaymentByAppointmentId(int appointmentID) {
         return paymentDAO.getPaymentByAppointmentId(appointmentID);
     }
+
+    public List<Payment> getPaymentsByAppointmentId(int appointmentID) {
+        return paymentDAO.getPaymentsByAppointmentId(appointmentID);
+    }
 }

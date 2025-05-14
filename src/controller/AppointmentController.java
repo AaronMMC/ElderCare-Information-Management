@@ -37,4 +37,8 @@ public class AppointmentController {
     public void updateAppointment(Appointment appointment) {
         appointmentDAO.updateAppointment(appointment);
     }
+
+    public void updateAppointmentPaymentStatus(int appointmentID, Appointment.PaymentStatus paymentStatus) {
+        appointmentDAO.updateAppointmentPaymentStatus(appointmentID, paymentStatus);
+    }
 }

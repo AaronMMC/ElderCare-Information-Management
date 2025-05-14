@@ -16,11 +16,10 @@ public class PaymentDAO {
     public void insertPayment(Payment payment) {
         System.out.println("The appointment id is : " + payment.getAppointmentID());
         try {
-            CallableStatement stmt = conn.prepareCall("{call insert_payment(?, ?, ?, ?)}");
+            CallableStatement stmt = conn.prepareCall("{call insert_payment(?, ?, ?)}");
             stmt.setDouble(1, payment.getAppointmentID());
-            stmt.setString(2, payment.getPaymentStatus().toString());
-            stmt.setDouble(3, payment.getTotalAmount());
-            stmt.setString(4, payment.getPaymentMethod().toString());
+            stmt.setDouble(2, payment.getAmountPaid());
+            stmt.setString(3, payment.getPaymentMethod().toString());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -74,11 +73,10 @@ public class PaymentDAO {
 
     public void updatePayment(Payment payment) {
         try {
-            CallableStatement stmt = conn.prepareCall("{call update_payment(?, ?, ?, ?)}");
+            CallableStatement stmt = conn.prepareCall("{call update_payment(?, ?, ?)}");
             stmt.setInt(1, payment.getPaymentID());
-            stmt.setString(2, payment.getPaymentStatus().toString());
-            stmt.setDouble(3, payment.getTotalAmount());
-            stmt.setString(4, payment.getPaymentMethod().toString());
+            stmt.setDouble(2, payment.getAmountPaid());
+            stmt.setString(3, payment.getPaymentMethod().toString());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -101,8 +99,7 @@ public class PaymentDAO {
         Payment payment = new Payment(
                 rs.getInt("payment_id"),
                 rs.getInt("appointment_id"),
-                Payment.PaymentStatus.valueOf(rs.getString("paymentStatus")),
-                rs.getDouble("totalAmount"),
+                rs.getDouble("amountPaid"),
                 Payment.PaymentMethod.valueOf(rs.getString("paymentMethod")),
                 rs.getTimestamp("transactionDate").toLocalDateTime());
         System.out.print("it's id is " + payment.getPaymentID());
@@ -110,4 +107,25 @@ public class PaymentDAO {
         return payment;
 
     }
+
+    public List<Payment> getPaymentsByAppointmentId(int appointmentID) {
+        List<Payment> payments = new ArrayList<>();
+        String sql = "{CALL GetPaymentsByAppointmentId(?)}";
+
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
+            stmt.setInt(1, appointmentID);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Payment payment = mapResultSetToPayment(rs);
+                payments.add(payment);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return payments;
+    }
+
+
 }

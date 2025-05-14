@@ -125,14 +125,10 @@ public class ServiceDAO {
     }
 
     private Service mapResultSetToService(ResultSet rs) throws SQLException {
-        System.out.print("service retrieved in dao : " );
-        Service service = new Service(
+        return new Service(
                 rs.getInt("service_id"),
                 rs.getString("category"),
                 rs.getString("service_name"),
                 rs.getInt("minimumHourDuration"));
-
-        System.out.println(service);
-        return service;
     }
 }
