@@ -81,7 +81,7 @@ public class AdminView {
            showAddServicePanel();
         });
 
-        topBar.getChildren().addAll(titleApp, new Label(" :: "), showCaregiversButton, spacer, logoutButton);
+        topBar.getChildren().addAll(titleApp, new Label(" :: "), showCaregiversButton, addService, spacer, logoutButton);
         mainLayout.setTop(topBar);
 
         // Set initial view in the center
