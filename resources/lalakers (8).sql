@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: May 14, 2025 at 01:34 PM
+-- Generation Time: May 14, 2025 at 01:42 PM
 -- Server version: 8.0.36
 -- PHP Version: 8.3.14
 
@@ -546,7 +546,7 @@ END$$
 DROP PROCEDURE IF EXISTS `UpdateAppointmentPaymentStatus`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateAppointmentPaymentStatus` (IN `appointmentId` INT, IN `newStatus` VARCHAR(50))   BEGIN
     UPDATE appointment
-    SET status = newStatus
+    SET paymentStatus = newStatus
     WHERE appointment_id = appointmentId;
 END$$
 
@@ -747,7 +747,7 @@ CREATE TABLE IF NOT EXISTS `appointment` (
 --
 
 INSERT INTO `appointment` (`appointment_id`, `appointmentDate`, `status`, `duration`, `createdDate`, `caregiver_id`, `elder_id`, `service_id`, `totalCost`, `paymentStatus`) VALUES
-(5, '2025-05-14 09:00:00', 'PENDING', 5, '2025-05-14 12:47:32', 1, 1, 17, 2500, 'PENDING');
+(5, '2025-05-14 09:00:00', 'PENDING', 5, '2025-05-14 12:47:32', 1, 1, 17, 2500, 'PAID');
 
 -- --------------------------------------------------------
 
@@ -909,7 +909,16 @@ CREATE TABLE IF NOT EXISTS `payment` (
   `transactionDate` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`payment_id`),
   KEY `fk_paymentid_appointmentid` (`appointment_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `payment`
+--
+
+INSERT INTO `payment` (`payment_id`, `appointment_id`, `paymentStatus`, `amountPaid`, `paymentMethod`, `transactionDate`) VALUES
+(18, 5, 'PENDING', 2300.00, 'DEBIT', '2025-05-14 21:37:05'),
+(19, 5, 'PENDING', 199.00, 'CREDIT', '2025-05-14 21:37:14'),
+(20, 5, 'PENDING', 1.00, 'CREDIT', '2025-05-14 21:37:22');
 
 -- --------------------------------------------------------
 
