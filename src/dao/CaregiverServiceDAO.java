@@ -29,7 +29,7 @@ public class CaregiverServiceDAO {
             stmt.setDouble(4, caregiverService.getHourlyRate());
             stmt.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("You already have this as a service.");
         }
     }
 

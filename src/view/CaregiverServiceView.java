@@ -196,14 +196,26 @@ public class CaregiverServiceView {
                 double hourlyRate = Double.parseDouble(hourlyRateField.getText());
 
                 CaregiverService caregiverService = new CaregiverService(caregiver.getCaregiverID(), selectedService.getServiceID(), experienceYears, hourlyRate);
+
                 caregiverServiceController.addCaregiverService(caregiverService);
 
                 refreshServiceList(conn, caregiver, caregiverServiceController);
                 serviceStage.close();
             } catch (NumberFormatException ex) {
                 errorLabel.setText("Please enter valid numeric values.");
+            } catch (RuntimeException exc) {
+                showAlert(Alert.AlertType.ERROR, "Error", exc.getMessage());
             }
         });
+    }
+
+
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private void refreshServiceList(Connection conn, Caregiver caregiver, CaregiverServiceController caregiverServiceController) {

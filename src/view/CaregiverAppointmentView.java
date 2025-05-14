@@ -37,7 +37,6 @@ public class CaregiverAppointmentView {
     private final TableView<Appointment> appointmentTable; // Use TableView
 
     public CaregiverAppointmentView(Stage stage, Connection conn, Caregiver caregiver) throws SQLException {
-
         this.stage = stage;
         this.conn = conn;
         this.caregiver = caregiver;
