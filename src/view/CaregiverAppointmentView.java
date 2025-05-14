@@ -31,7 +31,6 @@ public class CaregiverAppointmentView {
     private final Caregiver caregiver;
     private final FilteredList<Appointment> filteredAppointments;
     private final AppointmentController appointmentController;
-    private final GuardianController guardianController;
     private final ElderController elderController;
     private final PaymentController paymentController;
     private final TableView<Appointment> appointmentTable; // Use TableView
@@ -41,7 +40,6 @@ public class CaregiverAppointmentView {
         this.conn = conn;
         this.caregiver = caregiver;
         this.appointmentController = new AppointmentController(conn);
-        this.guardianController = new GuardianController(conn);
         this.elderController = new ElderController(conn);
         this.paymentController = new PaymentController(conn);
 
@@ -63,18 +61,19 @@ public class CaregiverAppointmentView {
         appointmentTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY); // Make columns fit table width
 
         // Define columns (Important: Use StringProperty for display)
-        TableColumn<Appointment, String> guardianColumn = new TableColumn<>("Guardian");
+        TableColumn<Appointment, String> guardianColumn = new TableColumn<>("Elders");
         guardianColumn.setCellValueFactory(cellData -> {
             Appointment appointment = cellData.getValue();
-            Guardian guardian = guardianController.getGuardianByAppointmentId(appointment.getAppointmentID());
-            if (guardian != null) {
-                return new SimpleStringProperty(guardian.getFirstName() + " " + guardian.getLastName() +
-                        "\nPhone: " + guardian.getContactNumber() +
-                        "\nEmail: " + guardian.getEmail() +
-                        "\nAddress: " + guardian.getAddress());
-            } else {
-                return new SimpleStringProperty("No Guardian"); // Handle null guardian
+            List<Elder> elders = elderController.getAllEldersByAppointmentId(appointment.getAppointmentID());
+            for (Elder elder : elders) {
+                if (elder != null) {
+                    return new SimpleStringProperty(elder.getFirstName() + " " + elder.getLastName() +
+                            "\nPhone: " + elder.getContactNumber() +
+                            "\nEmail: " + elder.getEmail() +
+                            "\nAddress: " + elder.getAddress());
+                }
             }
+            return new SimpleStringProperty("No Elder");
         });
 
         TableColumn<Appointment, String> detailsColumn = new TableColumn<>("Appointment Details");
@@ -207,11 +206,14 @@ public class CaregiverAppointmentView {
         String selectedStatus = sortBox.getValue();
 
         filteredAppointments.setPredicate(appt -> {
-            Guardian guardian = guardianController.getGuardianByAppointmentId(appt.getAppointmentID());
-            if (guardian == null) return false;
-
-            boolean matchesSearch = guardian.getFirstName().toLowerCase().contains(searchText);
-            boolean matchesStatus = selectedStatus.equals("ALL") || appt.getStatus().name().equals(selectedStatus);
+            List<Elder> elders = elderController.getAllEldersByAppointmentId(appt.getAppointmentID());
+            boolean matchesSearch =false;
+            boolean matchesStatus = false;
+            for (Elder elder : elders) {
+                if (elder == null) return false;
+                matchesSearch = elder.getFirstName().toLowerCase().contains(searchText);
+                matchesStatus = selectedStatus.equals("ALL") || appt.getStatus().name().equals(selectedStatus);
+            }
             return matchesSearch && matchesStatus;
         });
         appointmentTable.refresh();
