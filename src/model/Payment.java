@@ -3,35 +3,32 @@ package model;
 import java.time.LocalDateTime;
 
 public class Payment {
-
     private int paymentID;
     private int appointmentID;
-    private PaymentStatus paymentStatus;
-    private double totalAmount;
+    private double amountPaid;
     private PaymentMethod paymentMethod;
     private LocalDateTime transactionDate; // this will only be set when the payment is completed
 
-    public Payment(int paymentID, int appointmentID, PaymentStatus paymentStatus, double totalAmount, PaymentMethod paymentMethod, LocalDateTime transactionDate) {
+    public Payment(int paymentID, int appointmentID, double amountPaid, PaymentMethod paymentMethod, LocalDateTime transactionDate) {
         this.paymentID = paymentID;
         this.appointmentID = appointmentID;
-        this.paymentStatus = paymentStatus;
-        this.totalAmount = totalAmount;
+        this.amountPaid = amountPaid;
         this.paymentMethod = paymentMethod;
         this.transactionDate = transactionDate;
     }
 
+    public Payment() {}
 
-    public Payment(int appointmentID, PaymentStatus paymentStatus, double totalAmount, PaymentMethod paymentMethod) {
+
+    public Payment(int appointmentID, double amountPaid, PaymentMethod paymentMethod) {
         this.appointmentID = appointmentID;
-        this.paymentStatus = paymentStatus;
-        this.totalAmount = totalAmount;
+        this.amountPaid = amountPaid;
         this.paymentMethod = paymentMethod;
     }
 
-    public Payment(int appointmentID, PaymentStatus paymentStatus, double totalAmount, PaymentMethod paymentMethod, LocalDateTime transactionDate) {
+    public Payment(int appointmentID, double amountPaid, PaymentMethod paymentMethod, LocalDateTime transactionDate) {
         this.appointmentID = appointmentID;
-        this.paymentStatus = paymentStatus;
-        this.totalAmount = totalAmount;
+        this.amountPaid = amountPaid;
         this.paymentMethod = paymentMethod;
         this.transactionDate = transactionDate;
     }
@@ -53,20 +50,12 @@ public class Payment {
         this.appointmentID = appointmentID;
     }
 
-    public PaymentStatus getPaymentStatus() {
-        return paymentStatus;
+    public double getAmountPaid() {
+        return amountPaid;
     }
 
-    public void setPaymentStatus(PaymentStatus paymentStatus) {
-        this.paymentStatus = paymentStatus;
-    }
-
-    public double getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setAmountPaid(double amountPaid) {
+        this.amountPaid = amountPaid;
     }
 
     public PaymentMethod getPaymentMethod() {
@@ -91,11 +80,5 @@ public class Payment {
         CREDIT,
         DEBIT,
         OTHER
-    }
-
-
-    public enum PaymentStatus {
-        PENDING,
-        PAID
     }
 }

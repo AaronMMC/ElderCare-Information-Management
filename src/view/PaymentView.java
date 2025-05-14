@@ -17,11 +17,14 @@ import java.util.Locale;
 
 public class PaymentView {
 
-    private final Scene scene;
-    private Payment payment;
+    private Scene scene;
+    private double totalAmount;
+    private double totalPaidAmount = 0;
+    private double totalAmountToPayLeft;
     private final PaymentController paymentController;
     private final Appointment appointment;
     private final Connection conn;
+    private List<Payment> payments;
     private final AppointmentController appointmentController;
     private CaregiverServiceController caregiverServiceController;
 
@@ -29,6 +32,9 @@ public class PaymentView {
     private TextField amountField; // Keep a reference
     private TextArea breakdownArea; // Keep a reference to update breakdown if needed
     private NumberFormat pesoFormat;
+    private Label titleLabel;
+    private Label breakdownLabel;
+    private StringBuilder initialBreakdownText;
 
     public PaymentView(Stage stage, Connection conn, Guardian guardian, Appointment appointment) {
         this.conn = conn;
@@ -40,28 +46,13 @@ public class PaymentView {
         this.appointment = appointment;
 
         this.pesoFormat = NumberFormat.getCurrencyInstance(new Locale("en", "PH"));
-        payment = paymentController.getPaymentByAppointmentId(appointment.getAppointmentID());
+        computeCosts();
         int caregiverID = appointment.getCaregiverID();
         Caregiver caregiver = caregiverController.getCaregiverById(caregiverID);
         CaregiverService caregiverService = caregiverServiceController.getCaregiverService(caregiverID, appointment.getServiceID());
         Service service = serviceController.getServiceById(appointment.getServiceID());
-        // === Title ===
-        Label titleLabel = new Label("Payment Details");
-        titleLabel.setFont(Font.font("Arial", 24));
-        titleLabel.setStyle("-fx-font-weight: bold;");
 
-        // === Balance Breakdown ===
-        Label breakdownLabel = new Label("Balance breakdown:");
-        StringBuilder initialBreakdownText = new StringBuilder();
-
-        initialBreakdownText.append(String.format("Service: %s (%s)%n", service.getServiceName(), service.getCategory()));
-        initialBreakdownText.append(String.format("Caregiver: %s %s%n", caregiver.getFirstName(), caregiver.getLastName()));
-        initialBreakdownText.append(String.format("%nDuration (Hour): %s%n", appointment.getDuration()));
-        initialBreakdownText.append(String.format("Caregiver's Hourly Rate: %s%n",
-                pesoFormat.format(caregiverService.getHourlyRate())));
-        initialBreakdownText.append(String.format("------------------------------------%n"));
-        initialBreakdownText.append(String.format("Total Amount: %s%n",
-                pesoFormat.format(payment.getTotalAmount())));
+        doBreakdownOfFees(service, caregiverService, caregiver);
         this.breakdownArea = new TextArea(initialBreakdownText.toString());
         breakdownArea.setWrapText(true);
         breakdownArea.setEditable(false);
@@ -76,8 +67,8 @@ public class PaymentView {
         breakdownArea.setPrefHeight(200);
 
         // === Amount Field ===
-        this.amountLabel = new Label("Amount to be paid: " + pesoFormat.format(payment.getTotalAmount()));
-        this.amountField = new TextField(pesoFormat.format(payment.getTotalAmount()));
+        this.amountLabel = new Label("Amount to be paid (Balance): ");
+        this.amountField = new TextField(pesoFormat.format(totalAmountToPayLeft));
         amountField.setEditable(false); // Make it non-editable
         amountField.setStyle("""
             -fx-background-color: #D9D9D9;
@@ -125,6 +116,10 @@ public class PaymentView {
         rightPane.setAlignment(Pos.TOP_CENTER);
         rightPane.setPrefWidth(250);
 
+        reshowScreen(rightPane, goBackButton, leftPane, stage);
+    }
+
+    private void reshowScreen(VBox rightPane, Button goBackButton, VBox leftPane, Stage stage) {
         // Push goBack button to the bottom
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -141,6 +136,37 @@ public class PaymentView {
         stage.setTitle("Payment Details");
         stage.setScene(scene);
         stage.show();
+    }
+
+
+    private void doBreakdownOfFees(Service service, CaregiverService caregiverService, Caregiver caregiver) {
+        // === Title ===
+        titleLabel = new Label("Payment Details");
+        titleLabel.setFont(Font.font("Arial", 24));
+        titleLabel.setStyle("-fx-font-weight: bold;");
+
+        // === Balance Breakdown ===
+        breakdownLabel = new Label("Balance breakdown:");
+        initialBreakdownText = new StringBuilder();
+
+        initialBreakdownText.append(String.format("Service: %s (%s)%n", service.getServiceName(), service.getCategory()));
+        initialBreakdownText.append(String.format("Caregiver: %s %s%n", caregiver.getFirstName(), caregiver.getLastName()));
+        initialBreakdownText.append(String.format("Duration (Hour): %s%n", appointment.getDuration()));
+        initialBreakdownText.append(String.format("Caregiver's Hourly Rate: %s%n",pesoFormat.format(caregiverService.getHourlyRate())));
+        initialBreakdownText.append(String.format("------------------------------------%n"));
+        initialBreakdownText.append(String.format("Total Cost: %s%n", pesoFormat.format(totalAmount)));
+        initialBreakdownText.append(String.format("Total Paid Amount: %s%n", pesoFormat.format(totalPaidAmount)));
+        initialBreakdownText.append(String.format("------------------------------------%n"));
+        initialBreakdownText.append(String.format("Balance: %s%n", pesoFormat.format(totalAmountToPayLeft)));
+    }
+
+
+    private void computeCosts() {
+        payments = paymentController.getPaymentsByAppointmentId(appointment.getAppointmentID());
+        for (Payment payment : payments)
+            totalPaidAmount += payment.getAmountPaid();
+        totalAmount = appointment.getTotalCost();
+        totalAmountToPayLeft = totalAmount - totalPaidAmount;
     }
 
     private void showPaymentInputDialog(Payment.PaymentMethod paymentMethod) {
@@ -161,41 +187,46 @@ public class PaymentView {
 
         payButton.setOnAction(event -> {
             try {
-                double amountToPay = payment.getTotalAmount();
                 double amountEntered = Double.parseDouble(amountInput.getText());
 
-                if (amountEntered > 0 && amountEntered <= amountToPay) {
-                    double currentTotal = payment.getTotalAmount();
-                    double amountPaid = Math.min(amountEntered, currentTotal); // Ensure we don't deduct more than the total
-                    payment.setTotalAmount(Math.max(0, currentTotal - amountPaid));
-                    payment.setPaymentMethod(paymentMethod);
-                    paymentController.addPayment(payment);
-
-                    // Add payment history to the breakdown area
-                    breakdownArea.appendText(String.format("%nPayment of %s via %s recorded.", formatPeso(amountPaid), paymentMethod));
-
-                    if (payment.getTotalAmount() <= 0) {
-                        payment.setPaymentStatus(Payment.PaymentStatus.PAID);
-                        paymentController.updatePayment(payment);
-                        showAlert("Payment Successful", "Appointment has been fully paid.");
-                    } else {
-                        showAlert("Payment Received", "Amount paid: " + formatPeso(amountPaid) + ". Remaining balance: " + formatPeso(payment.getTotalAmount()));
-                    }
-
-                    // Update the amountLabel in the main PaymentView
-                    amountLabel.setText("Amount to be paid: " + formatPeso(payment.getTotalAmount()));
-                    amountField.setText(formatPeso(payment.getTotalAmount()));
-
-                    paymentStage.close();
-                } else if (amountEntered <= 0) {
+                if (amountEntered <= 0) {
                     showAlert("Invalid Input", "Please enter an amount greater than zero.");
-                } else {
-                    showAlert("Invalid Input", "Amount entered exceeds the total amount to be paid (" + formatPeso(amountToPay) + ").");
+                    return;
                 }
+
+                if (amountEntered > totalAmountToPayLeft) {
+                    showAlert("Invalid Input", "Amount entered exceeds the remaining balance (" + formatPeso(totalAmountToPayLeft) + ").");
+                    return;
+                }
+
+                // Record payment
+                Payment payment = new Payment(appointment.getAppointmentID(), amountEntered, paymentMethod);
+                paymentController.addPayment(payment);
+
+                totalAmountToPayLeft -= amountEntered;
+
+                if (totalAmountToPayLeft <= 0) {
+                    appointment.setPaymentStatus(Appointment.PaymentStatus.PAID);
+                    appointmentController.updateAppointmentPaymentStatus(appointment.getAppointmentID(), Appointment.PaymentStatus.PAID);
+                    showAlert("Payment Successful", "Appointment has been fully paid.");
+                } else {
+                    showAlert("Payment Received", "Amount paid: " + formatPeso(amountEntered) + ". Remaining balance: " + formatPeso(totalAmountToPayLeft));
+                }
+
+                // Update UI labels
+                amountLabel.setText("Amount to be paid (Balance): " + formatPeso(totalAmountToPayLeft));
+                amountField.setText(formatPeso(totalAmountToPayLeft));
+
+                // Append payment record to breakdown area
+                breakdownArea.appendText(String.format("%nPayment of %s via %s recorded.", formatPeso(amountEntered), paymentMethod));
+
+                paymentStage.close();
+
             } catch (NumberFormatException e) {
                 showAlert("Invalid Input", "Please enter a numeric amount.");
             }
         });
+
     }
 
     private void showAlert(String title, String content) {

@@ -6,6 +6,18 @@ import java.util.List;
 
 public class Appointment {
 
+
+    private int appointmentID;
+    private LocalDateTime appointmentDate;
+    private AppointmentStatus status;
+    private int duration;
+    private LocalDateTime createdDate;
+    private int caregiverID;
+    private int elderID;
+    private int serviceID;
+    private double totalCost;
+    private PaymentStatus paymentStatus;
+
     public Appointment() {
 
     }
@@ -17,16 +29,12 @@ public class Appointment {
         PENDING
     }
 
-    private int appointmentID;
-    private LocalDateTime appointmentDate;
-    private AppointmentStatus status;
-    private int duration;
-    private LocalDateTime createdDate;
-    private int caregiverID;
-    private int elderID;
-    private int serviceID;
+    public enum PaymentStatus {
+        PENDING,
+        PAID
+    }
 
-    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int elderID, int serviceID) {
+    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int elderID, int serviceID, double totalCost, PaymentStatus paymentStatus) {
         this.appointmentID = appointmentID;
         this.appointmentDate = appointmentDate;
         this.status = status;
@@ -35,10 +43,12 @@ public class Appointment {
         this.caregiverID = caregiverID;
         this.elderID = elderID;
         this.serviceID = serviceID;
+        this.totalCost = totalCost;
+        this.paymentStatus = paymentStatus;
     }
 
-
-    public Appointment(LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int paymentID, int elderID, int serviceID) {
+    public Appointment(int appointmentID, LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int elderID, int serviceID, double totalCost) {
+        this.appointmentID = appointmentID;
         this.appointmentDate = appointmentDate;
         this.status = status;
         this.duration = duration;
@@ -46,16 +56,30 @@ public class Appointment {
         this.caregiverID = caregiverID;
         this.elderID = elderID;
         this.serviceID = serviceID;
+        this.totalCost = totalCost;
     }
 
 
-    public Appointment(LocalDateTime appointmentDate, AppointmentStatus status, int duration, int caregiverID, int elderID, int serviceID) {
+    public Appointment(LocalDateTime appointmentDate, AppointmentStatus status, int duration, LocalDateTime createdDate, int caregiverID, int elderID, int serviceID, double totalCost) {
+        this.appointmentDate = appointmentDate;
+        this.status = status;
+        this.duration = duration;
+        this.createdDate = createdDate;
+        this.caregiverID = caregiverID;
+        this.elderID = elderID;
+        this.serviceID = serviceID;
+        this.totalCost = totalCost;
+    }
+
+
+    public Appointment(LocalDateTime appointmentDate, AppointmentStatus status, int duration, int caregiverID, int elderID, int serviceID, double totalCost) {
         this.appointmentDate = appointmentDate;
         this.status = status;
         this.duration = duration;
         this.caregiverID = caregiverID;
         this.elderID = elderID;
         this.serviceID = serviceID;
+        this.totalCost = totalCost;
     }
 
     public int getAppointmentID() {
@@ -116,6 +140,23 @@ public class Appointment {
 
     public int getServiceID() {
         return serviceID;
+    }
+
+    public double getTotalCost() {
+        return totalCost;
+    }
+
+    public void setTotalCost(double totalCost) {
+        this.totalCost = totalCost;
+    }
+
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
     }
 
     public void setServiceID(int serviceID) {

@@ -466,12 +466,9 @@ public class AppointmentView {
 
             double totalAmount = caregiverService.getHourlyRate() * durationInHours;
 
-            Appointment appointment = new Appointment(appointmentDateTime, Appointment.AppointmentStatus.PENDING, durationInHours, selectedCaregiver.getCaregiverID(), selectedElder.getElderID(), selectedService.getServiceID());
+            Appointment appointment = new Appointment(appointmentDateTime, Appointment.AppointmentStatus.PENDING, durationInHours, selectedCaregiver.getCaregiverID(), selectedElder.getElderID(), selectedService.getServiceID(), totalAmount);
             appointment.setAppointmentID(appointmentController.addAppointment(appointment));
-            Payment payment = new Payment(appointment.getAppointmentID(), Payment.PaymentStatus.PENDING, totalAmount, Payment.PaymentMethod.CASH);
-            paymentController.addPayment(payment);
             showAlert(Alert.AlertType.CONFIRMATION, "Success", "Appointment submitted successfully!");
-
         } catch (NumberFormatException ex) {
             showAlert(Alert.AlertType.ERROR, "Input Error", "Duration must be a valid number.");
         } catch (Exception ex) {
