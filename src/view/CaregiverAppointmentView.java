@@ -56,8 +56,8 @@ public class CaregiverAppointmentView {
 
         TextField searchField = createRoundedTextField("Search by Guardian's First Name");
         ComboBox<String> sortBox = createRoundedComboBox("Filter by Status");
-        sortBox.getItems().addAll("ALL", "PAID", "UNPAID", "FINISHED", "CANCELLED", "ONGOING");
-        sortBox.setValue("PAID");
+        sortBox.getItems().addAll("ALL", "PENDING", "FINISHED", "CANCELLED", "ONGOING");
+        sortBox.setValue("ALL");
 
         // Initialize TableView
         appointmentTable = new TableView<>();
