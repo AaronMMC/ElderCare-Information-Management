@@ -121,11 +121,11 @@ public class GuardianAppointmentView {
             String caregiverFullName = caregiver.getFirstName() + " " + caregiver.getLastName(); // Concatenate full name
 
             String details = String.format("""
-Date posted: %s
-Appointment On: %s
-Total Cost: %s
-Payment Status: %s
-""",
+                                    Date posted: %s
+                                    Appointment On: %s
+                                    Total Cost: %s
+                                    Payment Status: %s
+                                    """,
                     appt.getCreatedDate().toLocalDate(),
                     appt.getAppointmentDate().toLocalDate(),
                     appt.getTotalCost(),

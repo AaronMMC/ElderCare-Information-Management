@@ -220,11 +220,12 @@ public class AppointmentView {
         filterDropdown.setValue("All Categories");
         populateServiceCheckboxes(allServices, "All Categories");
 
-        // Call updateAvailableCaregivers one more time after initial population
-        if (selectedService != null) {
+        filterDropdown.setOnAction(f -> {
+            String selectedCategory = filterDropdown.getValue();
+            populateServiceCheckboxes(allServices, selectedCategory);
             updateAvailableCaregivers();
-        }
-        updateTotalAmount(); // Ensure initial amount is also set
+            updateTotalAmount();
+        });
     }
 
     private void populateServiceCheckboxes(List<Service> services, String categoryFilter) {
