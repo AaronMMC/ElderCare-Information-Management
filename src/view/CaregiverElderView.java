@@ -46,7 +46,7 @@ public class CaregiverElderView {
         titleLabel.setFont(Font.font("Arial", 24));
         titleLabel.setStyle("-fx-font-weight: bold;");
 
-        sortBox.getItems().addAll("PAID", "UNPAID", "FINISHED", "CANCELLED", "ONGOING");
+        sortBox.getItems().addAll("PENDING", "FINISHED", "CANCELLED", "ONGOING");
         sortBox.setValue("ONGOING"); // default filter
 
         sortBox.setOnAction(e -> populateTable());
