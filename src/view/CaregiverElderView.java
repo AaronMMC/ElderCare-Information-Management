@@ -54,13 +54,25 @@ public class CaregiverElderView {
         HBox filterBox = new HBox(20, new Label("Filter by:"), sortBox);
         filterBox.setAlignment(Pos.CENTER_RIGHT);
 
-        table.setHgap(20);
-        table.setVgap(20);
-        table.setPadding(new Insets(20));
-        table.setMinWidth(700);
-        table.setPrefWidth(700);
+        table.setHgap(10); // Reduced horizontal gap
+        table.setVgap(10);   // Reduced vertical gap
+        table.setPadding(new Insets(15)); // Adjusted padding
         table.setStyle("-fx-border-color: #B891F1; -fx-border-width: 2; -fx-background-color: #F9F9F9;");
-        table.setPrefWidth(750);
+
+        // Define column constraints for dynamic sizing
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(20); // Adjust percentages as needed
+        col1.setHgrow(Priority.ALWAYS);
+
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(60);
+        col2.setHgrow(Priority.ALWAYS);
+
+        ColumnConstraints col3 = new ColumnConstraints();
+        col3.setPercentWidth(20);
+        col3.setHgrow(Priority.ALWAYS);
+
+        table.getColumnConstraints().addAll(col1, col2, col3);
 
         ScrollPane scrollPane = new ScrollPane(table);
         scrollPane.setFitToWidth(true);
@@ -68,9 +80,9 @@ public class CaregiverElderView {
         scrollPane.setPrefHeight(220); // Adjust based on row height
 
         VBox leftPane = new VBox(20, titleLabel, filterBox, scrollPane);
-
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(800);
+        HBox.setHgrow(leftPane, Priority.ALWAYS); // Make left pane grow horizontally
 
         Button goBackBtn = createSidebarButton("Go Back");
         goBackBtn.setOnAction(e -> {
@@ -103,13 +115,19 @@ public class CaregiverElderView {
 
         Label eldersHeader = new Label("Elders");
         eldersHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
-        eldersHeader.setPrefWidth(150);
+        eldersHeader.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(eldersHeader, Priority.ALWAYS);
 
         Label detailsHeader = new Label("Service Details");
         detailsHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
-        detailsHeader.setPrefWidth(400);
+        detailsHeader.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(detailsHeader, Priority.ALWAYS);
 
-        Label actionHeader = new Label();
+        Label actionHeader = new Label("Actions");
+        actionHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
+        actionHeader.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(actionHeader, Priority.ALWAYS);
+        actionHeader.setAlignment(Pos.CENTER); // Center the header
 
         table.add(eldersHeader, 0, 0);
         table.add(detailsHeader, 1, 0);
@@ -122,62 +140,78 @@ public class CaregiverElderView {
                 .filter(a -> a.getStatus() == filterStatus)
                 .toList();
 
+        //Debug: its not even printing this shit out
+        for (Appointment a : appointments) {
+            System.out.println("An appointment is found." + a.getAppointmentID());
+            System.out.println(elderController.getElderById(a.getElderID()));
+        }
+
         int rowIndex = 1;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
         for (Appointment appointment : appointments) {
-            List<Elder> elders = elderController.getAllEldersByAppointmentId(appointment.getAppointmentID());
+            Elder elder = elderController.getElderById(appointment.getElderID());
             List<Service> services = serviceController.getAllServicesByAppointmentId(appointment.getAppointmentID());
 
-            for (Elder elder : elders) {
-                int age = Period.between(elder.getDateOfBirth().toLocalDate(), LocalDate.now()).getYears();
-                String elderInfo = elder.getFirstName() + " " + elder.getLastName() +
-                        "\nAge: " + age +
-                        "\nPhone: " + elder.getContactNumber() +
-                        "\nEmail: " + elder.getEmail() +
-                        "\nAddress: " + elder.getAddress();
+            int age = Period.between(elder.getDateOfBirth().toLocalDate(), LocalDate.now()).getYears();
+            String elderInfo = elder.getFirstName() + " " + elder.getLastName() +
+                    "\nAge: " + age +
+                    "\nPhone: " + elder.getContactNumber() +
+                    "\nEmail: " + elder.getEmail() +
+                    "\nAddress: " + elder.getAddress();
 
-                StringBuilder details = new StringBuilder();
-                details.append("Created: ").append(formatter.format(appointment.getCreatedDate()))
-                        .append("\nScheduled: ").append(formatter.format(appointment.getAppointmentDate()))
-                        .append("\nDuration: ").append(appointment.getDuration() / 60).append(" hours")
-                        .append("\nStatus: ").append(appointment.getStatus().name())
-                        .append("\n\nServices:");
-                for (Service service : services) {
-                    details.append("\n- ").append(service.getServiceName())
-                            .append(" (Type: ").append(service.getCategory()).append(")");
-                }
-
-                Label elderLabel = new Label(elderInfo);
-                elderLabel.setPrefWidth(150);
-                elderLabel.setWrapText(true);
-
-                Label detailsLabel = new Label(details.toString());
-                detailsLabel.setPrefWidth(400);
-                detailsLabel.setWrapText(true);
-
-                Button markDoneBtn = createBigGreenButton("Mark as done");
-                markDoneBtn.setOnAction(e -> {
-                    appointment.setStatus(Appointment.AppointmentStatus.FINISHED);
-                    appointmentController.updateAppointment(appointment);
-                    populateTable(); // Refresh after marking done
-                });
-
-                Button seeRecordBtn = createBigGreenButton("See Medical Record");
-                seeRecordBtn.setOnAction(e -> {
-                   MedicalRecordView medicalRecordView = new MedicalRecordView(stage, conn, elder, caregiver);
-                   stage.setScene(medicalRecordView.getScene());
-                });
-
-                HBox buttonBox = new HBox(markDoneBtn, seeRecordBtn);
-                buttonBox.setAlignment(Pos.CENTER_RIGHT);
-                buttonBox.setPrefWidth(150);
-
-                table.add(elderLabel, 0, rowIndex);
-                table.add(detailsLabel, 1, rowIndex);
-                table.add(buttonBox, 2, rowIndex);
-                rowIndex++;
+            StringBuilder details = new StringBuilder();
+            details.append("Created: ").append(formatter.format(appointment.getCreatedDate()))
+                    .append("\nScheduled: ").append(formatter.format(appointment.getAppointmentDate()))
+                    .append("\nDuration: ").append(appointment.getDuration() / 60).append(" hours")
+                    .append("\nStatus: ").append(appointment.getStatus().name())
+                    .append("\n\nServices:");
+            for (Service service : services) {
+                details.append("\n- ").append(service.getServiceName())
+                        .append(" (Type: ").append(service.getCategory()).append(")");
             }
+
+            Label elderLabel = new Label(elderInfo);
+            elderLabel.setWrapText(true);
+            elderLabel.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(elderLabel, Priority.ALWAYS);
+
+            Label detailsLabel = new Label(details.toString());
+            detailsLabel.setWrapText(true);
+            detailsLabel.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(detailsLabel, Priority.ALWAYS);
+
+            Button markDoneBtn = createBigGreenButton("Mark as done");
+            Button seeRecordBtn = createBigGreenButton("See Medical Record");
+
+            // Suggestion 1: Set a minimum width for the buttons
+            markDoneBtn.setMinWidth(120); // Adjust as needed
+            seeRecordBtn.setMinWidth(150); // Adjust as needed
+
+            markDoneBtn.setOnAction(e -> {
+                appointment.setStatus(Appointment.AppointmentStatus.FINISHED);
+                appointmentController.updateAppointment(appointment);
+                populateTable(); // Refresh after marking done
+            });
+
+            seeRecordBtn.setOnAction(e -> {
+                MedicalRecordView medicalRecordView = new MedicalRecordView(stage, conn, elder, caregiver);
+                stage.setScene(medicalRecordView.getScene());
+            });
+
+            HBox buttonBox = new HBox(10, markDoneBtn, seeRecordBtn);
+            buttonBox.setAlignment(Pos.CENTER_RIGHT);
+            buttonBox.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(buttonBox, Priority.ALWAYS);
+
+            // Suggestion 2: Ensure the buttonBox doesn't constrain the buttons
+            HBox.setHgrow(markDoneBtn, Priority.SOMETIMES);
+            HBox.setHgrow(seeRecordBtn, Priority.SOMETIMES);
+
+            table.add(elderLabel, 0, rowIndex);
+            table.add(detailsLabel, 1, rowIndex);
+            table.add(buttonBox, 2, rowIndex);
+            rowIndex++;
         }
     }
 

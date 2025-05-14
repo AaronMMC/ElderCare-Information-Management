@@ -64,15 +64,14 @@ public class CaregiverAppointmentView {
         TableColumn<Appointment, String> guardianColumn = new TableColumn<>("Elders");
         guardianColumn.setCellValueFactory(cellData -> {
             Appointment appointment = cellData.getValue();
-            List<Elder> elders = elderController.getAllEldersByAppointmentId(appointment.getAppointmentID());
-            for (Elder elder : elders) {
-                if (elder != null) {
-                    return new SimpleStringProperty(elder.getFirstName() + " " + elder.getLastName() +
+            Elder elder = elderController.getElderById(appointment.getElderID());
+            if (elder != null) {
+                return new SimpleStringProperty(elder.getFirstName() + " " + elder.getLastName() +
                             "\nPhone: " + elder.getContactNumber() +
                             "\nEmail: " + elder.getEmail() +
                             "\nAddress: " + elder.getAddress());
-                }
             }
+
             return new SimpleStringProperty("No Elder");
         });
 
@@ -206,14 +205,11 @@ public class CaregiverAppointmentView {
         String selectedStatus = sortBox.getValue();
 
         filteredAppointments.setPredicate(appt -> {
-            List<Elder> elders = elderController.getAllEldersByAppointmentId(appt.getAppointmentID());
-            boolean matchesSearch =false;
-            boolean matchesStatus = false;
-            for (Elder elder : elders) {
-                if (elder == null) return false;
-                matchesSearch = elder.getFirstName().toLowerCase().contains(searchText);
-                matchesStatus = selectedStatus.equals("ALL") || appt.getStatus().name().equals(selectedStatus);
-            }
+            Elder elder = elderController.getElderById(appt.getElderID());
+            if (elder == null) return false;
+            boolean matchesSearch = elder.getFirstName().toLowerCase().contains(searchText);
+            boolean matchesStatus  = selectedStatus.equals("ALL") || appt.getStatus().name().equals(selectedStatus);
+
             return matchesSearch && matchesStatus;
         });
         appointmentTable.refresh();

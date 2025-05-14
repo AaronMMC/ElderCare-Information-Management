@@ -242,19 +242,30 @@ public class CaregiverServiceView {
     }
 
     private HBox createServiceRow(Service service, Caregiver caregiver, Connection conn) {
-        CaregiverService caregiverService = caregiverServiceController.getCaregiverService(caregiver.getCaregiverID(),service.getServiceID());
+        CaregiverService caregiverService = caregiverServiceController.getCaregiverService(caregiver.getCaregiverID(), service.getServiceID());
         int experienceYears = (caregiverService != null) ? caregiverService.getExperienceYears() : 0;
         double hourlyRate = (caregiverService != null) ? caregiverService.getHourlyRate() : 0;
 
         Label nameLabel = new Label(service.getServiceName());
         nameLabel.setPrefWidth(150);
 
+        Label namePromptLabel = new Label("Name:");
         TextField nameField = new TextField(service.getServiceName());
-        TextField categoryField = new TextField(service.getCategory());
-        TextField experienceYearsField = new TextField(String.valueOf(experienceYears));
-        TextField hourlyRateField = new TextField(String.valueOf(hourlyRate));
+        HBox nameBox = new HBox(5, namePromptLabel, nameField);
 
-        VBox detailBox = new VBox(5, nameField, categoryField, experienceYearsField, hourlyRateField);
+        Label categoryPromptLabel = new Label("Category:");
+        TextField categoryField = new TextField(service.getCategory());
+        HBox categoryBox = new HBox(5, categoryPromptLabel, categoryField);
+
+        Label experienceYearsPromptLabel = new Label("Experience (Years):");
+        TextField experienceYearsField = new TextField(String.valueOf(experienceYears));
+        HBox experienceYearsBox = new HBox(5, experienceYearsPromptLabel, experienceYearsField);
+
+        Label hourlyRatePromptLabel = new Label("Hourly Rate:");
+        TextField hourlyRateField = new TextField(String.valueOf(hourlyRate));
+        HBox hourlyRateBox = new HBox(5, hourlyRatePromptLabel, hourlyRateField);
+
+        VBox detailBox = new VBox(5, nameBox, categoryBox, experienceYearsBox, hourlyRateBox);
         detailBox.setPrefWidth(400);
 
         Button editBtn = createBigGreenButton("Edit");
@@ -276,8 +287,19 @@ public class CaregiverServiceView {
             service.setCategory(categoryField.getText());
             serviceController.updateService(service);
 
-            CaregiverService updatedCaregiverService = new CaregiverService(caregiver.getCaregiverID(), service.getServiceID(), experienceYearsField.getLength(), hourlyRateField.getLength());
-            caregiverServiceController.updateCaregiverService(updatedCaregiverService);
+            // It looks like you intended to use the *value* entered in the text fields,
+            // not just the length of the text. Let's parse the input.
+            try {
+                int updatedExperienceYears = Integer.parseInt(experienceYearsField.getText());
+                double updatedHourlyRate = Double.parseDouble(hourlyRateField.getText());
+                CaregiverService updatedCaregiverService = new CaregiverService(caregiver.getCaregiverID(), service.getServiceID(), updatedExperienceYears, updatedHourlyRate);
+                caregiverServiceController.updateCaregiverService(updatedCaregiverService);
+            } catch (NumberFormatException ex) {
+                // Handle the case where the user enters non-numeric values
+                System.err.println("Invalid input for experience years or hourly rate.");
+                // Optionally, provide feedback to the user.
+                return;
+            }
 
             refreshServiceList(conn, caregiver, caregiverServiceController);
         });
@@ -301,6 +323,13 @@ public class CaregiverServiceView {
         buttonBox.setPrefWidth(150);
 
         return new HBox(20, nameLabel, detailBox, buttonBox);
+    }
+
+    private void setEditable(boolean editable, TextField... fields) {
+        for (TextField field : fields) {
+            field.setEditable(editable);
+            field.setStyle(editable ? "-fx-background-color: white;" : "-fx-background-color: lightgray;");
+        }
     }
 
     private void setEditable(boolean editable, Object... controls) {
