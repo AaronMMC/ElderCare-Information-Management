@@ -168,6 +168,7 @@ public class GuardianAppointmentView {
         caregiverLabel.setPrefWidth(150);
 
         Label detailsLabel = new Label(details);
+        detailsLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12pt; -fx-background-color: lightgray;");
         detailsLabel.setWrapText(true);
         detailsLabel.setPrefWidth(400);
 
