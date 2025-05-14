@@ -4,12 +4,15 @@ import controller.AppointmentController;
 import controller.ElderController;
 import controller.GuardianController;
 import controller.PaymentController;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -31,6 +34,7 @@ public class CaregiverAppointmentView {
     private final GuardianController guardianController;
     private final ElderController elderController;
     private final PaymentController paymentController;
+    private final TableView<Appointment> appointmentTable; // Use TableView
 
     public CaregiverAppointmentView(Stage stage, Connection conn, Caregiver caregiver) throws SQLException {
 
@@ -43,7 +47,8 @@ public class CaregiverAppointmentView {
         this.paymentController = new PaymentController(conn);
 
         List<Appointment> appointmentList = appointmentController.getAllAppointmentsByCaregiver(caregiver.getCaregiverID());
-        filteredAppointments = new FilteredList<>(FXCollections.observableArrayList(appointmentList), p -> true);
+        ObservableList<Appointment> observableList = FXCollections.observableArrayList(appointmentList); // Use ObservableList
+        filteredAppointments = new FilteredList<>(observableList, p -> true);
 
         Label titleLabel = new Label("Your Appointments");
         titleLabel.setFont(Font.font("Arial", 24));
@@ -52,70 +57,115 @@ public class CaregiverAppointmentView {
         TextField searchField = createRoundedTextField("Search by Guardian's First Name");
         ComboBox<String> sortBox = createRoundedComboBox("Filter by Status");
         sortBox.getItems().addAll("ALL", "PAID", "UNPAID", "FINISHED", "CANCELLED", "ONGOING");
-        sortBox.setValue("PAID"); // Default to PAID
+        sortBox.setValue("PAID");
 
-        GridPane table = new GridPane();
-        table.setHgap(20);
-        table.setVgap(20);
-        table.setPadding(new Insets(20));
-        table.setStyle("-fx-border-color: #B891F1; -fx-border-width: 2; -fx-background-color: #F9F9F9;");
-        table.setPrefWidth(750);
+        // Initialize TableView
+        appointmentTable = new TableView<>();
+        appointmentTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY); // Make columns fit table width
 
-        Label guardiansHeader = new Label("Guardians");
-        guardiansHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
-        Label detailsHeader = new Label("Appointment Details");
-        detailsHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
-        Label actionHeader = new Label("");
+        // Define columns (Important: Use StringProperty for display)
+        TableColumn<Appointment, String> guardianColumn = new TableColumn<>("Guardian");
+        guardianColumn.setCellValueFactory(cellData -> {
+            Appointment appointment = cellData.getValue();
+            Guardian guardian = guardianController.getGuardianByAppointmentId(appointment.getAppointmentID());
+            if (guardian != null) {
+                return new SimpleStringProperty(guardian.getFirstName() + " " + guardian.getLastName() +
+                        "\nPhone: " + guardian.getContactNumber() +
+                        "\nEmail: " + guardian.getEmail() +
+                        "\nAddress: " + guardian.getAddress());
+            } else {
+                return new SimpleStringProperty("No Guardian"); // Handle null guardian
+            }
+        });
 
-        guardiansHeader.setPrefWidth(150);
-        detailsHeader.setPrefWidth(400);
+        TableColumn<Appointment, String> detailsColumn = new TableColumn<>("Appointment Details");
+        detailsColumn.setCellValueFactory(cellData -> {
+            Appointment appointment = cellData.getValue();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            Payment payment = paymentController.getPaymentByAppointmentId(appointment.getAppointmentID());
+            String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
+            String dueDate = formatter.format(appointment.getCreatedDate().plusWeeks(1));
 
-        table.add(guardiansHeader, 0, 0);
-        table.add(detailsHeader, 1, 0);
-        table.add(actionHeader, 2, 0);
+            return new SimpleStringProperty(
+                    "Date posted: " + formatter.format(appointment.getCreatedDate()) +
+                            "\nStatus: " + appointment.getStatus() +
+                            "\nAppointment On: " + formatter.format(appointment.getAppointmentDate()) +
+                            "\nBalance: " + balance +
+                            "\nDue on: " + dueDate
+            );
+        });
 
-        // Add listeners AFTER headers are added
+        TableColumn<Appointment, Void> actionColumn = new TableColumn<>("Actions");
+        actionColumn.setCellFactory(param -> new TableCell<>() {
+            private final Button approveBtn = createBigGreenButton("Approve");
+            private final Button activityButton = createBigGreenButton("Activity Log");
+            private final HBox buttonBox = new HBox(5, approveBtn, activityButton); // Add spacing
+
+            {
+                buttonBox.setAlignment(Pos.CENTER); // Align buttons in the cell
+
+                approveBtn.setOnAction(event -> {
+                    Appointment appointment = getTableRow().getItem(); // Get the appointment
+                    if (appointment != null) { //Make sure the appointment isn't null
+                        appointment.setStatus(Appointment.AppointmentStatus.ONGOING);
+                        appointmentController.updateAppointment(appointment);
+                        // Refresh the table
+                        updateTableData();
+                    }
+                });
+
+                activityButton.setOnAction(event -> {
+                    Appointment appointment = getTableRow().getItem();
+                    if (appointment != null){
+                        ActivityView activityView = new ActivityView(stage, conn, appointment, caregiver);
+                        stage.setScene(activityView.getScene());
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(buttonBox);
+                }
+            }
+        });
+
+        // Add columns to the TableView
+        appointmentTable.getColumns().addAll(guardianColumn, detailsColumn, actionColumn);
+        appointmentTable.setItems(filteredAppointments); // Set the filtered list as the table's data source.
+
+        // Add listeners
         searchField.textProperty().addListener((obs, oldVal, newVal) -> {
-            updateFilter(searchField, sortBox, guardianController);
-            populateTable(table, guardianController, elderController, appointmentController, paymentController);
+            updateFilter(searchField, sortBox);
         });
 
         sortBox.setOnAction(e -> {
-            updateFilter(searchField, sortBox, guardianController);
-            populateTable(table, guardianController, elderController, appointmentController, paymentController);
+            updateFilter(searchField, sortBox);
         });
 
-        updateFilter(searchField, sortBox, guardianController); // Initial filter
-        populateTable(table, guardianController, elderController, appointmentController, paymentController);
+        updateFilter(searchField, sortBox);
+        updateTableData(); // Initial population
 
         HBox searchSortBox = new HBox(20,
                 new Label("Search:"), searchField,
                 new Label("Sort by:"), sortBox);
         searchSortBox.setAlignment(Pos.CENTER_RIGHT);
 
-        ScrollPane scrollPane = new ScrollPane(table);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPrefHeight(240); // Roughly shows 3 appointment rows
-        scrollPane.setStyle("-fx-background-color: transparent;");
-
-        VBox leftPane = new VBox(20, titleLabel, searchSortBox, scrollPane);
+        VBox leftPane = new VBox(20, titleLabel, searchSortBox, appointmentTable);
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(800);
 
-//        Button scheduleBtn = createSidebarButton("Your Schedule");
         Button goBackBtn = createSidebarButton("Go Back");
-
-        /*scheduleBtn.setOnAction(e -> {
-            CaregiverScheduleView scheduleView = new CaregiverScheduleView(stage, conn, caregiver);
-            stage.setScene(scheduleView.getScene());
-        });*/
 
         goBackBtn.setOnAction(e -> {
             CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
             stage.setScene(caregiverView.getScene());
         });
 
-//        VBox rightPane = new VBox(30, scheduleBtn);
         VBox rightPane = new VBox(30);
         rightPane.setPadding(new Insets(30));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
@@ -135,75 +185,25 @@ public class CaregiverAppointmentView {
         stage.show();
     }
 
-    private void populateTable(GridPane table, GuardianController guardianController, ElderController elderController, AppointmentController appointmentController, PaymentController paymentController) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-
-        table.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) > 0);
-
-        int rowIndex = 1;
-        for (Appointment appointment : filteredAppointments) {
-            Guardian guardian = guardianController.getGuardianByAppointmentId(appointment.getAppointmentID());
-            if (guardian == null) continue;
-
-            // === Guardian Info ===
-            StringBuilder guardianInfo = new StringBuilder();
-            guardianInfo.append(guardian.getFirstName()).append(" ").append(guardian.getLastName())
-                    .append("\nPhone: ").append(guardian.getContactNumber())
-                    .append("\nEmail: ").append(guardian.getEmail())
-                    .append("\nAddress: ").append(guardian.getAddress());
-
-            // === Payment Info ===
-            Payment payment = paymentController.getPaymentByAppointmentId(appointment.getAppointmentID());
-            String balance = payment != null ? String.format("Php %.2f", payment.getTotalAmount()) : "Php 0.00";
-            String dueDate = formatter.format(appointment.getCreatedDate().plusWeeks(1));
-
-            // === Appointment Details ===
-            StringBuilder details = new StringBuilder();
-            details.append("Date posted: ").append(formatter.format(appointment.getCreatedDate()))
-                    .append("\nStatus: ").append(appointment.getStatus())
-                    .append("\nAppointment On: ").append(formatter.format(appointment.getAppointmentDate()))
-                    .append("\nBalance: ").append(balance)
-                    .append("\nDue on: ").append(dueDate);
-
-            // === UI Components ===
-            Label guardianLabel = new Label(guardianInfo.toString());
-            guardianLabel.setPrefWidth(150);
-            guardianLabel.setWrapText(true);
-
-            Label detailsLabel = new Label(details.toString());
-            detailsLabel.setPrefWidth(400);
-            detailsLabel.setWrapText(true);
-
-            Button approveBtn = createBigGreenButton("Approve");
-            approveBtn.setOnAction(e -> {
-                appointment.setStatus(Appointment.AppointmentStatus.ONGOING);
-                appointmentController.updateAppointment(appointment);
-
-                String updatedDetails = details.toString().replaceFirst(
-                        "Status: \\w+", "Status: " + appointment.getStatus().name()
-                );
-                detailsLabel.setText(updatedDetails);
-            });
-
-            Button activityButton = createBigGreenButton("Activity Log");
-            activityButton.setOnAction(e -> {
-                ActivityView activityView = new ActivityView(stage, conn, appointment, caregiver);
-                stage.setScene(activityView.getScene());
-            });
-
-            HBox buttonBox = new HBox(approveBtn, activityButton);
-            buttonBox.setAlignment(Pos.CENTER_RIGHT);
-            buttonBox.setPrefWidth(150);
-
-            table.add(guardianLabel, 0, rowIndex);
-            table.add(detailsLabel, 1, rowIndex);
-            table.add(buttonBox, 2, rowIndex);
-            rowIndex++;
-
+    private void updateTableData() {
+        try {
+            List<Appointment> appointmentList = appointmentController.getAllAppointmentsByCaregiver(caregiver.getCaregiverID());
+            // 1. Get the source list, which should be an ObservableList
+            ObservableList<Appointment> sourceList = (ObservableList<Appointment>) filteredAppointments.getSource();
+            // 2. Clear the source list first
+            sourceList.clear();
+            // 3. Add all the new appointments to the source list
+            sourceList.addAll(appointmentList);
+            appointmentTable.refresh(); // Refresh the table view
+        } catch (Exception e) {
+            e.printStackTrace(); // Handle the error appropriately (e.g., show an alert)
+            // Consider showing an error message to the user
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Error loading appointments: " + e.getMessage());
+            alert.showAndWait();
         }
     }
 
-    private void updateFilter(TextField searchField, ComboBox<String> sortBox, GuardianController guardianController) {
+    private void updateFilter(TextField searchField, ComboBox<String> sortBox) {
         String searchText = searchField.getText().toLowerCase();
         String selectedStatus = sortBox.getValue();
 
@@ -215,6 +215,7 @@ public class CaregiverAppointmentView {
             boolean matchesStatus = selectedStatus.equals("ALL") || appt.getStatus().name().equals(selectedStatus);
             return matchesSearch && matchesStatus;
         });
+        appointmentTable.refresh();
     }
 
     private TextField createRoundedTextField(String prompt) {
