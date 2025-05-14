@@ -79,7 +79,7 @@ public class CaregiverServiceView {
         });
 
         addService.setOnAction(e -> {
-
+            showAddServicePanel();
         });
 
         VBox rightPane = new VBox(30);
@@ -90,7 +90,7 @@ public class CaregiverServiceView {
 
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
-        rightPane.getChildren().addAll(spacer, goBackBtn);
+        rightPane.getChildren().addAll(addService, spacer, goBackBtn);
 
         Button cancelButton = createBigGreenButton("Cancel");
         Button saveButton = createBigGreenButton("Save Changes");
@@ -117,6 +117,8 @@ public class CaregiverServiceView {
         stage.setTitle("Services");
         stage.setScene(scene);
         stage.show();
+
+        refreshServiceList(conn, caregiver, caregiverServiceController);
     }
 
     private void showAddServicePanel() {
@@ -133,7 +135,6 @@ public class CaregiverServiceView {
         // Labels to display selected service details
         Label serviceNameLabel = new Label("Service name: ");
         Label serviceCategoryLabel = new Label("Category: ");
-        Label servicePriceLabel = new Label("Price: ");
 
         // Update labels when a service is selected
         serviceDropdown.setOnAction(e -> {
@@ -162,7 +163,6 @@ public class CaregiverServiceView {
                 serviceDropdown,
                 serviceNameLabel,
                 serviceCategoryLabel,
-                servicePriceLabel,
                 experienceYearsLabel,
                 experienceYearsField,
                 hourlyRateLabel,
@@ -179,6 +179,7 @@ public class CaregiverServiceView {
         serviceStage.show();
 
         add.setOnAction(e -> {
+            System.out.println("The add service button set on action is triggered ");
             Service selectedService = serviceDropdown.getValue();
             if (selectedService == null) {
                 errorLabel.setText("Please select a service.");
@@ -189,12 +190,11 @@ public class CaregiverServiceView {
                 int experienceYears = Integer.parseInt(experienceYearsField.getText());
                 double hourlyRate = Double.parseDouble(hourlyRateField.getText());
 
-                CaregiverService caregiverService = new CaregiverService(experienceYears, hourlyRate, selectedService.getServiceID());
+                CaregiverService caregiverService = new CaregiverService(caregiver.getCaregiverID(), selectedService.getServiceID(), experienceYears, hourlyRate);
                 caregiverServiceController.addCaregiverService(caregiverService);
 
                 refreshServiceList(conn, caregiver, caregiverServiceController);
                 serviceStage.close();
-
             } catch (NumberFormatException ex) {
                 errorLabel.setText("Please enter valid numeric values.");
             }

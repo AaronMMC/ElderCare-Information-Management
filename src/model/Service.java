@@ -52,4 +52,9 @@ public class Service {
     public void setMinimumHourDuration(int minimumHourDuration) {
         this.minimumHourDuration = minimumHourDuration;
     }
+
+    @Override
+    public String toString() {
+        return serviceName;
+    }
 }

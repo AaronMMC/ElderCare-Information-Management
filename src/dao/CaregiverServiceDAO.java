@@ -40,8 +40,8 @@ public class CaregiverServiceDAO {
             stmt.setInt(2, serviceId);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                int experienceYears = rs.getInt("experience_years");
-                double hourlyRate = rs.getDouble("hourly_rate");
+                int experienceYears = rs.getInt("experienceYears");
+                double hourlyRate = rs.getDouble("hourlyRate");
                 return new CaregiverService(caregiverId, serviceId, experienceYears, hourlyRate);
             }
         } catch (SQLException e) {

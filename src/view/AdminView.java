@@ -107,22 +107,14 @@ public class AdminView {
         Label minimumHourDurationLabel = new Label("Minimum Hour Duration: ");
         TextField minimumHourDurationInput = new TextField();
 
-        Label experienceYearsLabel = new Label("Experience in years: ");
-        TextField experienceYearsInput = new TextField();
-
-        Label hourlyRateLabel = new Label("Rate per hour: ");
-        TextField hourlyRateInput = new TextField();
-
         Button add = new Button("Add");
 
         VBox layout = new VBox(20, serviceNameLabel, serviceNameInput, serviceCategoryLabel,
-                serviceCategoryInput, minimumHourDurationLabel, minimumHourDurationInput,
-                experienceYearsLabel, experienceYearsInput, hourlyRateLabel,
-                hourlyRateInput, add);
+                serviceCategoryInput, minimumHourDurationLabel, minimumHourDurationInput, add);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(30));
 
-        Scene scene = new Scene(layout, 300, 150);
+        Scene scene = new Scene(layout, 300, 400);
         serviceStage.setScene(scene);
         serviceStage.show();
 
@@ -130,16 +122,9 @@ public class AdminView {
             String serviceName = serviceNameInput.getText();
             String serviceCategory = serviceCategoryInput.getText();
             int minimumHourDuration = Integer.parseInt(minimumHourDurationInput.getText());
-            int experienceYears = Integer.parseInt(experienceYearsInput.getText());
-            double hourlyRate = Double.parseDouble(hourlyRateInput.getText());
 
             Service service = new Service(serviceName, serviceCategory, minimumHourDuration);
-
             serviceController.addService(service);
-
-            CaregiverService updatedCaregiverService = new CaregiverService(experienceYears, hourlyRate, service.getServiceID());
-            caregiverServiceController.addCaregiverService(updatedCaregiverService);
-
             serviceStage.close();
         });
     }

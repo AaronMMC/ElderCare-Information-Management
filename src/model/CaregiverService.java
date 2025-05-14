@@ -13,12 +13,6 @@ public class CaregiverService {
         this.hourlyRate = hourlyRate;
     }
 
-    public CaregiverService(int experienceYears, double hourlyRate, int serviceId) {
-        this.experienceYears = experienceYears;
-        this.hourlyRate = hourlyRate;
-        this.serviceId = serviceId;
-    }
-
     public CaregiverService(int serviceId, int caregiverId) {
         this.serviceId = serviceId;
         this.caregiverId = caregiverId;
