@@ -29,7 +29,7 @@ public class PaymentDAO {
     public Payment getPaymentByID(int paymentID)  {
         String sql = "SELECT * FROM payment WHERE payment_id = ?";
         try {
-            CallableStatement stmt = conn.prepareCall(sql);
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, paymentID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -43,7 +43,7 @@ public class PaymentDAO {
 
     public Payment getPaymentByAppointmentId(int appointmentID)  {
         String sql = "SELECT * FROM payment WHERE appointment_id = ?";
-        try (CallableStatement stmt = conn.prepareCall(sql)){
+        try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,appointmentID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -57,19 +57,19 @@ public class PaymentDAO {
 
 
     public List<Payment> getAllPayments() {
-        String sql = "Select * FROM payment";
+        String sql = "SELECT * FROM payment";
         List<Payment> payments = new ArrayList<>();
-        try {
-            CallableStatement stmt = conn.prepareCall(sql);
-            ResultSet rs = stmt.executeQuery();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {  // Use PreparedStatement, not Statement
+            ResultSet rs = stmt.executeQuery();  // Executes the query
             while (rs.next()) {
-                payments.add(mapResultSetToPayment(rs));
+                payments.add(mapResultSetToPayment(rs));  // Process each row and map to Payment object
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return payments;
     }
+
 
     public void updatePayment(Payment payment) {
         try {
@@ -87,7 +87,7 @@ public class PaymentDAO {
         String sql = "DELETE FROM payment \n" +
                 "    WHERE payment_id = ?";
         try {
-            CallableStatement stmt = conn.prepareCall(sql);
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, paymentID);
             stmt.executeUpdate();
         } catch (SQLException e) {
