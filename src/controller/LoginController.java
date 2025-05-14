@@ -43,9 +43,9 @@ public class LoginController {
         String username = loginView.getUsernameField().getText();
         String password = loginView.getPasswordField().getText();
 
-        Guardian guardian = guardianDAO.findByUsernameAndPassword(username,password);
-        Caregiver caregiver = caregiverDAO.findByUsernameAndPassword(username,password);
-        Admin admin = adminDAO.findByUsernameAndPassword(username,password);
+        Guardian guardian = guardianDAO.findByUsernameAndPassword(username, password);
+        Caregiver caregiver = caregiverDAO.findByUsernameAndPassword(username, password);
+        Admin admin = adminDAO.findByUsernameAndPassword(username, password);
 
         if (guardian == null && caregiver == null && admin == null) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -62,26 +62,36 @@ public class LoginController {
             return;
         }
         if (caregiver != null && caregiver.getPassword().equals(password)) {
-            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Pending  && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Pending){
+            Caregiver.BackgroundCheckStatus bgStatus = caregiver.getBackgroundCheckStatus();
+            Caregiver.MedicalClearanceStatus medStatus = caregiver.getMedicalClearanceStatus();
+
+            if (bgStatus == Caregiver.BackgroundCheckStatus.Passed && medStatus == Caregiver.MedicalClearanceStatus.Cleared) {
+                // Fully approved
+                CaregiverView caregiverView = new CaregiverView(stage, conn, caregiver);
+                stage.setScene(caregiverView.getScene());
+            } else if ((bgStatus == Caregiver.BackgroundCheckStatus.Pending || bgStatus == Caregiver.BackgroundCheckStatus.Passed)
+                    && (medStatus == Caregiver.MedicalClearanceStatus.Pending || medStatus == Caregiver.MedicalClearanceStatus.Cleared)) {
+                // Still under review
                 CaregiverPendingView pendingView = new CaregiverPendingView(stage, conn);
                 stage.setScene(pendingView.getScene());
-                return;
-            }
-            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Passed && caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Cleared) {
-                CaregiverView caregiverView = new CaregiverView(stage,conn, caregiver);
-                stage.setScene(caregiverView.getScene());
-                return;
-            }
-            if (caregiver.getBackgroundCheckStatus() == Caregiver.BackgroundCheckStatus.Failed || caregiver.getMedicalClearanceStatus() == Caregiver.MedicalClearanceStatus.Not_Cleared) {
+            } else if (bgStatus == Caregiver.BackgroundCheckStatus.Failed || medStatus == Caregiver.MedicalClearanceStatus.Not_Cleared) {
+                // Rejected
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Login Failed.");
                 alert.setHeaderText(null);
-                alert.setContentText("Your Account was not approve. Please register again.");
+                alert.setContentText("Your account was not approved. Please register again.");
                 alert.showAndWait();
                 caregiverDAO.deleteCaregiver(caregiver.getCaregiverID());
-                return;
+            } else {
+                // Fallback for any unexpected combination
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Login");
+                alert.setHeaderText(null);
+                alert.setContentText("Your application is under review.");
+                alert.showAndWait();
             }
-        }
+
+    }
         if (admin != null) {
             System.out.println("Admin object found for username: " + admin.getUsername());
             // Be careful about printing actual passwords to console in production, but for debugging:
