@@ -18,6 +18,13 @@ public class CaregiverService {
         this.caregiverId = caregiverId;
     }
 
+    public CaregiverService() {
+        this.caregiverId = -1;
+        this.serviceId = -1;
+        this.experienceYears = 0;
+        this.hourlyRate = 0;
+    }
+
     public int getCaregiverId() { return caregiverId; }
 
     public void setCaregiverId(int caregiverId) { this.caregiverId = caregiverId; }

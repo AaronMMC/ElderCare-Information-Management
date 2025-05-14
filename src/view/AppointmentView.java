@@ -34,7 +34,6 @@ public class AppointmentView {
     private final Label amountLabel = new Label("Amount To Be Paid: 0.00");
     private final VBox serviceCheckboxContainer = new VBox(10);
     private final ComboBox<String> filterDropdown = new ComboBox<>();
-    private double totalAmount;
 
     private final Connection conn;
     private final AppointmentController appointmentController;
@@ -43,8 +42,7 @@ public class AppointmentView {
     private final ElderController elderController;
     private final ServiceController serviceController;
     private final PaymentController paymentController;
-    private final Appointment appointment = new Appointment();
-    private Payment payment;
+    private CaregiverService caregiverService;
     private ComboBox<String> durationBox;
 
 
@@ -56,6 +54,7 @@ public class AppointmentView {
         this.elderController = new ElderController(conn);
         this.serviceController = new ServiceController(conn);
         this.paymentController = new PaymentController(conn);
+        this.caregiverService = new CaregiverService();
 
         BorderPane rootLayout = new BorderPane();
         rootLayout.setPadding(new Insets(20));
@@ -232,6 +231,7 @@ public class AppointmentView {
 
     private void populateServiceCheckboxes(List<Service> services, String categoryFilter) {
         serviceCheckboxContainer.getChildren().clear();
+        Service previouslySelectedService = selectedService;
         selectedService = null; // Reset the selected service
 
         for (Service service : services) {
@@ -239,26 +239,47 @@ public class AppointmentView {
                 continue;
             }
 
-            CheckBox cb = new CheckBox(service.getServiceName());
+            String serviceDisplayName = service.getServiceName();
+            if (caregiverDropdown.getValue() != null) {
+                caregiverService = caregiverServiceController.getCaregiverService(caregiverDropdown.getValue().getCaregiverID(), service.getServiceID());
+                if (caregiverService != null) {
+                    serviceDisplayName += String.format(" (Php %.2f/hr)", caregiverService.getHourlyRate());
+                } else {
+                    serviceDisplayName += " (N/A)";
+                }
+            } else {
+                serviceDisplayName += " (Select a caregiver to see specific rate)";
+            }
+
+            CheckBox cb = new CheckBox(serviceDisplayName);
             cb.setWrapText(true);
+            cb.setUserData(service);
 
             cb.setOnAction(e -> {
+                Service newlySelectedService = (Service) cb.getUserData();
                 if (cb.isSelected()) {
-                    if (selectedService != null) {
-                        // Deselect the previously selected checkbox if it's not the current one
+                    if (selectedService != null && !selectedService.equals(newlySelectedService)) {
+                        // Deselect the previously selected checkbox
                         for (Node node : serviceCheckboxContainer.getChildren()) {
-                            if (node instanceof CheckBox && node != cb) {
-                                ((CheckBox) node).setSelected(false); // Cast node to CheckBox
+                            if (node instanceof CheckBox && ((Service) ((CheckBox) node).getUserData()).equals(selectedService)) {
+                                ((CheckBox) node).setSelected(false);
+                                break;
                             }
                         }
                     }
-                    selectedService = service; // Set the selected service
+                    selectedService = newlySelectedService; // Set the newly selected service
                 } else {
                     selectedService = null; // Unselect the service
                 }
                 updateAvailableCaregivers();
                 updateTotalAmount();
             });
+
+            // Retain selection if the service was previously selected
+            if (previouslySelectedService != null && previouslySelectedService.getServiceID() == service.getServiceID()) {
+                cb.setSelected(true);
+                selectedService = previouslySelectedService;
+            }
 
             serviceCheckboxContainer.getChildren().add(cb);
         }
@@ -296,9 +317,9 @@ public class AppointmentView {
                 return;
             }
 
-            CaregiverService caregiverService =  new CaregiverService(selectedService.getServiceID(), caregiverDropdown.getValue().getCaregiverID());
+            caregiverService =  new CaregiverService(selectedService.getServiceID(), caregiverDropdown.getValue().getCaregiverID());
             caregiverService = caregiverServiceController.getCaregiverService(caregiverService.getCaregiverId(), caregiverService.getServiceId());
-            totalAmount = caregiverService.getHourlyRate() * duration;
+            double totalAmount = caregiverService.getHourlyRate() * duration;
             amountLabel.setText("Amount To Be Paid: " + String.format("%.2f", totalAmount));
         } else {
 
@@ -447,7 +468,7 @@ public class AppointmentView {
 
             Appointment appointment = new Appointment(appointmentDateTime, Appointment.AppointmentStatus.PENDING, durationInHours, selectedCaregiver.getCaregiverID(), selectedElder.getElderID(), selectedService.getServiceID());
             appointment.setAppointmentID(appointmentController.addAppointment(appointment));
-            payment = new Payment(appointment.getAppointmentID(), Payment.PaymentStatus.PENDING, totalAmount, Payment.PaymentMethod.CASH);
+            Payment payment = new Payment(appointment.getAppointmentID(), Payment.PaymentStatus.PENDING, totalAmount, Payment.PaymentMethod.CASH);
             paymentController.addPayment(payment);
             showAlert(Alert.AlertType.CONFIRMATION, "Success", "Appointment submitted successfully!");
 
