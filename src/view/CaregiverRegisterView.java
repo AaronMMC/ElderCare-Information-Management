@@ -38,7 +38,7 @@ public class CaregiverRegisterView {
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
 
-    private static final String NUMBER_REGEX = "\\d+";
+    private static final String NUMBER_REGEX = "^(\\+63|0)9\\d{9}$";
     private static final Pattern NUMBER_PATTERN = Pattern.compile(NUMBER_REGEX);
 
 
