@@ -92,40 +92,63 @@ public class AdminView {
 
     private void showAddServicePanel() {
         ServiceController serviceController = new ServiceController(conn);
-        CaregiverServiceController caregiverServiceController = new CaregiverServiceController(conn);
 
-        //TODO: Make this gui better
         Stage serviceStage = new Stage();
         serviceStage.setTitle("Add a Service");
 
-        Label serviceNameLabel = new Label("Service name: ");
+        Label serviceNameLabel = new Label("Service name:");
         TextField serviceNameInput = new TextField();
 
-        Label serviceCategoryLabel = new Label("Category: ");
+        Label serviceCategoryLabel = new Label("Category:");
         TextField serviceCategoryInput = new TextField();
 
-        Label minimumHourDurationLabel = new Label("Minimum Hour Duration: ");
+        Label minimumHourDurationLabel = new Label("Minimum Hour Duration:");
         TextField minimumHourDurationInput = new TextField();
 
-        Button add = new Button("Add");
+        Button add = new Button("Add Service");
 
-        VBox layout = new VBox(20, serviceNameLabel, serviceNameInput, serviceCategoryLabel,
-                serviceCategoryInput, minimumHourDurationLabel, minimumHourDurationInput, add);
+        VBox layout = new VBox(10,
+                serviceNameLabel, serviceNameInput,
+                serviceCategoryLabel, serviceCategoryInput,
+                minimumHourDurationLabel, minimumHourDurationInput,
+                add);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(30));
+        layout.setStyle("-fx-background-color: #f4f4f4;");
+        serviceNameInput.setMaxWidth(200);
+        serviceCategoryInput.setMaxWidth(200);
+        minimumHourDurationInput.setMaxWidth(200);
 
-        Scene scene = new Scene(layout, 300, 400);
+        Scene scene = new Scene(layout, 350, 400);
         serviceStage.setScene(scene);
         serviceStage.show();
 
         add.setOnAction(e -> {
-            String serviceName = serviceNameInput.getText();
-            String serviceCategory = serviceCategoryInput.getText();
-            int minimumHourDuration = Integer.parseInt(minimumHourDurationInput.getText());
+            String serviceName = serviceNameInput.getText().trim();
+            String serviceCategory = serviceCategoryInput.getText().trim();
+            String durationText = minimumHourDurationInput.getText().trim();
 
-            Service service = new Service(serviceCategory, serviceName, minimumHourDuration);
-            serviceController.addService(service);
-            serviceStage.close();
+            if (serviceName.isEmpty() || serviceCategory.isEmpty() || durationText.isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Error","All fields must be filled.");
+                return;
+            }
+
+            try {
+                int minimumHourDuration = Integer.parseInt(durationText);
+                if (minimumHourDuration <= 0) {
+                    showAlert(Alert.AlertType.ERROR,  "Error","Duration must be greater than 0.");
+                    return;
+                }
+
+                Service service = new Service(serviceCategory, serviceName, minimumHourDuration);
+                serviceController.addService(service);
+                showAlert(Alert.AlertType.INFORMATION, " ","Service added successfully.");
+                serviceStage.close();
+            } catch (NumberFormatException ex) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Minimum duration must be a number.");
+            } catch (Exception ex) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Something went wrong: " + ex.getMessage());
+            }
         });
     }
 
