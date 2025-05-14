@@ -220,14 +220,12 @@ public class AppointmentView {
         filterDropdown.setValue("All Categories");
         populateServiceCheckboxes(allServices, "All Categories");
 
-        filterDropdown.setOnAction(f -> {
-            String selectedCategory = filterDropdown.getValue();
-            populateServiceCheckboxes(allServices, selectedCategory);
+        // Call updateAvailableCaregivers one more time after initial population
+        if (selectedService != null) {
             updateAvailableCaregivers();
-            updateTotalAmount();
-        });
+        }
+        updateTotalAmount(); // Ensure initial amount is also set
     }
-
 
     private void populateServiceCheckboxes(List<Service> services, String categoryFilter) {
         serviceCheckboxContainer.getChildren().clear();
@@ -284,8 +282,11 @@ public class AppointmentView {
             serviceCheckboxContainer.getChildren().add(cb);
         }
 
-        updateAvailableCaregivers(); // Update the caregivers after the service checkboxes are populated.
-        updateTotalAmount();  // Update the total amount
+        // Update caregivers after repopulating based on the current selectedService
+        if (selectedService != null) {
+            updateAvailableCaregivers();
+        }
+        updateTotalAmount(); // Ensure amount is updated after service selection/deselection
     }
 
     private void updateAvailableCaregivers() {
@@ -293,6 +294,7 @@ public class AppointmentView {
         if (selectedService != null) {
             List<Caregiver> availableCaregivers = caregiverController.getAllCaregiversByService(selectedService);
             caregiverDropdown.getItems().addAll(availableCaregivers);
+            System.out.println(""+availableCaregivers.size());
         }
 
         certBox.getChildren().clear();

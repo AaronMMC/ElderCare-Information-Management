@@ -114,24 +114,25 @@ public class GuardianAppointmentView {
         List<Appointment> appointments = appointmentController.getAllAppointmentsByGuardian(guardian.getGuardianID());
         int row = 1;
 
-
         for (Appointment appt : appointments) {
             Caregiver caregiver = caregiverController.getCaregiverById(appt.getCaregiverID());
             if (caregiver == null || !caregiver.getFirstName().toLowerCase().contains(searchTerm.toLowerCase())) continue;
 
+            String caregiverFullName = caregiver.getFirstName() + " " + caregiver.getLastName(); // Concatenate full name
+
             String details = String.format("""
-    Date posted: %s
-    Appointment On: %s
-    Total Cost: %s
-    Payment Status: %s
-    """,
+Date posted: %s
+Appointment On: %s
+Total Cost: %s
+Payment Status: %s
+""",
                     appt.getCreatedDate().toLocalDate(),
                     appt.getAppointmentDate().toLocalDate(),
                     appt.getTotalCost(),
                     appt.getPaymentStatus()
             );
 
-            addAppointmentRow(table, row++, caregiver.getFirstName(), details, appt);
+            addAppointmentRow(table, row++, caregiverFullName, details, appt); // Pass the full name
         }
     }
 
