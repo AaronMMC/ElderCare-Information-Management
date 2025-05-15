@@ -30,7 +30,18 @@ public class MedicalRecord {
         this.lastModified = lastModified;
     }
 
-    public MedicalRecord( String diagnosis, String medications, String treatmentPlan, Status medicationStatus, Status treatmentStatus, LocalDateTime lastModified, int elderID) {
+    public MedicalRecord(int medicalRecordID, String diagnosis, String medications, String treatmentPlan, Status medicationStatus, Status treatmentStatus, LocalDateTime lastModified, int elderID) {
+        this.medicalRecordID = medicalRecordID;
+        this.diagnosis = diagnosis;
+        this.medications = medications;
+        this.treatmentPlan = treatmentPlan;
+        this.medicationStatus = medicationStatus;
+        this.treatmentStatus = treatmentStatus;
+        this.lastModified = lastModified;
+        this.elderID = elderID;
+    }
+
+    public MedicalRecord(String diagnosis, String medications, String treatmentPlan, Status medicationStatus, Status treatmentStatus, LocalDateTime lastModified, int elderID) {
         this.diagnosis = diagnosis;
         this.medications = medications;
         this.treatmentPlan = treatmentPlan;

@@ -68,12 +68,8 @@ public class MedicalRecordDAO {
     }
 
     public MedicalRecord getMedicalRecordByElderId(int elderID) {
-        String sql = "SELECT mr.*\n" +
-                "    FROM medicalrecord mr\n" +
-                "    INNER JOIN guardianelder ge ON mr.elder_id = ge.elder_id\n" +
-                "    INNER JOIN guardian g ON ge.guardian_id = g.guardian_id\n" +
-                "    WHERE mr.elder_id = ?";
-        try (CallableStatement stmt = conn.prepareCall(sql)){
+        String sql = "SELECT * FROM medicalrecord WHERE elder_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, elderID);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -84,6 +80,7 @@ public class MedicalRecordDAO {
         }
         return null;
     }
+
 
     public void updateMedicalRecord(MedicalRecord record) {
         String sql = "{CALL UpdateMedicalRecord(?, ?, ?, ?, ?, ?)}";
@@ -112,13 +109,14 @@ public class MedicalRecordDAO {
 
     private MedicalRecord mapResultSetToMedicalRecord(ResultSet rs) throws SQLException {
         return new MedicalRecord(
-                rs.getInt("medical_record_id"),
+                rs.getInt("medicalRecord_id"),
                 rs.getString("diagnosis"),
                 rs.getString("medications"),
-                rs.getString("treatment_plan"),
-                MedicalRecord.Status.valueOf(rs.getString("medication_status")),
-                MedicalRecord.Status.valueOf(rs.getString("treatment_status")),
-                rs.getTimestamp("last_modified").toLocalDateTime()
+                rs.getString("treatmentPlan"),
+                MedicalRecord.Status.valueOf(rs.getString("medicationStatus")),
+                MedicalRecord.Status.valueOf(rs.getString("treatmentStatus")),
+                rs.getTimestamp("lastModified").toLocalDateTime(),
+                rs.getInt("elder_id")
         );
     }
 }
