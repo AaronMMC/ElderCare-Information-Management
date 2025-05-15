@@ -54,7 +54,7 @@ public class ActivityDAO {
         }
     }
 
-    //TODO: Procedure Call.
+
     public void deleteActivity(Activity activity) {
         String sql = "DELETE FROM activity WHERE activity_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
