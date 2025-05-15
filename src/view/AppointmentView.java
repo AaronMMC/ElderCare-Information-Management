@@ -5,36 +5,44 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import model.*;
 
+import java.awt.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
-import java.util.*;
+import java.util.Base64;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public class AppointmentView {
 
     private final Scene scene;
-    private Service selectedService;
-    private Elder selectedElder;
     private final ComboBox<Caregiver> caregiverDropdown = new ComboBox<>();
     private final VBox certBox = new VBox(5);
-
     private final Label amountLabel = new Label("Amount To Be Paid: 0.00");
     private final VBox serviceCheckboxContainer = new VBox(10);
     private final ComboBox<String> filterDropdown = new ComboBox<>();
-
     private final Connection conn;
     private final AppointmentController appointmentController;
     private final CaregiverController caregiverController;
@@ -42,19 +50,22 @@ public class AppointmentView {
     private final ElderController elderController;
     private final ServiceController serviceController;
     private final PaymentController paymentController;
-    private CaregiverService caregiverService;
+    private Service selectedService;
+    private Elder selectedElder;
     private ComboBox<String> durationBox;
+    private final Stage primaryStage;
 
 
     public AppointmentView(Stage stage, Connection conn, Guardian guardian) {
+        this.primaryStage = stage;
         this.conn = conn;
+
         this.appointmentController = new AppointmentController(conn);
         this.caregiverController = new CaregiverController(conn);
         this.caregiverServiceController = new CaregiverServiceController(conn);
         this.elderController = new ElderController(conn);
         this.serviceController = new ServiceController(conn);
         this.paymentController = new PaymentController(conn);
-        this.caregiverService = new CaregiverService();
 
         BorderPane rootLayout = new BorderPane();
         rootLayout.setPadding(new Insets(20));
@@ -68,14 +79,16 @@ public class AppointmentView {
 
         rootLayout.setCenter(mainContent);
 
-
         this.scene = new Scene(rootLayout, 1250, 700);
         stage.setTitle("Submit New Appointment");
         stage.setScene(scene);
         stage.show();
 
         loadInitialData(guardian);
+        updateAvailableCaregivers();
+        updateCaregiverInfo();
     }
+
 
     private VBox createLeftPane(Stage stage, Guardian guardian) {
         Label titleLabel = new Label("Submit an Appointment");
@@ -112,19 +125,14 @@ public class AppointmentView {
         datePicker.setStyle(getInputFieldStyle());
         datePicker.setPrefWidth(180);
 
-        final Callback<DatePicker, DateCell> dayCellFactory = new Callback<DatePicker, DateCell>() {
+        final Callback<DatePicker, DateCell> dayCellFactory = dp -> new DateCell() {
             @Override
-            public DateCell call(final DatePicker datePicker) {
-                return new DateCell() {
-                    @Override
-                    public void updateItem(LocalDate item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (item.isBefore(LocalDate.now())) {
-                            setDisable(true);
-                            setStyle("-fx-background-color: #ffc0cb;");
-                        }
-                    }
-                };
+            public void updateItem(LocalDate item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item.isBefore(LocalDate.now())) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: #ffc0cb;");
+                }
             }
         };
         datePicker.setDayCellFactory(dayCellFactory);
@@ -160,11 +168,8 @@ public class AppointmentView {
         leftPane.setPadding(new Insets(20, 30, 20, 20));
         leftPane.setAlignment(Pos.TOP_LEFT);
 
-
-        durationBox.valueProperty().addListener((obs, oldVal, newVal) -> {
-            System.out.println("duration box action listener is triggered ");
-            updateTotalAmount();
-        });
+        durationBox.valueProperty().addListener((obs, oldVal, newVal) -> updateTotalAmount());
+        datePicker.valueProperty().addListener((obs, oldVal, newVal) -> updateTotalAmount());
 
         return leftPane;
     }
@@ -173,9 +178,10 @@ public class AppointmentView {
         Label caregiverLabel = new Label("Select a Caregiver:");
         caregiverLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         caregiverLabel.setStyle("-fx-text-fill: white;");
-        caregiverDropdown.setPromptText("Select a caregiver");
+
+        caregiverDropdown.setPromptText("Select a service first");
         caregiverDropdown.setStyle(getInputFieldStyle() + "-fx-pref-width: 280px;");
-        caregiverDropdown.setCellFactory(cb -> new ListCell<>() {
+        caregiverDropdown.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(Caregiver caregiver, boolean empty) {
                 super.updateItem(caregiver, empty);
@@ -194,9 +200,11 @@ public class AppointmentView {
         Label certsLabel = new Label("Caregiver Certifications:");
         certsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         certsLabel.setStyle("-fx-text-fill: white;");
+
         certBox.setStyle("-fx-background-color: #ffffff; -fx-background-radius: 10; -fx-border-color: #bdc3c7; -fx-border-radius: 10;");
         certBox.setPadding(new Insets(12));
         certBox.setPrefHeight(180);
+
         ScrollPane certScrollPane = new ScrollPane(certBox);
         certScrollPane.setFitToWidth(true);
         certScrollPane.setPrefHeight(180);
@@ -211,25 +219,27 @@ public class AppointmentView {
         return rightPane;
     }
 
-
     private void loadInitialData(Guardian guardian) {
         List<Service> allServices = serviceController.getAllServices();
         Set<String> categories = allServices.stream().map(Service::getCategory).collect(Collectors.toCollection(TreeSet::new));
-        categories.add("All Categories");
-        filterDropdown.getItems().setAll(categories);
+        filterDropdown.getItems().add("All Categories");
+        filterDropdown.getItems().addAll(categories);
         filterDropdown.setValue("All Categories");
+
         populateServiceCheckboxes(allServices, "All Categories");
 
         filterDropdown.setOnAction(f -> {
             String selectedCategory = filterDropdown.getValue();
             populateServiceCheckboxes(allServices, selectedCategory);
-            updateAvailableCaregivers();
-            updateTotalAmount();
         });
     }
 
     private void populateServiceCheckboxes(List<Service> services, String categoryFilter) {
         serviceCheckboxContainer.getChildren().clear();
+        Service oldSelectedService = selectedService;
+        selectedService = null;
+
+        Caregiver currentCaregiver = caregiverDropdown.getValue();
 
         for (Service service : services) {
             if (!"All Categories".equals(categoryFilter) && !service.getCategory().equals(categoryFilter)) {
@@ -237,84 +247,124 @@ public class AppointmentView {
             }
 
             String serviceDisplayName = service.getServiceName();
-            if (caregiverDropdown.getValue() != null) {
-                caregiverService = caregiverServiceController.getCaregiverService(caregiverDropdown.getValue().getCaregiverID(), service.getServiceID());
-                if (caregiverService != null) {
-                    serviceDisplayName += String.format(" (Php %.2f/hr)", caregiverService.getHourlyRate());
+            if (currentCaregiver != null) {
+                CaregiverService cs = caregiverServiceController.getCaregiverService(currentCaregiver.getCaregiverID(), service.getServiceID());
+                if (cs != null) {
+                    serviceDisplayName += String.format(" (Php %.2f/hr)", cs.getHourlyRate());
                 } else {
-                    serviceDisplayName += " (N/A)";
+                    serviceDisplayName += " (Rate N/A)";
                 }
             } else {
-                serviceDisplayName += " (Select a caregiver to see specific rate)";
+                serviceDisplayName += " (Select caregiver for rate)";
             }
 
             CheckBox cb = new CheckBox(serviceDisplayName);
             cb.setWrapText(true);
             cb.setUserData(service);
 
+            if (service.equals(oldSelectedService)) {
+                cb.setSelected(true);
+                selectedService = service;
+            }
+
             cb.setOnAction(e -> {
                 Service newlySelectedService = (Service) cb.getUserData();
                 if (cb.isSelected()) {
-                    // Deselect any other selected service checkbox
-                    for (Node node : serviceCheckboxContainer.getChildren()) {
-                        if (node instanceof CheckBox && node != cb) {
-                            ((CheckBox) node).setSelected(false);
+                    if (selectedService != null && !selectedService.equals(newlySelectedService)) {
+                        for (Node node : serviceCheckboxContainer.getChildren()) {
+                            if (node instanceof CheckBox otherCb && node != cb) {
+                                if (otherCb.getUserData().equals(selectedService)) {
+                                    otherCb.setSelected(false);
+                                    break;
+                                }
+                            }
                         }
                     }
-                    selectedService = newlySelectedService; // Set the selected service
+                    selectedService = newlySelectedService;
                 } else {
-                    selectedService = null; // Unselect the service
+                    if (selectedService != null && selectedService.equals(newlySelectedService)) {
+                        selectedService = null;
+                    }
                 }
                 updateAvailableCaregivers();
-                updateTotalAmount();
             });
-
             serviceCheckboxContainer.getChildren().add(cb);
+        }
+        if (selectedService == null) {
+            updateAvailableCaregivers();
         }
         updateTotalAmount();
     }
 
-    private void updateAvailableCaregivers() {
-        System.out.println("updateAvailableCaregivers() called");
-        caregiverDropdown.getItems().clear();
-        if (selectedService != null) {
-            System.out.println("Selected Service: " + selectedService.getServiceName() + " (ID: " + selectedService.getServiceID() + ")"); // Add this line
-            List<Caregiver> availableCaregivers = caregiverController.getAllCaregiversByService(selectedService);
-            caregiverDropdown.getItems().addAll(availableCaregivers);
-            System.out.println("Number of available caregivers: " + availableCaregivers.size());
-        } else {
-            System.out.println("No service selected."); // Add this line
-        }
 
-        certBox.getChildren().clear();
+    private void updateAvailableCaregivers() {
+        Caregiver previouslySelectedCaregiver = caregiverDropdown.getValue();
+        caregiverDropdown.getItems().clear();
+
+        if (selectedService != null) {
+            List<Caregiver> availableCaregivers = caregiverController.getAllCaregiversByService(selectedService);
+            if (availableCaregivers.isEmpty()) {
+                caregiverDropdown.setPromptText("No caregivers for this service");
+                if (previouslySelectedCaregiver != null) {
+                    caregiverDropdown.setValue(null);
+                } else {
+                    updateCaregiverInfo();
+                }
+            } else {
+                caregiverDropdown.getItems().addAll(availableCaregivers);
+                caregiverDropdown.setPromptText("Select a caregiver");
+                if (previouslySelectedCaregiver != null && availableCaregivers.contains(previouslySelectedCaregiver)) {
+                    caregiverDropdown.setValue(previouslySelectedCaregiver);
+                } else {
+                    caregiverDropdown.setValue(null);
+                }
+            }
+        } else {
+            caregiverDropdown.setPromptText("Select a service first");
+            if (previouslySelectedCaregiver != null) {
+                caregiverDropdown.setValue(null);
+            } else {
+                updateCaregiverInfo();
+            }
+        }
     }
 
     private void updateTotalAmount() {
-        int duration;
-        if (selectedService != null && durationBox != null && caregiverDropdown.getValue() != null) {
+        double totalAmountValue = 0.0;
+        int durationValue = 0;
 
-            String selected = durationBox.getValue();
-            System.out.println("selected duration is : " + selected);
-
+        if (durationBox.getValue() != null && !durationBox.getValue().trim().isEmpty()) {
             try {
-                duration = Integer.parseInt(selected);
-                int minimumHourDuration = selectedService.getMinimumHourDuration();
-                if (duration < minimumHourDuration) {
-                    amountLabel.setText("Duration must be at least " + minimumHourDuration + (minimumHourDuration > 1 ? "hours": "hour"));
+                durationValue = Integer.parseInt(durationBox.getValue().trim());
+                if (durationValue <= 0) {
+                    amountLabel.setText("Duration must be positive");
                     return;
                 }
             } catch (NumberFormatException e) {
-                amountLabel.setText("Please enter a valid duration");
+                amountLabel.setText("Invalid duration format");
                 return;
             }
-
-            caregiverService =  new CaregiverService(selectedService.getServiceID(), caregiverDropdown.getValue().getCaregiverID());
-            caregiverService = caregiverServiceController.getCaregiverService(caregiverService.getCaregiverId(), caregiverService.getServiceId());
-            double totalAmount = caregiverService.getHourlyRate() * duration;
-            amountLabel.setText("Amount To Be Paid: " + String.format("%.2f", totalAmount));
         } else {
+            amountLabel.setText("Amount To Be Paid: 0.00");
+            return;
+        }
 
-            amountLabel.setText("Amount To Be Paid: Php 0.00");
+        Caregiver currentCaregiver = caregiverDropdown.getValue();
+        if (selectedService != null && currentCaregiver != null) {
+            if (durationValue < selectedService.getMinimumHourDuration()) {
+                amountLabel.setText("Min. duration: " + selectedService.getMinimumHourDuration() + "hr(s)");
+                return;
+            }
+            CaregiverService cs = caregiverServiceController.getCaregiverService(currentCaregiver.getCaregiverID(), selectedService.getServiceID());
+
+            if (cs != null) {
+                totalAmountValue = cs.getHourlyRate() * durationValue;
+                amountLabel.setText(String.format("Amount To Be Paid: %.2f", totalAmountValue));
+            } else {
+                amountLabel.setText("Rate N/A for this combination");
+            }
+        } else {
+            amountLabel.setText("Amount To Be Paid: 0.00");
         }
     }
 
@@ -333,75 +383,210 @@ public class AppointmentView {
         return "dat";
     }
 
+    private void refreshServiceDisplayRates() {
+        Caregiver currentCaregiver = caregiverDropdown.getValue();
+        for (Node node : serviceCheckboxContainer.getChildren()) {
+            if (node instanceof CheckBox cb) {
+                Service service = (Service) cb.getUserData();
+                if (service == null) continue;
+
+                String serviceDisplayName = service.getServiceName();
+                if (currentCaregiver != null) {
+                    CaregiverService cs = caregiverServiceController.getCaregiverService(currentCaregiver.getCaregiverID(), service.getServiceID());
+                    if (cs != null) {
+                        serviceDisplayName += String.format(" (Php %.2f/hr)", cs.getHourlyRate());
+                    } else {
+                        serviceDisplayName += " (Rate N/A)";
+                    }
+                } else {
+                    serviceDisplayName += " (Select caregiver for rate)";
+                }
+                cb.setText(serviceDisplayName);
+            }
+        }
+    }
+
     private void updateCaregiverInfo() {
         certBox.getChildren().clear();
-        Caregiver selected = caregiverDropdown.getValue();
-        if (selected != null) {
-            List<String> base64CertStrings = selected.getCertifications();
-            if (base64CertStrings != null && !base64CertStrings.isEmpty()) {
+        Caregiver selectedCaregiver = caregiverDropdown.getValue();
+
+        if (selectedCaregiver != null) {
+            List<String> certStrings = selectedCaregiver.getCertifications();
+
+            if (certStrings == null || certStrings.isEmpty()) {
+                Label messageLabel = new Label("No certifications listed for this caregiver.");
+                messageLabel.setStyle("-fx-text-fill: #555555; -fx-font-style: italic; -fx-padding: 5px;");
+                certBox.getChildren().add(messageLabel);
+            } else {
+                boolean contentAdded = false;
                 int certIndex = 1;
-                for (String certStr : base64CertStrings) {
+                for (String certStr : certStrings) {
                     if (certStr != null && !certStr.trim().isEmpty()) {
                         try {
                             byte[] decodedBytes = Base64.getDecoder().decode(certStr);
-                            String extension = determineFileExtension(decodedBytes).toUpperCase();
-                            String displayName = "Certification " + certIndex + (!"DAT".equals(extension) ? " (." + extension + ")" : " (File)");
-                            Label certLabel = new Label("• " + displayName);
-                            certLabel.setWrapText(true);
-                            certBox.getChildren().add(certLabel);
-                            certIndex++;
+                            String extension = determineFileExtension(decodedBytes).toLowerCase();
+
+                            String certDisplayNameText = "• View Certification " + certIndex;
+                            if (!"dat".equals(extension)) {
+                                certDisplayNameText += " (." + extension + ")";
+                            } else {
+                                certDisplayNameText += " (File)";
+                            }
+
+                            Hyperlink certLink = new Hyperlink(certDisplayNameText);
+                            certLink.setWrapText(true);
+                            certLink.setStyle("-fx-text-fill: #0000EE; -fx-padding: 2px 0;");
+
+                            final String currentCertStr = certStr;
+                            final int currentIndex = certIndex - 1;
+
+                            certLink.setOnAction(event -> {
+
+                                viewCertificationFile(selectedCaregiver, currentCertStr, currentIndex, extension);
+                            });
+
+                            certBox.getChildren().add(certLink);
+                            contentAdded = true;
                         } catch (IllegalArgumentException e) {
-                            Label errorLabel = new Label("• Certification " + certIndex + " (Error decoding)");
+                            Label errorLabel = new Label("• Certification " + certIndex + " (Error processing data)");
+                            errorLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-style: italic; -fx-padding: 2px 0;");
                             certBox.getChildren().add(errorLabel);
-                            certIndex++;
+                            contentAdded = true;
                         }
+                        certIndex++;
                     }
                 }
-                if (certBox.getChildren().isEmpty()) {
-                    Label noCertsLabel = new Label("No valid certifications found.");
-                    noCertsLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;");
-                    certBox.getChildren().add(noCertsLabel);
+                if (!contentAdded) {
+                    Label messageLabel = new Label("Certification entries are present but contain no displayable data.");
+                    messageLabel.setStyle("-fx-text-fill: #555555; -fx-font-style: italic; -fx-padding: 5px;");
+                    certBox.getChildren().add(messageLabel);
                 }
-            } else {
-                Label noCertsLabel = new Label("No certifications available for this caregiver.");
-                noCertsLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;");
-                certBox.getChildren().add(noCertsLabel);
             }
         } else {
-            clearCaregiverDetails();
+            Label messageLabel = new Label("No caregiver selected.");
+            if (selectedService == null) {
+                messageLabel.setText("Select a service and caregiver.");
+            }
+            messageLabel.setStyle("-fx-text-fill: #555555; -fx-font-style: italic; -fx-padding: 5px;");
+            certBox.getChildren().add(messageLabel);
         }
+        refreshServiceDisplayRates();
         updateTotalAmount();
     }
 
-    private void clearCaregiverDetails() {
-        certBox.getChildren().clear();
+    private void viewCertificationFile(Caregiver caregiver, String base64String, int certListIndex, String identifiedExtension) {
+        if (base64String == null || base64String.trim().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No Data", "Selected certification has no data.");
+            return;
+        }
+        try {
+            byte[] decodedBytes = Base64.getDecoder().decode(base64String);
 
-        Label noCertsLabel = new Label("No certifications to display.");
-        noCertsLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;");
-        certBox.getChildren().add(noCertsLabel);
+            String fileExtension = (identifiedExtension != null && !identifiedExtension.isEmpty()) ? identifiedExtension : determineFileExtension(decodedBytes);
+
+
+            String sanitizedFirstName = caregiver.getFirstName().replaceAll("[^a-zA-Z0-9_.-]", "_");
+            String sanitizedLastName = caregiver.getLastName().replaceAll("[^a-zA-Z0-9_.-]", "_");
+            String fileNamePrefix = sanitizedFirstName + "_" + sanitizedLastName + "_certification_" + (certListIndex + 1);
+
+
+            if (fileExtension.equalsIgnoreCase("png") || fileExtension.equalsIgnoreCase("jpg") || fileExtension.equalsIgnoreCase("jpeg") || fileExtension.equalsIgnoreCase("gif")) {
+                try {
+                    Image image = new Image(new ByteArrayInputStream(decodedBytes));
+                    if (!image.isError()) {
+                        ImageView imageView = new ImageView(image);
+                        imageView.setPreserveRatio(true);
+
+                        double maxWidth = 600;
+                        double maxHeight = 400;
+                        if (image.getWidth() > maxWidth || image.getHeight() > maxHeight) {
+                            imageView.setFitWidth(maxWidth);
+                            imageView.setFitHeight(maxHeight);
+                        }
+
+                        StackPane imagePane = new StackPane(imageView);
+                        imagePane.setPadding(new Insets(10));
+                        Scene imageScene = new Scene(imagePane);
+                        Stage imageStage = new Stage();
+                        imageStage.setTitle(fileNamePrefix + "." + fileExtension);
+                        imageStage.initOwner(this.primaryStage);
+                        imageStage.initModality(Modality.APPLICATION_MODAL);
+                        imageStage.setScene(imageScene);
+                        imageStage.sizeToScene();
+                        imageStage.showAndWait();
+                        return;
+                    }
+                } catch (Exception imgEx) {
+                    System.err.println("Could not display certification as image directly: " + imgEx.getMessage());
+
+                }
+            }
+
+
+            Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "eldercare_certs_guardian");
+            if (!Files.exists(tempDir)) {
+                Files.createDirectories(tempDir);
+            }
+
+
+            Path tempFilePath = Files.createTempFile(tempDir, fileNamePrefix + "_", "." + fileExtension);
+            Files.write(tempFilePath, decodedBytes);
+            File tempFile = tempFilePath.toFile();
+            tempFile.deleteOnExit();
+
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                Desktop.getDesktop().open(tempFile);
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Opening Failed", "Desktop operations not supported to open the file type: " + fileExtension);
+            }
+
+        } catch (IllegalArgumentException e) {
+            showAlert(Alert.AlertType.ERROR, "Decoding Error", "Certification data appears to be corrupt or not valid Base64.");
+            e.printStackTrace();
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "File Error", "Could not create, write, or open temporary file: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Unexpected Error", "An error occurred while trying to view the file: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
-
 
     private VBox createElderCheckboxSection(Guardian guardian) {
         VBox elderListBox = new VBox(8);
         elderListBox.setPadding(new Insets(10));
-
         List<Elder> elders = elderController.getAllEldersByGuardianId(guardian.getGuardianID());
+
         if (elders.isEmpty()) {
             Label noEldersLabel = new Label("No elders registered for this guardian.");
             noEldersLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #7f8c8d;");
             elderListBox.getChildren().add(noEldersLabel);
         } else {
-            elders.forEach(elder -> {
+            for (Elder elder : elders) {
                 CheckBox cb = new CheckBox(elder.getFirstName() + " " + elder.getLastName());
                 cb.setUserData(elder);
                 cb.setFont(Font.font("Arial", 13));
                 cb.setOnAction(e -> {
-                    if (cb.isSelected()) selectedElder = elder;
-                    else selectedElder = null;
+                    if (cb.isSelected()) {
+                        if (selectedElder != null && selectedElder != elder) {
+                            for (Node node : elderListBox.getChildren()) {
+                                if (node instanceof CheckBox otherCb) {
+                                    if (otherCb.getUserData() == selectedElder) {
+                                        otherCb.setSelected(false);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        selectedElder = elder;
+                    } else {
+                        if (selectedElder == elder) {
+                            selectedElder = null;
+                        }
+                    }
                 });
                 elderListBox.getChildren().add(cb);
-            });
+            }
         }
 
         ScrollPane scrollPane = new ScrollPane(elderListBox);
@@ -416,19 +601,19 @@ public class AppointmentView {
     }
 
     private void handleSubmitAppointment(DatePicker datePicker, ComboBox<String> durationBox, Guardian guardian) {
-        LocalDate selectedDate = datePicker.getValue();
-        String durationText = durationBox.getValue();
-        Caregiver selectedCaregiver = caregiverDropdown.getValue();
+        LocalDate selectedDateValue = datePicker.getValue();
+        String durationText = this.durationBox.getValue();
+        Caregiver currentSelectedCaregiver = caregiverDropdown.getValue();
 
         if (selectedElder == null) {
-            showAlert(Alert.AlertType.WARNING, "Input Error", "Please select at least one elder.");
+            showAlert(Alert.AlertType.WARNING, "Input Error", "Please select an elder.");
             return;
         }
         if (selectedService == null) {
-            showAlert(Alert.AlertType.WARNING, "Input Error", "Please select at least one service.");
+            showAlert(Alert.AlertType.WARNING, "Input Error", "Please select a service.");
             return;
         }
-        if (selectedDate == null) {
+        if (selectedDateValue == null) {
             showAlert(Alert.AlertType.WARNING, "Input Error", "Please select an appointment date.");
             return;
         }
@@ -436,41 +621,49 @@ public class AppointmentView {
             showAlert(Alert.AlertType.WARNING, "Input Error", "Please specify the duration.");
             return;
         }
-        if (selectedCaregiver == null) {
+        if (currentSelectedCaregiver == null) {
             showAlert(Alert.AlertType.WARNING, "Input Error", "Please select a caregiver.");
             return;
         }
 
-
+        int durationInHours;
         try {
-            int durationInHours = Integer.parseInt(durationText);
-
-            if (durationInHours < selectedService.getMinimumHourDuration()) {
-                showAlert(Alert.AlertType.WARNING, "Invalid Duration", "Duration must be at least " + selectedService.getMinimumHourDuration() + " hours.");
+            durationInHours = Integer.parseInt(durationText.trim());
+            if (durationInHours <= 0) {
+                showAlert(Alert.AlertType.WARNING, "Input Error", "Duration must be a positive number.");
                 return;
             }
-
-            LocalDateTime appointmentDateTime = selectedDate.atTime(9, 0);
-
-            CaregiverService caregiverService =  new CaregiverService(selectedService.getServiceID(), (caregiverDropdown.getValue() != null) ? caregiverDropdown.getValue().getCaregiverID() : -1);
-            caregiverService = caregiverServiceController.getCaregiverService(caregiverService.getCaregiverId(), caregiverService.getServiceId());
-
-            double totalAmount = caregiverService.getHourlyRate() * durationInHours;
-
-            Appointment appointment = new Appointment(appointmentDateTime, Appointment.AppointmentStatus.PENDING, durationInHours, selectedCaregiver.getCaregiverID(), selectedElder.getElderID(), selectedService.getServiceID(), totalAmount);
-            appointment.setAppointmentID(appointmentController.addAppointment(appointment));
-            showAlert(Alert.AlertType.CONFIRMATION, "Success", "Appointment submitted successfully!");
+            if (durationInHours < selectedService.getMinimumHourDuration()) {
+                showAlert(Alert.AlertType.WARNING, "Invalid Duration", "Duration must be at least " + selectedService.getMinimumHourDuration() + " hour(s) for " + selectedService.getServiceName() + ".");
+                return;
+            }
         } catch (NumberFormatException ex) {
             showAlert(Alert.AlertType.ERROR, "Input Error", "Duration must be a valid number.");
+            return;
+        }
+
+        LocalDateTime appointmentDateTime = selectedDateValue.atTime(9, 0);
+
+        CaregiverService cs = caregiverServiceController.getCaregiverService(currentSelectedCaregiver.getCaregiverID(), selectedService.getServiceID());
+
+        if (cs == null) {
+            showAlert(Alert.AlertType.ERROR, "Rate Error", "Could not determine the hourly rate for the selected caregiver and service. Please ensure the caregiver offers this service at a set rate.");
+            return;
+        }
+        double totalAmountCalculated = cs.getHourlyRate() * durationInHours;
+
+        try {
+            Appointment appointment = new Appointment(appointmentDateTime, Appointment.AppointmentStatus.PENDING, durationInHours, currentSelectedCaregiver.getCaregiverID(), selectedElder.getElderID(), selectedService.getServiceID(), totalAmountCalculated);
+            int appointmentId = appointmentController.addAppointment(appointment);
+            if (appointmentId > 0) {
+                showAlert(Alert.AlertType.CONFIRMATION, "Success", "Appointment submitted successfully! ID: " + appointmentId);
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Submission Error", "Failed to submit appointment. No ID was returned from the database operation.");
+            }
         } catch (Exception ex) {
             showAlert(Alert.AlertType.ERROR, "Submission Error", "An unexpected error occurred: " + ex.getMessage());
             ex.printStackTrace();
         }
-    }
-
-    private int getAge(LocalDate birthDate) {
-        if (birthDate == null) return 0;
-        return Period.between(birthDate, LocalDate.now()).getYears();
     }
 
     private void showAlert(Alert.AlertType alertType, String title, String message) {
@@ -478,7 +671,9 @@ public class AppointmentView {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
-        alert.initOwner(scene.getWindow());
+        if (primaryStage != null) {
+            alert.initOwner(primaryStage);
+        }
         alert.showAndWait();
     }
 
