@@ -183,6 +183,7 @@ public class CaregiverElderView {
 
             Button markDoneBtn = createBigGreenButton("Mark as done");
             Button seeRecordBtn = createBigGreenButton("See Medical Record");
+            Button activityButton = createBigGreenButton("Activity Log");
 
             // Suggestion 1: Set a minimum width for the buttons
             markDoneBtn.setMinWidth(120); // Adjust as needed
@@ -199,7 +200,12 @@ public class CaregiverElderView {
                 stage.setScene(medicalRecordView.getScene());
             });
 
-            HBox buttonBox = new HBox(10, markDoneBtn, seeRecordBtn);
+            activityButton.setOnAction(event -> {
+                ActivityView activityView = new ActivityView(stage, conn, appointment, caregiver);
+                stage.setScene(activityView.getScene());
+            });
+
+            HBox buttonBox = new HBox(10, markDoneBtn, seeRecordBtn, activityButton);
             buttonBox.setAlignment(Pos.CENTER_RIGHT);
             buttonBox.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(buttonBox, Priority.ALWAYS);

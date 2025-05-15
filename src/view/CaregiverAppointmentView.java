@@ -67,9 +67,9 @@ public class CaregiverAppointmentView {
             Elder elder = elderController.getElderById(appointment.getElderID());
             if (elder != null) {
                 return new SimpleStringProperty(elder.getFirstName() + " " + elder.getLastName() +
-                            "\nPhone: " + elder.getContactNumber() +
-                            "\nEmail: " + elder.getEmail() +
-                            "\nAddress: " + elder.getAddress());
+                        "\nPhone: " + elder.getContactNumber() +
+                        "\nEmail: " + elder.getEmail() +
+                        "\nAddress: " + elder.getAddress());
             }
 
             return new SimpleStringProperty("No Elder");
@@ -92,44 +92,7 @@ public class CaregiverAppointmentView {
             );
         });
 
-        TableColumn<Appointment, Void> actionColumn = new TableColumn<>("Actions");
-        actionColumn.setCellFactory(param -> new TableCell<>() {
-            private final Button approveBtn = createBigGreenButton("Approve");
-            private final Button activityButton = createBigGreenButton("Activity Log");
-            private final HBox buttonBox = new HBox(5, approveBtn, activityButton); // Add spacing
-
-            {
-                buttonBox.setAlignment(Pos.CENTER); // Align buttons in the cell
-
-                approveBtn.setOnAction(event -> {
-                    Appointment appointment = getTableRow().getItem(); // Get the appointment
-                    if (appointment != null) { //Make sure the appointment isn't null
-                        appointment.setStatus(Appointment.AppointmentStatus.ONGOING);
-                        appointmentController.updateAppointment(appointment);
-                        // Refresh the table
-                        updateTableData();
-                    }
-                });
-
-                activityButton.setOnAction(event -> {
-                    Appointment appointment = getTableRow().getItem();
-                    if (appointment != null){
-                        ActivityView activityView = new ActivityView(stage, conn, appointment, caregiver);
-                        stage.setScene(activityView.getScene());
-                    }
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(buttonBox);
-                }
-            }
-        });
+        TableColumn<Appointment, Void> actionColumn = createActionColumn(appointmentController, this::updateTableData);
 
         // Add columns to the TableView
         appointmentTable.getColumns().addAll(guardianColumn, detailsColumn, actionColumn);
@@ -208,7 +171,7 @@ public class CaregiverAppointmentView {
             Elder elder = elderController.getElderById(appt.getElderID());
             if (elder == null) return false;
             boolean matchesSearch = elder.getFirstName().toLowerCase().contains(searchText);
-            boolean matchesStatus  = selectedStatus.equals("ALL") || appt.getStatus().name().equals(selectedStatus);
+            boolean matchesStatus = selectedStatus.equals("ALL") || appt.getStatus().name().equals(selectedStatus);
 
             return matchesSearch && matchesStatus;
         });
@@ -241,7 +204,7 @@ public class CaregiverAppointmentView {
         return cb;
     }
 
-    private Button createBigGreenButton(String text) {
+    private static Button createBigGreenButton(String text) {
         Button btn = new Button(text);
         btn.setStyle("""
             -fx-background-color: #3BB49C;
@@ -264,7 +227,7 @@ public class CaregiverAppointmentView {
             -fx-background-radius: 15;
             -fx-cursor: hand;
             -fx-padding: 10 20;
-            -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 4, 0, 0, 1);
+            -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 4, 0, 0, 1);        
         """);
         btn.setPrefWidth(200);
         return btn;
@@ -272,5 +235,41 @@ public class CaregiverAppointmentView {
 
     public Scene getScene() {
         return scene;
+    }
+
+    public static TableColumn<Appointment, Void> createActionColumn(AppointmentController appointmentController, Runnable updateTableData) {
+        TableColumn<Appointment, Void> actionColumn = new TableColumn<>("Actions");
+        actionColumn.setCellFactory(param -> new TableCell<>() {
+            private final Button approveBtn = createBigGreenButton("Approve");
+            private final HBox buttonBox = new HBox(5, approveBtn);
+
+            {
+                buttonBox.setAlignment(Pos.CENTER);
+                approveBtn.setOnAction(event -> {
+                    Appointment appointment = getTableRow().getItem();
+                    if (appointment != null) {
+                        appointment.setStatus(Appointment.AppointmentStatus.ONGOING);
+                        appointmentController.updateAppointment(appointment);
+                        updateTableData.run(); // Use the provided Runnable to refresh
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    Appointment appointment = getTableRow().getItem(); // Get the appointment *here*
+                    if (appointment != null && appointment.getStatus() == Appointment.AppointmentStatus.PENDING) {
+                        setGraphic(buttonBox); // Show button only if status is PENDING
+                    } else {
+                        setGraphic(null); // Otherwise, show nothing
+                    }
+                }
+            }
+        });
+        return actionColumn;
     }
 }

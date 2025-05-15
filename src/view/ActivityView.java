@@ -242,12 +242,8 @@ public class ActivityView {
         });
 
         goBackBtn.setOnAction(e -> {
-            try {
-                CaregiverAppointmentView caregiverAppointmentView = new CaregiverAppointmentView(stage, conn, caregiver);
-                stage.setScene(caregiverAppointmentView.getScene());
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
+            CaregiverElderView caregiverelderview = new CaregiverElderView(stage, conn, caregiver);
+            stage.setScene(caregiverelderview.getScene());
         });
 
         addActivityBtn.setPrefWidth(200);
