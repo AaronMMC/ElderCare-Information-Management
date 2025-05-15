@@ -76,15 +76,9 @@ public class ElderView {
 
         // === Elder Form ===
         GridPane formGrid = new GridPane();
-        formGrid.setHgap(10); // Reduced horizontal gap
-        formGrid.setVgap(10); // Reduced vertical gap
+        formGrid.setHgap(20);
+        formGrid.setVgap(20);
         formGrid.setAlignment(Pos.CENTER_LEFT);
-
-        ColumnConstraints column1 = new ColumnConstraints();
-        column1.setPercentWidth(50);
-        ColumnConstraints column2 = new ColumnConstraints();
-        column2.setPercentWidth(50);
-        formGrid.getColumnConstraints().addAll(column1, column2);
 
         firstNameField = createRoundedField("First Name");
         lastNameField = createRoundedField("Last Name");
@@ -111,23 +105,17 @@ public class ElderView {
         formGrid.add(new Label("Contact Number:"), 1, 2);
         formGrid.add(contactField, 1, 3);
         formGrid.add(new Label("Address:"), 0, 4);
-        formGrid.add(addressField, 0, 5, 2, 1); // Span two columns
-        formGrid.add(new Label("Email:"), 0, 6);
-        formGrid.add(emailField, 0, 7);
-        formGrid.add(new Label("Relationship:"), 1, 6);
-        formGrid.add(relationshipField, 1, 7);
+        formGrid.add(addressField, 0, 5);
+        formGrid.add(new Label("Email:"), 1, 4);
+        formGrid.add(emailField, 1, 5);
+        formGrid.add(new Label("Relationship:"), 0, 6);
+        formGrid.add(relationshipField, 0, 7);
 
         // == Medical Record Grid ==
         GridPane medicalRecordGrid = new GridPane();
-        medicalRecordGrid.setHgap(10); // Reduced horizontal gap
-        medicalRecordGrid.setVgap(10); // Reduced vertical gap
+        medicalRecordGrid.setHgap(20);
+        medicalRecordGrid.setVgap(20);
         medicalRecordGrid.setAlignment(Pos.CENTER_RIGHT);
-
-        ColumnConstraints medCol1 = new ColumnConstraints();
-        medCol1.setPercentWidth(35);
-        ColumnConstraints medCol2 = new ColumnConstraints();
-        medCol2.setPercentWidth(65);
-        medicalRecordGrid.getColumnConstraints().addAll(medCol1, medCol2);
 
         diagnosisField = createRoundedField("Diagnosis");
         medicationsField = createRoundedField("Medications");
@@ -157,13 +145,31 @@ public class ElderView {
         addButton.setDisable(true); // Start with Add button disabled
         cancelButton.setDisable(true);
 
+        // Add listeners to all input fields to enable/disable buttons
+        addTextFieldListeners();
+
+        cancelButton.setOnAction(e -> {
+            clearFields();
+            cancelButton.setDisable(true);
+            addButton.setDisable(true);
+        });
+
+        addButton.setOnAction(e -> {
+            if (guardian == null || guardian.getGuardianID() <= 0) {
+                showAlert(Alert.AlertType.ERROR, "System Error", "Guardian information is missing. Cannot add elder.");
+                return;
+            }
+            addElderAndMedicalRecord();
+        });
+
         HBox buttonBox = new HBox(20, cancelButton, addButton);
         buttonBox.setAlignment(Pos.CENTER_LEFT);
         buttonBox.setPadding(new Insets(20, 0, 0, 0));
 
         VBox leftPane = new VBox(20, title, formGrid, medicalRecordGrid, buttonBox);
-        leftPane.setPadding(new Insets(20)); // Reduced padding
-        HBox.setHgrow(leftPane, Priority.ALWAYS); // Allow left pane to grow horizontally
+        leftPane.setPadding(new Insets(40));
+        leftPane.setPrefWidth(800);
+        leftPane.setAlignment(Pos.TOP_CENTER);
 
         // === Right Sidebar ===
         Button goBackBtn = createSidebarButton("Go Back");
@@ -173,48 +179,22 @@ public class ElderView {
         });
 
         VBox rightPane = new VBox();
-        rightPane.setPadding(new Insets(20)); // Reduced padding
+        rightPane.setPadding(new Insets(30));
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setAlignment(Pos.BOTTOM_CENTER);
-        rightPane.setMinWidth(150); // Set a minimum width for the sidebar
-        rightPane.setMaxWidth(200); // Set a maximum width for the sidebar
+        rightPane.setPrefWidth(250);
 
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         rightPane.getChildren().addAll(spacer, goBackBtn);
 
         HBox root = new HBox(20, leftPane, rightPane);
-        root.setPadding(new Insets(10)); // Reduced root padding
-        HBox.setHgrow(leftPane, Priority.ALWAYS);
-        HBox.setHgrow(rightPane, Priority.NEVER);
+        root.setPadding(new Insets(20));
 
-        this.scene = new Scene(root);
+        this.scene = new Scene(root, 1100, 650);
         stage.setTitle("Add Elder");
         stage.setScene(scene);
-        stage.show();
-
-        // Add listeners after the scene is set
-        addTextFieldListeners();
-        // Make the scene resizable and call method.
-        stage.setResizable(true);
-        makeLayoutResponsive(root);
-    }
-
-    private void makeLayoutResponsive(HBox root) {
-        scene.widthProperty().addListener((obs, oldWidth, newWidth) -> {
-            double width = newWidth.doubleValue();
-            // Adjust the widths of the left and right panes
-            VBox leftPane = (VBox) root.getChildren().get(0);
-            VBox rightPane = (VBox) root.getChildren().get(1);
-
-            if (width < 800) { // Example breakpoint
-                leftPane.setPrefWidth(width * 0.9);
-                rightPane.setPrefWidth(width * 0.9);
-            } else {
-                leftPane.setPrefWidth(width * 0.7); // 70% of the width
-                rightPane.setPrefWidth(250); // Fixed width
-            }
-        });
+        stage.show(); // Make sure the stage is shown.
     }
 
     private void addTextFieldListeners() {
@@ -279,7 +259,7 @@ public class ElderView {
         TextField field = new TextField();
         field.setPromptText(prompt);
         field.setStyle("-fx-background-color: lightgray; -fx-background-radius: 20; -fx-padding: 8 16;");
-        HBox.setHgrow(field, Priority.ALWAYS); // Allow text fields to grow horizontally
+        field.setPrefWidth(300);
         return field;
     }
 
@@ -287,9 +267,8 @@ public class ElderView {
         ComboBox<String> cb = new ComboBox<>();
         cb.setPromptText(prompt);
         styleComboBox(cb, false);
-        cb.setMinWidth(120);
+        cb.setMinWidth(180);
         cb.setPrefWidth(ComboBox.USE_COMPUTED_SIZE);
-        HBox.setHgrow(cb, Priority.ALWAYS); // Allow combo boxes to grow horizontally
         return cb;
     }
 
@@ -301,7 +280,7 @@ public class ElderView {
         DatePicker datePicker = new DatePicker();
         datePicker.setPromptText(prompt);
         datePicker.setStyle("-fx-background-color: lightgray; -fx-background-radius: 20; -fx-padding: 8 16;");
-        HBox.setHgrow(datePicker, Priority.ALWAYS); // Allow date picker to grow horizontally
+        datePicker.setPrefWidth(300);
         return datePicker;
     }
 
