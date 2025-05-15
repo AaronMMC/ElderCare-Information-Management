@@ -42,17 +42,20 @@ public class ActivityDAO {
         return activities;
     }
 
-    //TODO: Procedure Call.
+
     public void updateActivity(Activity activity) {
-        String sql = "{CALL updateActivity(?,?)}";
-        try (CallableStatement stmt = conn.prepareCall(sql)){
-            stmt.setString(1, activity.getTitle());
-            stmt.setString(2, activity.getDescription());
-            stmt.execute();
+        String sql = "UPDATE activity SET title = ?, description = ? WHERE title = ?;";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, activity.getTitle());        // new title
+            stmt.setString(2, activity.getDescription());  // new description
+            stmt.setString(3, activity.getTitle());        // old title (used in WHERE)
+
+            stmt.executeUpdate();  // use executeUpdate for UPDATE/INSERT/DELETE
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
 
     public void deleteActivity(Activity activity) {
