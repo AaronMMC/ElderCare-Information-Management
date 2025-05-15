@@ -47,21 +47,22 @@ public class CaregiverElderView {
         titleLabel.setStyle("-fx-font-weight: bold;");
 
         sortBox.getItems().addAll("PENDING", "FINISHED", "CANCELLED", "ONGOING");
-        sortBox.setValue("ONGOING"); // default filter
+        sortBox.setValue("ONGOING");
 
         sortBox.setOnAction(e -> populateTable());
 
         HBox filterBox = new HBox(20, new Label("Filter by:"), sortBox);
         filterBox.setAlignment(Pos.CENTER_RIGHT);
+        HBox.setHgrow(sortBox, Priority.ALWAYS);
 
-        table.setHgap(10); // Reduced horizontal gap
-        table.setVgap(10);   // Reduced vertical gap
-        table.setPadding(new Insets(15)); // Adjusted padding
+        table.setHgap(10);
+        table.setVgap(10);
+        table.setPadding(new Insets(15));
         table.setStyle("-fx-border-color: #B891F1; -fx-border-width: 2; -fx-background-color: #F9F9F9;");
 
-        // Define column constraints for dynamic sizing
+        // Use percentages for column constraints to make it responsive
         ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(20); // Adjust percentages as needed
+        col1.setPercentWidth(20);
         col1.setHgrow(Priority.ALWAYS);
 
         ColumnConstraints col2 = new ColumnConstraints();
@@ -77,12 +78,13 @@ public class CaregiverElderView {
         ScrollPane scrollPane = new ScrollPane(table);
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color:transparent;");
-        scrollPane.setPrefHeight(220); // Adjust based on row height
+        scrollPane.setPrefHeight(220);
 
         VBox leftPane = new VBox(20, titleLabel, filterBox, scrollPane);
         leftPane.setPadding(new Insets(20));
         leftPane.setPrefWidth(800);
-        HBox.setHgrow(leftPane, Priority.ALWAYS); // Make left pane grow horizontally
+        HBox.setHgrow(leftPane, Priority.ALWAYS);
+        VBox.setVgrow(leftPane, Priority.ALWAYS);
 
         Button goBackBtn = createSidebarButton("Go Back");
         goBackBtn.setOnAction(e -> {
@@ -95,12 +97,14 @@ public class CaregiverElderView {
         rightPane.setStyle("-fx-background-color: #3BB49C;");
         rightPane.setAlignment(Pos.BOTTOM_CENTER);
         rightPane.setPrefWidth(250);
+
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         rightPane.getChildren().addAll(spacer, goBackBtn);
 
         HBox root = new HBox(20, leftPane, rightPane);
         root.setPadding(new Insets(20));
+        HBox.setHgrow(leftPane, Priority.ALWAYS);
 
         this.scene = new Scene(root, 1100, 600);
         stage.setTitle("Your Elders");
@@ -108,6 +112,26 @@ public class CaregiverElderView {
         stage.show();
 
         populateTable();
+        stage.setResizable(true);
+        makeLayoutResponsive(root);
+    }
+
+    private void makeLayoutResponsive(HBox root) {
+        scene.widthProperty().addListener((obs, oldWidth, newWidth) -> {
+            double width = newWidth.doubleValue();
+            VBox leftPane = (VBox) root.getChildren().get(0);
+            VBox rightPane = (VBox) root.getChildren().get(1);
+
+            if (width < 800) {
+                leftPane.setPrefWidth(width * 0.9);
+                rightPane.setPrefWidth(width * 0.9);
+            } else {
+                leftPane.setPrefWidth(width * 0.7);
+                rightPane.setPrefWidth(250);
+            }
+            //make the table also resize
+            table.requestLayout();
+        });
     }
 
     private void populateTable() {
@@ -127,23 +151,20 @@ public class CaregiverElderView {
         actionHeader.setStyle("-fx-font-weight: bold; -fx-background-color: #E2C8FD; -fx-padding: 10;");
         actionHeader.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(actionHeader, Priority.ALWAYS);
-        actionHeader.setAlignment(Pos.CENTER); // Center the header
+        actionHeader.setAlignment(Pos.CENTER);
 
         table.add(eldersHeader, 0, 0);
         table.add(detailsHeader, 1, 0);
         table.add(actionHeader, 2, 0);
 
         String selectedStatus = sortBox.getValue();
-        Appointment.AppointmentStatus filterStatus = Appointment.AppointmentStatus.valueOf(selectedStatus);
-        List<Appointment> appointments = appointmentController.getAllAppointmentsByCaregiver(caregiver.getCaregiverID())
-                .stream()
-                .filter(a -> a.getStatus() == filterStatus)
-                .toList();
+        List<Appointment> appointments = appointmentController.getAllAppointmentsByCaregiver(caregiver.getCaregiverID());
 
-        //Debug: its not even printing this shit out
-        for (Appointment a : appointments) {
-            System.out.println("An appointment is found." + a.getAppointmentID());
-            System.out.println(elderController.getElderById(a.getElderID()));
+        if (!"ALL".equals(selectedStatus)) { // Only filter if a status is selected
+            Appointment.AppointmentStatus filterStatus = Appointment.AppointmentStatus.valueOf(selectedStatus);
+            appointments = appointments.stream()
+                    .filter(a -> a.getStatus() == filterStatus)
+                    .toList();
         }
 
         int rowIndex = 1;
@@ -185,14 +206,10 @@ public class CaregiverElderView {
             Button seeRecordBtn = createBigGreenButton("See Medical Record");
             Button activityButton = createBigGreenButton("Activity Log");
 
-            // Suggestion 1: Set a minimum width for the buttons
-            markDoneBtn.setMinWidth(120); // Adjust as needed
-            seeRecordBtn.setMinWidth(150); // Adjust as needed
-
             markDoneBtn.setOnAction(e -> {
                 appointment.setStatus(Appointment.AppointmentStatus.FINISHED);
                 appointmentController.updateAppointment(appointment);
-                populateTable(); // Refresh after marking done
+                populateTable();
             });
 
             seeRecordBtn.setOnAction(e -> {
@@ -209,10 +226,6 @@ public class CaregiverElderView {
             buttonBox.setAlignment(Pos.CENTER_RIGHT);
             buttonBox.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(buttonBox, Priority.ALWAYS);
-
-            // Suggestion 2: Ensure the buttonBox doesn't constrain the buttons
-            HBox.setHgrow(markDoneBtn, Priority.SOMETIMES);
-            HBox.setHgrow(seeRecordBtn, Priority.SOMETIMES);
 
             table.add(elderLabel, 0, rowIndex);
             table.add(detailsLabel, 1, rowIndex);
