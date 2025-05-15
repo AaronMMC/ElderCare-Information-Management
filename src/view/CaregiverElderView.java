@@ -222,10 +222,9 @@ public class CaregiverElderView {
                 stage.setScene(activityView.getScene());
             });
 
-            HBox buttonBox = new HBox(10, markDoneBtn, seeRecordBtn, activityButton);
-            buttonBox.setAlignment(Pos.CENTER_RIGHT);
-            buttonBox.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(buttonBox, Priority.ALWAYS);
+            VBox buttonBox = new VBox(10, markDoneBtn, seeRecordBtn, activityButton);
+            buttonBox.setAlignment(Pos.CENTER_RIGHT); // Alignment will now be within the vertical space
+            buttonBox.setMaxWidth(Double.MAX_VALUE); // This will still make the VBox take up available width
 
             table.add(elderLabel, 0, rowIndex);
             table.add(detailsLabel, 1, rowIndex);
