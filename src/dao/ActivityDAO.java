@@ -2,10 +2,7 @@ package dao;
 
 import model.Activity;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,8 +56,8 @@ public class ActivityDAO {
 
     //TODO: Procedure Call.
     public void deleteActivity(Activity activity) {
-        String sql = "{CALL deleteActivity(?)}";
-        try (CallableStatement stmt = conn.prepareCall(sql)){
+        String sql = "DELETE FROM activity WHERE activity_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1, activity.getActivityId());
             stmt.execute();
         } catch (SQLException e) {
