@@ -73,8 +73,6 @@ public class ActivityView {
             private final Button editBtn = createRoundedGreenButton("Edit");
             private final Button removeBtn = createRoundedGreenButton("Remove");
             private boolean editing = false;
-            private String originalTitle;
-            private String originalDescription;
 
             {
                 HBox actionsBox = new HBox(10, editBtn, removeBtn);
@@ -105,8 +103,8 @@ public class ActivityView {
             private void startEdit(Activity activity) {
                 editing = true;
                 editBtn.setText("Save");
-                originalTitle = activity.getTitle();
-                originalDescription = activity.getDescription();
+                String originalTitle = activity.getTitle();
+                String originalDescription = activity.getDescription();
                 activityTableView.setEditable(true);
                 activityTableView.edit(getIndex(), titleColumn);
                 activityTableView.edit(getIndex(), detailsColumn);
@@ -154,7 +152,7 @@ public class ActivityView {
                 private final Button removeBtn = createRoundedGreenButton("Remove");
 
                 { // Initialization block (similar to constructor)
-                    HBox actionsBox = new HBox(10, editBtn, removeBtn);
+                    VBox actionsBox = new VBox(10, editBtn, removeBtn);
                     actionsBox.setAlignment(Pos.CENTER);
                     setGraphic(actionsBox);
 
@@ -237,7 +235,7 @@ public class ActivityView {
             dialog.showAndWait().ifPresent(newActivity -> {
                 activityController.addActivity(newActivity);
                 activityList.add(newActivity);
-                activityTableView.getItems().add(newActivity);
+                activityTableView.refresh();
             });
         });
 
