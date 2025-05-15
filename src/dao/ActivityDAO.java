@@ -30,7 +30,6 @@ public class ActivityDAO {
         }
     }
 
-    //TODO: Procedure Call.
     public List<Activity> getAllActivitiesByAppointmentId(int appointmentId) {
         List<Activity> activities = new ArrayList<>();
         String sql = "{CALL getAllActivitiesByAppointmentId(?)}";
