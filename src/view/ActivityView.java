@@ -15,7 +15,6 @@ import model.Appointment;
 import model.Caregiver;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -29,6 +28,7 @@ public class ActivityView {
     private final TableView<Activity> activityTableView;
     private final Button saveBtn;
     private final Button cancelBtn;
+    private Activity currentlyEditing;
 
     public ActivityView(Stage stage, Connection conn, Appointment appointment, Caregiver caregiver) {
         this.activityController = new ActivityController(conn);
@@ -38,6 +38,7 @@ public class ActivityView {
         this.cancelBtn = createRoundedGreenButton("Cancel");
         saveBtn.setDisable(true);
         cancelBtn.setDisable(true);
+        this.currentlyEditing = null;
 
         // === Title ===
         Label titleLabel = new Label("Activity Log");
@@ -49,11 +50,25 @@ public class ActivityView {
         titleColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
         titleColumn.setPrefWidth(200);
         titleColumn.setCellFactory(tc -> new EditingCell());
+        titleColumn.setOnEditCommit(event -> {
+            if (currentlyEditing != null && currentlyEditing == event.getRowValue()) {
+                currentlyEditing.setTitle(event.getNewValue());
+                saveBtn.setDisable(false);
+                cancelBtn.setDisable(false);
+            }
+        });
 
         TableColumn<Activity, String> detailsColumn = new TableColumn<>("Activity Details");
         detailsColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDescription()));
         detailsColumn.setPrefWidth(400);
         detailsColumn.setCellFactory(tc -> new EditingCell());
+        detailsColumn.setOnEditCommit(event -> {
+            if (currentlyEditing != null && currentlyEditing == event.getRowValue()) {
+                currentlyEditing.setDescription(event.getNewValue());
+                saveBtn.setDisable(false);
+                cancelBtn.setDisable(false);
+            }
+        });
 
         TableColumn<Activity, String> timestampColumn = new TableColumn<>("Timestamp");
         timestampColumn.setCellValueFactory(cellData -> {
@@ -68,28 +83,11 @@ public class ActivityView {
         timestampColumn.setPrefWidth(150);
 
         TableColumn<Activity, Void> actionsColumn = new TableColumn<>("Actions");
-        actionsColumn.setPrefWidth(150);
+        actionsColumn.setPrefWidth(100);
         actionsColumn.setCellFactory(param -> new TableCell<Activity, Void>() {
-            private final Button editBtn = createRoundedGreenButton("Edit");
             private final Button removeBtn = createRoundedGreenButton("Remove");
-            private boolean editing = false;
 
             {
-                HBox actionsBox = new HBox(10, editBtn, removeBtn);
-                actionsBox.setAlignment(Pos.CENTER);
-                setGraphic(actionsBox);
-
-                editBtn.setOnAction(event -> {
-                    Activity activity = getTableRow().getItem();
-                    if (activity != null) {
-                        if (!editing) {
-                            startEdit(activity);
-                        } else {
-                            commitEdit(activity);
-                        }
-                    }
-                });
-
                 removeBtn.setOnAction(event -> {
                     Activity activity = getTableRow().getItem();
                     if (activity != null) {
@@ -98,28 +96,9 @@ public class ActivityView {
                         activityTableView.refresh();
                     }
                 });
-            }
-
-            private void startEdit(Activity activity) {
-                editing = true;
-                editBtn.setText("Save");
-                String originalTitle = activity.getTitle();
-                String originalDescription = activity.getDescription();
-                activityTableView.setEditable(true);
-                activityTableView.edit(getIndex(), titleColumn);
-                activityTableView.edit(getIndex(), detailsColumn);
-                saveBtn.setDisable(false);
-                cancelBtn.setDisable(false);
-            }
-
-            private void commitEdit(Activity activity) {
-                editing = false;
-                editBtn.setText("Edit");
-                activityTableView.setEditable(false);
-                activityController.updateActivity(activity);
-                saveBtn.setDisable(true);
-                cancelBtn.setDisable(true);
-                activityTableView.refresh();
+                HBox actionsBox = new HBox(10, removeBtn);
+                actionsBox.setAlignment(Pos.CENTER);
+                setGraphic(actionsBox);
             }
 
             @Override
@@ -128,7 +107,7 @@ public class ActivityView {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    setGraphic(new HBox(10, editBtn, removeBtn));
+                    setGraphic(new HBox(10, removeBtn));
                 }
             }
         });
@@ -136,7 +115,30 @@ public class ActivityView {
         activityTableView.getColumns().addAll(titleColumn, detailsColumn, timestampColumn, actionsColumn);
         activityTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         activityTableView.setPrefWidth(750);
+        activityTableView.setEditable(true); // Make the table editable
         VBox.setVgrow(activityTableView, Priority.ALWAYS);
+
+        // Add listener to handle row selection for editing
+        activityTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                if (currentlyEditing == null) {
+                    currentlyEditing = newSelection;
+                    saveBtn.setDisable(false);
+                    cancelBtn.setDisable(false);
+                } else if (currentlyEditing != newSelection) {
+                    // If another row is selected before saving/canceling
+                    saveBtn.setDisable(false);
+                    cancelBtn.setDisable(false);
+                }
+            } else {
+                // No row selected
+                if (currentlyEditing != null && saveBtn.isDisabled()) {
+                    // If we were editing and then deselected without saving/canceling
+                    saveBtn.setDisable(false);
+                    cancelBtn.setDisable(false);
+                }
+            }
+        });
 
         // === Action Buttons ===
         cancelBtn.setOnAction(e -> {
@@ -145,44 +147,19 @@ public class ActivityView {
             activityTableView.refresh();
             saveBtn.setDisable(true);
             cancelBtn.setDisable(true);
-            activityTableView.setEditable(false);
-            // Reset the "Edit" button text for all rows
-            actionsColumn.setCellFactory(param -> new TableCell<Activity, Void>() {
-                private final Button editBtn = createRoundedGreenButton("Edit");
-                private final Button removeBtn = createRoundedGreenButton("Remove");
-
-                { // Initialization block (similar to constructor)
-                    VBox actionsBox = new VBox(10, editBtn, removeBtn);
-                    actionsBox.setAlignment(Pos.CENTER);
-                    setGraphic(actionsBox);
-
-                    removeBtn.setOnAction(event -> {
-                        Activity activity = getTableRow().getItem();
-                        if (activity != null) {
-                            activityController.deleteActivity(activity);
-                            activityList.remove(activity);
-                            activityTableView.refresh();
-                        }
-                    });
-                }
-
-                @Override // Override the updateItem method
-                protected void updateItem(Void item, boolean empty) {
-                    super.updateItem(item, empty); // Call superclass implementation
-                    if (empty) {
-                        setGraphic(null);
-                    } else {
-                        setGraphic(new HBox(10, editBtn, removeBtn));
-                    }
-                }
-            });
+            currentlyEditing = null;
+            activityTableView.getSelectionModel().clearSelection();
         });
 
         saveBtn.setOnAction(e -> {
-            saveBtn.setDisable(true);
-            cancelBtn.setDisable(true);
-            activityTableView.setEditable(false);
-            // The updates are handled directly in the Edit button's commit action
+            if (currentlyEditing != null) {
+                activityController.updateActivity(currentlyEditing);
+                activityTableView.refresh();
+                saveBtn.setDisable(true);
+                cancelBtn.setDisable(true);
+                currentlyEditing = null;
+                activityTableView.getSelectionModel().clearSelection();
+            }
         });
 
         HBox actionBox = new HBox(20, cancelBtn, saveBtn);
